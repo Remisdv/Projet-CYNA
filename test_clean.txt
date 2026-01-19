@@ -1,6 +1,7 @@
-Ceci est un fichier de test propre.
-Il ne contient aucun emoji.
-La validation CI devrait passer avec succès pour ce fichier.
-Fonction test() {
-    return true;
-}
+Ceci est un fichier de test avec des EMOJIS pour le test CI.
+Il ne faut PAS que ça passe ! 🛑
+Voici une fusée : 🚀
+Un cœur : ❤️
+Un dingbat : ✂️
+Un sourire : 😊
+Fin du fichier. ✨
