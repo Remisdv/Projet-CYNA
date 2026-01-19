@@ -44,8 +44,27 @@ jobs:
           LINEAR_ID=$(echo "$BRANCH_NAME" | grep -oP '[A-Z]+-\d+' | head -1 || echo "")
           echo "linear_id=$LINEAR_ID" >> $GITHUB_OUTPUT
 
-      - name: Get branch info
+      - name: Check for changes
         if: steps.check-pr.outputs.pr_exists == 'false'
+        id: check-changes
+        run: |
+          # Trouve la branche par défaut dynamiquement
+          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+          echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+          
+          # Vérifie s'il y a des différences/commits
+          CHANGE_COUNT=$(git rev-list --count origin/$DEFAULT_BRANCH..${{ github.ref_name }})
+          
+          if [ "$CHANGE_COUNT" -eq 0 ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected (branch is equal to $DEFAULT_BRANCH). Skipping PR creation."
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected ($CHANGE_COUNT commits)."
+          fi
+
+      - name: Get branch info
+        if: steps.check-pr.outputs.pr_exists == 'false' && steps.check-changes.outputs.has_changes == 'true'
         id: branch-info
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
@@ -54,13 +73,12 @@ jobs:
           echo "title=$TITLE" >> $GITHUB_OUTPUT
 
       - name: Create Draft Pull Request
-        if: steps.check-pr.outputs.pr_exists == 'false'
+        if: steps.check-pr.outputs.pr_exists == 'false' && steps.check-changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
-          # Trouve la branche par défaut dynamiquement
-          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
+          DEFAULT_BRANCH="${{ steps.check-changes.outputs.default_branch }}"
           LINEAR_ID="${{ steps.linear-id.outputs.linear_id }}"
           TITLE="${{ steps.branch-info.outputs.title }}"
           
