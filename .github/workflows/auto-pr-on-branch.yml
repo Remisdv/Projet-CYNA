@@ -1,22 +1,24 @@
-name: Auto Create PR on Branch Creation
+name: Auto Create PR on First Push
 
 on:
-  create:  # Trigger quand branche ou tag créé
+  push:
+    branches-ignore:
+      - 'main'
+      - 'master'
+      - 'develop'
+      - 'production'
 
 jobs:
   auto-create-pr:
-    # Ne run que si c'est une branche (pas un tag)
-    if: github.ref_type == 'branch'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
           fetch-depth: 0
 
       - name: Check if PR already exists
@@ -26,115 +28,60 @@ jobs:
         run: |
           # Vérifie si une PR existe déjà pour cette branche
           PR_COUNT=$(gh pr list --head "${{ github.ref_name }}" --json number --jq length)
-          echo "pr_exists=$PR_COUNT" >> $GITHUB_OUTPUT
-          echo "Found $PR_COUNT existing PR(s) for this branch"
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "PR already exists. Skipping creation."
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found. Proceeding to creation."
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Extract Linear ID from branch name
+        if: steps.check-pr.outputs.pr_exists == 'false'
         id: linear-id
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
-          
-          # Essaye d'extraire un ID Linear (format: CYN-123, PROJ-456, etc.)
           LINEAR_ID=$(echo "$BRANCH_NAME" | grep -oP '[A-Z]+-\d+' | head -1 || echo "")
-          
-          if [ -n "$LINEAR_ID" ]; then
-            echo "linear_id=$LINEAR_ID" >> $GITHUB_OUTPUT
-            echo "Found Linear ID: $LINEAR_ID"
-          else
-            echo "No Linear ID found in branch name"
-            echo "linear_id=" >> $GITHUB_OUTPUT
-          fi
+          echo "linear_id=$LINEAR_ID" >> $GITHUB_OUTPUT
 
       - name: Get branch info
+        if: steps.check-pr.outputs.pr_exists == 'false'
         id: branch-info
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
-          
-          # Nettoie le nom de branche pour le titre (remplace - et _ par espaces)
           CLEAN_NAME=$(echo "$BRANCH_NAME" | sed 's/feature\///g' | sed 's/bugfix\///g' | sed 's/[-_]/ /g')
-          
-          # Capitalise la première lettre
           TITLE=$(echo "$CLEAN_NAME" | awk '{for(i=1;i<=NF;i++) $i=toupper(substr($i,1,1)) tolower(substr($i,2))}1')
-          
           echo "title=$TITLE" >> $GITHUB_OUTPUT
-          echo "Generated title: $TITLE"
-
-      - name: Check if branch has changes
-        id: check-changes
-        run: |
-          # Compare avec main (ou master)
-          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
-          echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
-          
-          # Compte les différences
-          DIFF_COUNT=$(git diff origin/$DEFAULT_BRANCH...${{ github.ref_name }} | wc -l)
-          echo "diff_count=$DIFF_COUNT" >> $GITHUB_OUTPUT
-          
-          if [ "$DIFF_COUNT" -eq 0 ]; then
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No changes detected - will create empty commit"
-          else
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected - $DIFF_COUNT lines"
-          fi
-
-      - name: Create empty commit if no changes
-        if: steps.check-changes.outputs.has_changes == 'false' && steps.check-pr.outputs.pr_exists == '0'
-        continue-on-error: true
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git commit --allow-empty -m "chore: initialisation branche pour PR [skip ci]"
-          
-          echo "Tentative de push du commit vide..."
-          if ! git push origin ${{ github.ref_name }}; then
-            echo "::error::Impossible de pousser le commit vide. Vos règles de dépôt bloquent le push direct. Veuillez ajouter 'github-actions[bot]' à la liste 'Bypass list' dans Settings > Rules > Rulesets."
-            exit 1
-          fi
-          echo "Empty commit created to allow PR creation"
 
       - name: Create Draft Pull Request
-        if: steps.check-pr.outputs.pr_exists == '0'
+        if: steps.check-pr.outputs.pr_exists == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
-          DEFAULT_BRANCH="${{ steps.check-changes.outputs.default_branch }}"
+          # Trouve la branche par défaut dynamiquement
+          DEFAULT_BRANCH=$(git remote show origin | grep 'HEAD branch' | cut -d' ' -f5)
           LINEAR_ID="${{ steps.linear-id.outputs.linear_id }}"
           TITLE="${{ steps.branch-info.outputs.title }}"
           
-          # Construit le titre de la PR
-          
-          # Construit le titre de la PR
           if [ -n "$LINEAR_ID" ]; then
             PR_TITLE="$LINEAR_ID: $TITLE"
           else
             PR_TITLE="$TITLE"
           fi
           
-          # Détection spécifique Issue GitHub (ex: branche "12-ajout-feature")
           ISSUE_NUM=$(echo "$BRANCH_NAME" | grep -oE '^[0-9]+' || echo "")
-          
           LINK_TEXT=""
           if [ -n "$ISSUE_NUM" ]; then
              LINK_TEXT="Closes #$ISSUE_NUM"
           fi
-          
-          # Ajoute une note si c'est une branche vide
-          EMPTY_NOTE=""
-          if [ "$HAS_CHANGES" == "false" ]; then
-            EMPTY_NOTE="
-          ⚠️ *Cette branche est vide et prête pour des changements.*"
-          fi
 
-          # Construit le corps de la PR
           PR_BODY="🤖 **Cette PR a été créée automatiquement**
           
           Branche : \`$BRANCH_NAME\`
           Base : \`$DEFAULT_BRANCH\`
           
-          $LINK_TEXT$EMPTY_NOTE
+          $LINK_TEXT
           "
           
           echo "Création de la PR..."
