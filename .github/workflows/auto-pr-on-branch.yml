@@ -9,7 +9,31 @@ on:
       - 'production'
 
 jobs:
-  auto-create-pr:
+  check-pr-exists:
+    runs-on: ubuntu-latest
+    outputs:
+      pr_exists: ${{ steps.check.outputs.pr_exists }}
+    steps:
+      - name: Check if PR exists
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use GH CLI to check for existing PRs without checking out the code
+          # We need to specify the repo context since we don't have a git folder
+          PR_COUNT=$(gh pr list --head "${{ github.ref_name }}" -R "${{ github.repository }}" --json number --jq length)
+          
+          if [ "$PR_COUNT" -gt 0 ]; then
+            echo "PR already exists for ${{ github.ref_name }}"
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found for ${{ github.ref_name }}"
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  create-pr:
+    needs: check-pr-exists
+    if: needs.check-pr-exists.outputs.pr_exists == 'false'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,23 +45,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check if PR already exists
-        id: check-pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Vérifie si une PR existe déjà pour cette branche
-          PR_COUNT=$(gh pr list --head "${{ github.ref_name }}" --json number --jq length)
-          if [ "$PR_COUNT" -gt 0 ]; then
-            echo "PR already exists. Skipping creation."
-            echo "pr_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "No PR found. Proceeding to creation."
-            echo "pr_exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Extract Linear ID from branch name
-        if: steps.check-pr.outputs.pr_exists == 'false'
         id: linear-id
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
@@ -45,7 +53,6 @@ jobs:
           echo "linear_id=$LINEAR_ID" >> $GITHUB_OUTPUT
 
       - name: Check for changes
-        if: steps.check-pr.outputs.pr_exists == 'false'
         id: check-changes
         run: |
           # Trouve la branche par défaut dynamiquement
@@ -64,7 +71,7 @@ jobs:
           fi
 
       - name: Get branch info
-        if: steps.check-pr.outputs.pr_exists == 'false' && steps.check-changes.outputs.has_changes == 'true'
+        if: steps.check-changes.outputs.has_changes == 'true'
         id: branch-info
         run: |
           BRANCH_NAME="${{ github.ref_name }}"
@@ -73,7 +80,7 @@ jobs:
           echo "title=$TITLE" >> $GITHUB_OUTPUT
 
       - name: Create Draft Pull Request
-        if: steps.check-pr.outputs.pr_exists == 'false' && steps.check-changes.outputs.has_changes == 'true'
+        if: steps.check-changes.outputs.has_changes == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
