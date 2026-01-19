@@ -94,7 +94,7 @@ jobs:
              LINK_TEXT="Closes #$ISSUE_NUM"
           fi
 
-          PR_BODY="🤖 **Cette PR a été créée automatiquement**
+          PR_BODY="**Cette PR a été créée automatiquement**
           
           Branche : \`$BRANCH_NAME\`
           Base : \`$DEFAULT_BRANCH\`

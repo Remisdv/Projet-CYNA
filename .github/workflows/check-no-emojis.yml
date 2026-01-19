@@ -1,0 +1,33 @@
+name: No Emojis Allowed
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  check-no-emojis:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan for emojis
+        run: |
+          # Cherche les caractères Unicode correspondant aux emojis dans tous les fichiers
+          # Exclut le dossier .git et .github (car ce workflow peut contenir des emojis dans les commentaires)
+          
+          echo "Scanning codebase for forbidden emojis..."
+          
+          # Plages courantes d'emojis : 
+          # 1F300-1FAFF (Symboles et Pictogrammes divers, Emojis récents)
+          # 2600-27BF (Symboles divers, Dingbats souvent utilisés comme emojis)
+          # Note: On utilise grep -P (Perl-compatible regex) pour supporter les codes hexadécimaux \x{}
+          
+          if grep -rP "[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]" . --exclude-dir={.git,.github} --binary-files=without-match; then
+            echo ""
+            echo "::error::EMOJIS DETECTED! Emojis are strictly forbidden in this codebase as they may indicate AI-generated code."
+            exit 1
+          else
+            echo "No emojis found. Clean code."
+          fi
