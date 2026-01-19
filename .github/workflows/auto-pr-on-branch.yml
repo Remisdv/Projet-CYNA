@@ -78,6 +78,22 @@ jobs:
             echo "Changes detected - $DIFF_COUNT lines"
           fi
 
+      - name: Create empty commit if no changes
+        if: steps.check-changes.outputs.has_changes == 'false' && steps.check-pr.outputs.pr_exists == '0'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git commit --allow-empty -m "chore: initialisation branche pour PR [skip ci]"
+          
+          echo "Tentative de push du commit vide..."
+          if ! git push origin ${{ github.ref_name }}; then
+            echo "::error::Impossible de pousser le commit vide. Vos règles de dépôt bloquent le push direct. Veuillez ajouter 'github-actions[bot]' à la liste 'Bypass list' dans Settings > Rules > Rulesets."
+            exit 1
+          fi
+          echo "Empty commit created to allow PR creation"
+
       - name: Create Draft Pull Request
         if: steps.check-pr.outputs.pr_exists == '0'
         env:
@@ -87,7 +103,8 @@ jobs:
           DEFAULT_BRANCH="${{ steps.check-changes.outputs.default_branch }}"
           LINEAR_ID="${{ steps.linear-id.outputs.linear_id }}"
           TITLE="${{ steps.branch-info.outputs.title }}"
-          HAS_CHANGES="${{ steps.check-changes.outputs.has_changes }}"
+          
+          # Construit le titre de la PR
           
           # Construit le titre de la PR
           if [ -n "$LINEAR_ID" ]; then
