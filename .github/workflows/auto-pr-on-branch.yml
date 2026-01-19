@@ -108,4 +108,5 @@ jobs:
             --body "$PR_BODY" \
             --base "$DEFAULT_BRANCH" \
             --head "$BRANCH_NAME" \
-            --draft
+            --draft \
+            --assignee "${{ github.actor }}"
