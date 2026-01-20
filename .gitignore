@@ -1,0 +1,40 @@
+# no node modules
+node_modules/
+# no log files
+*.log
+# no environment variable files
+.env
+# no build output
+dist/
+build/
+# no OS generated files
+.DS_Store
+Thumbs.db
+# no IDE specific files
+.vscode/
+.idea/
+.claude/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+# no dependency directories
+vendor/
+.bundle/
+# no coverage reports
+coverage/
+.nyc_output/
+# no temporary files
+*.tmp
+*.swp
+*.bak
+# no compiled files
+*.class
+*.o
+*.so
+*.exe
+*.dll
+# no package manager files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml

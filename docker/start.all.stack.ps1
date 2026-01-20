@@ -50,7 +50,7 @@ $Apps = @("cyna-gateway-api", "cyna-bo-api", "cyna-webapp-api", "cyna-service-ap
 $MissingApps = @()
 
 foreach ($app in $Apps) {
-    $appPath = Join-Path $ProjectRoot $app
+    $appPath = Join-Path $ProjectRoot "service\api\$app"
     if (-not (Test-Path $appPath)) {
         $MissingApps += $app
     }

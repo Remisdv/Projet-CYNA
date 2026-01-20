@@ -49,7 +49,7 @@ APPS=("cyna-gateway-api" "cyna-bo-api" "cyna-webapp-api" "cyna-service-api")
 MISSING_APPS=()
 
 for app in "${APPS[@]}"; do
-    if [ ! -d "$PROJECT_ROOT/$app" ]; then
+    if [ ! -d "$PROJECT_ROOT/service/api/$app" ]; then
         MISSING_APPS+=("$app")
     fi
 done

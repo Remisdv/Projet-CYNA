@@ -51,12 +51,12 @@ services:
       context: ../../
       dockerfile: docker/dev/Dockerfile.nestjs
       args:
-        APP_NAME: cyna-gateway-api
+        APP_NAME: service/api/cyna-gateway-api
     container_name: cyna-gateway-api
     ports:
       - "3000:3000"
     volumes:
-      - ../../cyna-gateway-api:/app
+      - ../../service/api/cyna-gateway-api:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -76,12 +76,12 @@ services:
       context: ../../
       dockerfile: docker/dev/Dockerfile.nestjs
       args:
-        APP_NAME: cyna-bo-api
+        APP_NAME: service/api/cyna-bo-api
     container_name: cyna-bo-api
     ports:
       - "3001:3000"
     volumes:
-      - ../../cyna-bo-api:/app
+      - ../../service/api/cyna-bo-api:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -101,12 +101,12 @@ services:
       context: ../../
       dockerfile: docker/dev/Dockerfile.nestjs
       args:
-        APP_NAME: cyna-webapp-api
+        APP_NAME: service/api/cyna-webapp-api
     container_name: cyna-webapp-api
     ports:
       - "3002:3000"
     volumes:
-      - ../../cyna-webapp-api:/app
+      - ../../service/api/cyna-webapp-api:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
@@ -126,12 +126,12 @@ services:
       context: ../../
       dockerfile: docker/dev/Dockerfile.nestjs
       args:
-        APP_NAME: cyna-service-api
+        APP_NAME: service/api/cyna-service-api
     container_name: cyna-service-api
     ports:
       - "3003:3000"
     volumes:
-      - ../../cyna-service-api:/app
+      - ../../service/api/cyna-service-api:/app
       - /app/node_modules
     environment:
       - NODE_ENV=development
