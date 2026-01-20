@@ -1,0 +1,175 @@
+name: cyna-it
+
+services:
+  # ============================================
+  # DATABASES
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: cyna-postgres
+    environment:
+      POSTGRES_USER: cyna
+      POSTGRES_PASSWORD: cyna_password
+      POSTGRES_DB: cyna_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cyna-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyna -d cyna_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: cyna-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - cyna-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # MAIL SERVER (Dev)
+  # ============================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: cyna-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - cyna-network
+
+  # ============================================
+  # BACKEND APIs (NestJS with Hot Reload)
+  # ============================================
+  cyna-gateway-api:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.nestjs
+      args:
+        APP_NAME: service/api/cyna-gateway-api
+    container_name: cyna-gateway-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../service/api/cyna-gateway-api:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cyna-network
+
+  cyna-bo-api:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.nestjs
+      args:
+        APP_NAME: service/api/cyna-bo-api
+    container_name: cyna-bo-api
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../../service/api/cyna-bo-api:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cyna-network
+
+  cyna-webapp-api:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.nestjs
+      args:
+        APP_NAME: service/api/cyna-webapp-api
+    container_name: cyna-webapp-api
+    ports:
+      - "3002:3000"
+    volumes:
+      - ../../service/api/cyna-webapp-api:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cyna-network
+
+  cyna-service-api:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.nestjs
+      args:
+        APP_NAME: service/api/cyna-service-api
+    container_name: cyna-service-api
+    ports:
+      - "3003:3000"
+    volumes:
+      - ../../service/api/cyna-service-api:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - cyna-network
+
+networks:
+  cyna-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
