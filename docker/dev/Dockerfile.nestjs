@@ -5,23 +5,17 @@ FROM node:20-alpine
 ARG APP_NAME
 ENV APP_NAME=${APP_NAME}
 
-# Activer Corepack pour utiliser Yarn
-RUN corepack enable
-
 # Installation des dependances systeme necessaires
 RUN apk add --no-cache python3 make g++
 
 # Creation du repertoire de travail
 WORKDIR /app
 
-# Copie du package.json de l'application (contient packageManager: yarn@4.12.0)
+# Copie du package.json de l'application
 COPY ${APP_NAME}/package.json ./
 
-# Copie de la config Yarn
-COPY .yarnrc.yml ./
-
-# Installation des dependances avec Yarn
-RUN yarn install
+# Installation des dependances avec NPM
+RUN npm install --ignore-scripts
 
 # Copie du reste du code source
 COPY ${APP_NAME}/ ./
@@ -30,4 +24,4 @@ COPY ${APP_NAME}/ ./
 EXPOSE 3000
 
 # Commande de demarrage avec hot-reload (watch mode)
-CMD ["yarn", "start:dev"]
+CMD ["npm", "run", "start:dev"]
