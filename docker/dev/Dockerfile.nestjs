@@ -1,0 +1,27 @@
+# Dockerfile NestJS avec Hot Reload pour le developpement
+FROM node:20-alpine
+
+# Argument pour le nom de l'application
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME}
+
+# Installation des dependances systeme necessaires
+RUN apk add --no-cache python3 make g++
+
+# Creation du repertoire de travail
+WORKDIR /app
+
+# Copie des fichiers package.json et package-lock.json
+COPY ${APP_NAME}/package*.json ./
+
+# Installation des dependances
+RUN npm install
+
+# Copie du reste du code source
+COPY ${APP_NAME}/ ./
+
+# Exposition du port
+EXPOSE 3000
+
+# Commande de demarrage avec hot-reload (watch mode)
+CMD ["npm", "run", "start:dev"]
