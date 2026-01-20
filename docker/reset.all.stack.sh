@@ -43,23 +43,27 @@ echo ""
 cd "$SCRIPT_DIR/dev"
 
 # Etape 1: Arret et suppression des conteneurs + volumes
-echo -e "${YELLOW}[1/4] Arret et suppression des conteneurs et volumes...${NC}"
+echo -e "${YELLOW}[1/5] Arret et suppression des conteneurs et volumes...${NC}"
 if docker compose version &> /dev/null; then
     docker compose down -v --remove-orphans 2>/dev/null || true
 else
     docker-compose down -v --remove-orphans 2>/dev/null || true
 fi
 
-# Etape 2: Suppression des images CYNA
-echo -e "${YELLOW}[2/4] Suppression des images Docker CYNA...${NC}"
+# Etape 2: Suppression forcee de tous les conteneurs cyna-*
+echo -e "${YELLOW}[2/5] Suppression forcee des conteneurs CYNA...${NC}"
+docker ps -aq --filter "name=cyna-" | xargs -r docker rm -f 2>/dev/null || true
+
+# Etape 3: Suppression des images CYNA
+echo -e "${YELLOW}[3/5] Suppression des images Docker CYNA...${NC}"
 docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "^dev[-_]cyna|^cyna" | xargs -r docker rmi -f 2>/dev/null || true
 
-# Etape 3: Nettoyage des ressources Docker non utilisees
-echo -e "${YELLOW}[3/4] Nettoyage des ressources Docker orphelines...${NC}"
+# Etape 4: Nettoyage des ressources Docker non utilisees
+echo -e "${YELLOW}[4/5] Nettoyage des ressources Docker orphelines...${NC}"
 docker system prune -f 2>/dev/null || true
 
-# Etape 4: Reconstruction et demarrage
-echo -e "${YELLOW}[4/4] Reconstruction et demarrage de la stack...${NC}"
+# Etape 5: Reconstruction et demarrage
+echo -e "${YELLOW}[5/5] Reconstruction et demarrage de la stack...${NC}"
 if docker compose version &> /dev/null; then
     docker compose up --build -d
 else
@@ -77,6 +81,8 @@ echo ""
 echo -e "${BLUE}Services disponibles:${NC}"
 echo -e "  - PostgreSQL:      localhost:5432"
 echo -e "  - Elasticsearch:   localhost:9200"
+echo -e "  - MailHog SMTP:    localhost:1025"
+echo -e "  - MailHog Web UI:  localhost:8025"
 echo -e "  - Gateway API:     localhost:3000"
 echo -e "  - Back-Office API: localhost:3001"
 echo -e "  - WebApp API:      localhost:3002"

@@ -34,7 +34,10 @@ coverage/
 *.so
 *.exe
 *.dll
-# no package manager files
-yarn.lock
+# no package manager files (sauf yarn.lock pour verrouiller les deps)
 package-lock.json
 pnpm-lock.yaml
+
+# Yarn
+.yarn/
+.pnp.*

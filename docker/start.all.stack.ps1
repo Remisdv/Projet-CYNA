@@ -84,6 +84,8 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Services disponibles:" -ForegroundColor Blue
     Write-Host "  - PostgreSQL:      localhost:5432"
     Write-Host "  - Elasticsearch:   localhost:9200"
+    Write-Host "  - MailHog SMTP:    localhost:1025"
+    Write-Host "  - MailHog Web UI:  localhost:8025"
     Write-Host "  - Gateway API:     localhost:3000"
     Write-Host "  - Back-Office API: localhost:3001"
     Write-Host "  - WebApp API:      localhost:3002"
