@@ -4,3 +4,7 @@
 
 * [Démarrage](README.md)
 * [Prérequis](prerequis-et-demarrage/prérequis.md)
+
+## Architecture
+
+* [Health Check](architecture/health-check.md)

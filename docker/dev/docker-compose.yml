@@ -8,17 +8,17 @@ services:
     image: postgres:16-alpine
     container_name: cyna-postgres
     environment:
-      POSTGRES_USER: cyna
-      POSTGRES_PASSWORD: cyna_password
-      POSTGRES_DB: cyna_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - cyna-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cyna -d cyna_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +50,7 @@ services:
     image: mailhog/mailhog:latest
     container_name: cyna-mailhog
     ports:
-      - "1025:1025"
+      - "${SMTP_PORT}:1025"
       - "8025:8025"
     networks:
       - cyna-network
@@ -66,17 +66,20 @@ services:
         APP_NAME: service/api/cyna-gateway-api
     container_name: cyna-gateway-api
     ports:
-      - "3000:3000"
+      - "${GATEWAY_API_PORT}:3000"
     volumes:
       - ../../service/api/cyna-gateway-api:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - PORT=3000
-      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - BO_API_URL=${BO_API_URL}
+      - WEBAPP_API_URL=${WEBAPP_API_URL}
+      - SERVICE_API_URL=${SERVICE_API_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,17 +96,17 @@ services:
         APP_NAME: service/api/cyna-bo-api
     container_name: cyna-bo-api
     ports:
-      - "3001:3000"
+      - "${BO_API_PORT}:3000"
     volumes:
       - ../../service/api/cyna-bo-api:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - PORT=3000
-      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,17 +123,17 @@ services:
         APP_NAME: service/api/cyna-webapp-api
     container_name: cyna-webapp-api
     ports:
-      - "3002:3000"
+      - "${WEBAPP_API_PORT}:3000"
     volumes:
       - ../../service/api/cyna-webapp-api:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - PORT=3000
-      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,17 +150,17 @@ services:
         APP_NAME: service/api/cyna-service-api
     container_name: cyna-service-api
     ports:
-      - "3003:3000"
+      - "${SERVICE_API_PORT}:3000"
     volumes:
       - ../../service/api/cyna-service-api:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV}
       - PORT=3000
-      - DATABASE_URL=postgresql://cyna:cyna_password@postgres:5432/cyna_db
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}
+      - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
     depends_on:
       postgres:
         condition: service_healthy
