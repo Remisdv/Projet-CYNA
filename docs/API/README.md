@@ -1,5 +1,5 @@
 ---
-description: Learn more about documenting APIs in GitBook.
+description: Documentation des APIs CYNA
 icon: terminal
 layout:
   width: default
@@ -12,18 +12,36 @@ layout:
   outline:
     visible: true
   pagination:
-    visible: false
+    visible: true
   metadata:
     visible: true
-metaLinks:
-  alternates:
-    - https://app.gitbook.com/s/M9ty6FYa3j98VSBHF9LN/
 ---
 
-# Developer Platform API
+# API Reference
 
-GitBook automatically generates pages and endpoints for your OpenAPI spec. Fully customizable and equipped with testing capabilities, your documentation has never been more powerful.
+Documentation de référence des APIs backend CYNA.
 
-The API reference below is automatically generated from a demo OpenAPI spec in this space.
+## Services disponibles
 
-<a href="https://gitbookio.github.io/onboarding-template-images/gitbook-petstore.yaml" class="button primary" data-icon="arrow-up-right-from-square">View OpenAPI spec</a>
+| Service | Port | Description |
+|---------|------|-------------|
+| Gateway API | 3000 | Point d'entrée, agrégation des health checks |
+| Back-Office API | 3001 | API pour le back-office |
+| WebApp API | 3002 | API pour l'application web |
+| Service API | 3003 | API de services |
+
+## Swagger UI
+
+La documentation interactive Swagger est disponible sur le Gateway :
+
+```
+http://localhost:3000/api
+```
+
+## Base URL
+
+En développement local :
+
+```
+http://localhost:{port}
+```
