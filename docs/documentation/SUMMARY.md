@@ -2,5 +2,5 @@
 
 ## Prérequis et démarrage
 
-* [Démarrage](prerequis-et-demarrage/demarrage.md)
+* [Démarrage](README.md)
 * [Prérequis](prerequis-et-demarrage/prérequis.md)
