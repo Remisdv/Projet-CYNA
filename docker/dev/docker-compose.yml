@@ -169,6 +169,29 @@ services:
     networks:
       - cyna-network
 
+  # ============================================
+  # FRONTEND - Back Office
+  # ============================================
+  cyna-bo-front:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.react
+      args:
+        APP_PATH: service/front/back-office
+    container_name: cyna-bo-front
+    ports:
+      - "${BO_FRONT_PORT}:5173"
+    volumes:
+      - ../../service/front/back-office:/app
+      - /app/node_modules
+    environment:
+      # Vite expose les variables commençant par VITE_
+      # L'URL doit pointer vers le port mappé de la machine hôte (pas l'interne docker)
+      # car le code s'exécute dans le navigateur
+      - VITE_API_URL=http://localhost:${GATEWAY_API_PORT}
+    networks:
+      - cyna-network
+
 networks:
   cyna-network:
     driver: bridge
