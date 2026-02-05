@@ -1,0 +1,170 @@
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  FileText,
+  Users,
+  LogOut,
+  ChevronDown,
+  Package,
+  FolderOpen,
+  HelpCircle,
+  Megaphone,
+  ShoppingCart,
+  TrendingUp,
+} from 'lucide-react';
+import clsx from 'clsx';
+import { useState } from 'react';
+
+const navigation = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard Commercial', href: '/commercial', icon: TrendingUp, roles: ['commercial', 'admin'] },
+  { name: 'Commandes', href: '/orders', icon: ShoppingCart },
+  {
+    name: 'Catalogue',
+    icon: ShoppingBag,
+    children: [
+      { name: 'Services', href: '/catalog/services', icon: Package },
+      { name: 'Catégories', href: '/catalog/categories', icon: FolderOpen },
+    ],
+  },
+  {
+    name: 'Contenu',
+    icon: FileText,
+    children: [
+      { name: 'FAQ', href: '/content/faq', icon: HelpCircle },
+      { name: 'Publicités', href: '/content/advertisements', icon: Megaphone },
+    ],
+  },
+  { name: 'Utilisateurs', href: '/users', icon: Users },
+];
+
+export default function MainLayout() {
+  const { logout, user } = useAuth();
+  const location = useLocation();
+  const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({
+    Catalogue: true,
+    Contenu: true,
+  });
+
+  const toggleMenu = (name: string) => {
+    setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <div className="fixed inset-y-0 left-0 w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white shadow-xl">
+        <div className="flex items-center justify-center h-16 bg-gradient-to-r from-blue-600 to-blue-700">
+          <span className="text-2xl font-bold tracking-wide">CYNA</span>
+        </div>
+        <nav className="mt-8 px-3 space-y-2 overflow-y-auto h-[calc(100vh-160px)]">
+          {navigation.map((item) => {
+            // Check role-based access
+            if ('roles' in item && item.roles && user?.role) {
+              if (!item.roles.includes(user.role)) {
+                return null; // Hide menu item if user doesn't have required role
+              }
+            }
+
+            if ('children' in item && item.children) {
+              const isOpen = openMenus[item.name];
+              const hasActiveChild = item.children.some((child) =>
+                location.pathname.startsWith(child.href)
+              );
+
+              return (
+                <div key={item.name}>
+                  <button
+                    onClick={() => toggleMenu(item.name)}
+                    className={clsx(
+                      'w-full group flex items-center justify-between px-3 py-2.5 text-sm font-medium rounded-lg transition-all',
+                      hasActiveChild
+                        ? 'bg-blue-600 text-white shadow-lg'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    )}
+                  >
+                    <div className="flex items-center">
+                      <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                      {item.name}
+                    </div>
+                    <ChevronDown
+                      className={clsx(
+                        'h-4 w-4 transition-transform',
+                        isOpen && 'rotate-180'
+                      )}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="mt-1 ml-6 space-y-1">
+                      {item.children.map((child) => {
+                        const isActive = location.pathname === child.href;
+                        return (
+                          <Link
+                            key={child.name}
+                            to={child.href}
+                            className={clsx(
+                              'group flex items-center px-3 py-2 text-sm rounded-lg transition-all',
+                              isActive
+                                ? 'bg-blue-500 text-white font-medium shadow-md'
+                                : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            )}
+                          >
+                            <child.icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                            {child.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={clsx(
+                  'group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all',
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                )}
+              >
+                <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                {item.name}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="absolute bottom-0 w-full p-4 bg-gray-900 border-t border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-white">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-gray-400">{user?.email}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
+              title="Déconnexion"
+            >
+              <LogOut className="h-5 w-5 text-gray-400 hover:text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="pl-64 flex flex-col min-h-screen">
+        <main className="flex-1 p-8 bg-gray-50">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

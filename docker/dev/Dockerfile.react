@@ -1,0 +1,27 @@
+# Dockerfile React/Vite avec Hot Reload pour le developpement
+FROM node:20-alpine
+
+# Argument pour le chemin de l'application (ex: service/front/back-office)
+ARG APP_PATH
+ENV APP_PATH=${APP_PATH}
+
+# Creation du repertoire de travail
+WORKDIR /app
+
+# Copie du package.json de l'application
+COPY ${APP_PATH}/package.json ./
+
+# Installation des dependances
+# Note: On utilise npm ici pour simplifier comme dans le Dockerfile.nestjs, 
+# mais dans un vrai monorepo yarn, on copierait le root package.json et yarn.lock
+RUN npm install --legacy-peer-deps
+
+# Copie du reste du code source
+COPY ${APP_PATH}/ ./
+
+# Exposition du port Vite par defaut
+EXPOSE 5173
+
+# Commande de demarrage
+# --host est necessaire pour exposer le serveur hors du conteneur
+CMD ["npm", "run", "dev", "--", "--host"]
