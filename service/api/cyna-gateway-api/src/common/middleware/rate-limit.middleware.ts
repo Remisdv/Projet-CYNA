@@ -3,6 +3,7 @@ import {
   NestMiddleware,
   HttpException,
   HttpStatus,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
@@ -11,17 +12,30 @@ interface RateLimitRecord {
   resetTime: number;
 }
 
+/**
+ * Rate Limiting Middleware
+ * 
+ * WARNING: This implementation uses in-memory storage (Map). 
+ * In a multi-instance production environment, this will not work correctly 
+ * as the rate limit state will be isolated to each instance.
+ * For production with multiple instances, use a shared storage solution like Redis.
+ */
 @Injectable()
-export class RateLimitMiddleware implements NestMiddleware {
+export class RateLimitMiddleware implements NestMiddleware, OnModuleDestroy {
   private readonly windowMs: number;
   private readonly maxRequests: number;
   private readonly requests: Map<string, RateLimitRecord> = new Map();
+  private interval: NodeJS.Timeout;
 
   constructor() {
     this.windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10);
     this.maxRequests = parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10);
 
-    setInterval(() => this.cleanupExpiredRecords(), this.windowMs);
+    this.interval = setInterval(() => this.cleanupExpiredRecords(), this.windowMs);
+  }
+
+  onModuleDestroy() {
+    clearInterval(this.interval);
   }
 
   use(req: Request, res: Response, next: NextFunction) {

@@ -1,9 +1,10 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import * as zlib from 'zlib';
 
 @Injectable()
 export class CompressionMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(CompressionMiddleware.name);
   private readonly threshold: number;
   private readonly enabled: boolean;
 
@@ -68,6 +69,7 @@ export class CompressionMiddleware implements NestMiddleware {
 
       zlib.gzip(body, (err, compressed) => {
         if (err) {
+          this.logger.error(`Compression failed: ${err.message}`, err.stack);
           res.write = originalWrite;
           res.end = originalEnd;
           return originalEnd(body);
@@ -75,7 +77,6 @@ export class CompressionMiddleware implements NestMiddleware {
 
         res.setHeader('Content-Encoding', 'gzip');
         res.setHeader('Content-Length', compressed.length);
-        res.removeHeader('Content-Length');
 
         res.write = originalWrite;
         res.end = originalEnd;

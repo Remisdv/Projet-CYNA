@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import * as crypto from 'crypto';
-import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
+import { AUTH_KEY } from '../decorator/auth.decorator';
+import { ROLES_KEY } from '../decorator/roles.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -17,33 +18,39 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+    // 1. Check if route is protected by @Auth()
+    const isProtected = this.reflector.getAllAndOverride<boolean>(AUTH_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    if (isPublic) {
+    // 2. Check if route requires roles @Roles(...)
+    const requiredRoles = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    // If neither @Auth nor @Roles is present, the route is public
+    if (!isProtected && !requiredRoles) {
       return true;
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    
+    // Extract token from HTTP-only cookie
+    // Ensure "cookie-parser" is installed and app.use(cookieParser()) is set in main.ts
+    // The cookie name should match what is set by the authentication service
+    const token = request.cookies?.['Authentication'];
 
-    if (!authHeader) {
-      throw new UnauthorizedException('Authorization header missing');
-    }
-
-    const [type, token] = authHeader.split(' ');
-
-    if (type !== 'Bearer' || !token) {
-      throw new UnauthorizedException('Invalid authorization format');
+    if (!token) {
+      throw new UnauthorizedException('Authentication cookie missing');
     }
 
     try {
       const payload = this.verifyToken(token);
       request.user = payload;
       return true;
-    } catch {
+    } catch (err) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

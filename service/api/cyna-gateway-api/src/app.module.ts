@@ -18,6 +18,8 @@ import {
   controllers: [AppController],
   providers: [
     AppService,
+    // Order matters: JwtAuthGuard must run before RolesGuard
+    // because RolesGuard relies on the user object attached by JwtAuthGuard
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -32,6 +34,12 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(
+        // Order matters for middleware:
+        // 1. RequestId: Generates ID for tracking (needed by Logger)
+        // 2. Helmet: Security headers
+        // 3. Logger: Logs request (uses ID from RequestId)
+        // 4. RateLimit: Limits requests
+        // 5. Compression: Compresses response
         RequestIdMiddleware,
         HelmetMiddleware,
         LoggerMiddleware,

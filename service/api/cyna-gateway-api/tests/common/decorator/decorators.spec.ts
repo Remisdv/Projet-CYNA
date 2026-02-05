@@ -1,7 +1,37 @@
 import { IS_PUBLIC_KEY, Public } from '../../../src/common/decorator/public.decorator';
 import { ROLES_KEY, Roles } from '../../../src/common/decorator/roles.decorator';
+import { AUTH_KEY, Auth } from '../../../src/common/decorator/auth.decorator';
 
 describe('Decorators', () => {
+  describe('Auth decorator', () => {
+    it('should set AUTH_KEY metadata to true', () => {
+      const decorator = Auth();
+
+      @decorator
+      class TestClass {}
+
+      const metadata = Reflect.getMetadata(AUTH_KEY, TestClass);
+      expect(metadata).toBe(true);
+    });
+
+    it('should work on methods', () => {
+      class TestClass {
+        @Auth()
+        testMethod() {}
+      }
+
+      const metadata = Reflect.getMetadata(
+        AUTH_KEY,
+        TestClass.prototype.testMethod,
+      );
+      expect(metadata).toBe(true);
+    });
+
+    it('should export AUTH_KEY constant', () => {
+      expect(AUTH_KEY).toBe('auth');
+    });
+  });
+
   describe('Public decorator', () => {
     it('should set IS_PUBLIC_KEY metadata to true', () => {
       const decorator = Public();

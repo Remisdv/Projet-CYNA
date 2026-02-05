@@ -18,6 +18,12 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
 
+    // Explicitly configured with an empty roles array: require authentication
+    // but do not enforce any specific role.
+    if (Array.isArray(requiredRoles) && requiredRoles.length === 0) {
+      return !!user;
+    }
+
     if (!user || !user.role) {
       return false;
     }

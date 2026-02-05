@@ -14,6 +14,7 @@ export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const startTime = Date.now();
     const { method, originalUrl, ip } = req;
+    const requestId = (req as any).requestId;
 
     res.on('finish', () => {
       const duration = Date.now() - startTime;
@@ -21,6 +22,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
       const logMessage = this.formatLog({
         timestamp: new Date().toISOString(),
+        requestId,
         method,
         url: originalUrl,
         statusCode,
@@ -39,6 +41,7 @@ export class LoggerMiddleware implements NestMiddleware {
 
   private formatLog(data: {
     timestamp: string;
+    requestId?: string;
     method: string;
     url: string;
     statusCode: number;
@@ -52,8 +55,10 @@ export class LoggerMiddleware implements NestMiddleware {
     const status = this.enableColors
       ? `${statusColor}${data.statusCode}${resetColor}`
       : `${data.statusCode}`;
+    
+    const reqIdInfo = data.requestId ? `[${data.requestId}] ` : '';
 
-    return `[${data.timestamp}] ${data.method} ${data.url} ${status} ${data.duration}ms - ${data.ip}`;
+    return `[${data.timestamp}] ${reqIdInfo}${data.method} ${data.url} ${status} ${data.duration}ms - ${data.ip}`;
   }
 
   private getStatusColor(statusCode: number): string {

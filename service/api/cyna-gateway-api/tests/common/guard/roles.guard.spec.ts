@@ -70,7 +70,7 @@ describe('RolesGuard', () => {
       jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([]);
       const context = createMockExecutionContext({ role: 'any' });
 
-      expect(guard.canActivate(context)).toBe(false);
+      expect(guard.canActivate(context)).toBe(true);
     });
   });
 });
