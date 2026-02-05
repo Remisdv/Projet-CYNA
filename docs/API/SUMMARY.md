@@ -5,3 +5,8 @@
 ## Endpoints
 
 * [Health Check](health.md)
+
+## Security
+
+* [Guards](guards.md)
+* [Middlewares](middlewares.md)
