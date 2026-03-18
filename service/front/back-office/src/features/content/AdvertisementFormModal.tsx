@@ -6,7 +6,7 @@ import {
   useCreateAdvertisement,
   useUpdateAdvertisement,
   Advertisement,
-} from '../../services/queries';
+} from './hooks/useAdvertisements';
 import { Modal } from '../../components/ui/Modal';
 import { Textarea } from '../../components/ui/Textarea';
 import { Button } from '../../components/ui/Button';

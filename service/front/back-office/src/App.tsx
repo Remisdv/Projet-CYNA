@@ -1,17 +1,17 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import LoginPage from './pages/auth/LoginPage';
-import TwoFactorPage from './pages/auth/TwoFactorPage';
-import DashboardPage from './pages/dashboard/DashboardPage';
-import ServicesPage from './pages/catalog/ServicesPage';
-import CategoriesPage from './pages/catalog/CategoriesPage';
-import FaqsPage from './pages/content/FaqsPage';
-import AdvertisementsPage from './pages/content/AdvertisementsPage';
-import UsersPage from './pages/users/UsersPage';
-import OrdersPage from './pages/orders/OrdersPage';
-import OrderDetailPage from './pages/orders/OrderDetailPage';
-import CommercialDashboardPage from './pages/commercial/CommercialDashboardPage';
+import LoginPage from './features/auth/LoginPage';
+import TwoFactorPage from './features/auth/TwoFactorPage';
+import DashboardPage from './features/dashboard/DashboardPage';
+import ServicesPage from './features/catalog/ServicesPage';
+import CategoriesPage from './features/catalog/CategoriesPage';
+import FaqsPage from './features/content/FaqsPage';
+import AdvertisementsPage from './features/content/AdvertisementsPage';
+import UsersPage from './features/users/UsersPage';
+import OrdersPage from './features/orders/OrdersPage';
+import OrderDetailPage from './features/orders/OrderDetailPage';
+import CommercialDashboardPage from './features/commercial/CommercialDashboardPage';
 import MainLayout from './layouts/MainLayout';
 
 const queryClient = new QueryClient({
@@ -60,7 +60,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/2fa" element={<TwoFactorPage />} />
-      
+
       <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />

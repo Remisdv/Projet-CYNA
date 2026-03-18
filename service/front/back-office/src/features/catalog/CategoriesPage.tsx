@@ -3,7 +3,7 @@ import {
   useCategories,
   useDeleteCategory,
   Category,
-} from '../../services/queries';
+} from './hooks/useCategories';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';

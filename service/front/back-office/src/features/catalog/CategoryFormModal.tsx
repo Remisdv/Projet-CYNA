@@ -6,7 +6,7 @@ import {
   useCreateCategory,
   useUpdateCategory,
   Category,
-} from '../../services/queries';
+} from './hooks/useCategories';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';

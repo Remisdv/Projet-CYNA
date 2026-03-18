@@ -23,133 +23,36 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-
-// ========== MOCK DATA ==========
-
-interface ProductSales {
-  productId: string;
-  productName: string;
-  salesThisMonth: number;
-  revenueThisMonth: number;
-  salesLastMonth: number;
-  revenueLastMonth: number;
-  growthPercent: number;
-}
-
-interface DailySales {
-  date: string;
-  sales: number;
-  revenue: number;
-}
-
-const generateMockProductSales = (): ProductSales[] => {
-  const products = [
-    'SOC Monitoring Pro',
-    'EDR Protection Advanced',
-    'XDR Platform Enterprise',
-    'Penetration Test',
-    'Security Audit',
-    'Firewall NextGen',
-    'IDS/IPS Pro',
-    'SIEM Solution',
-    'Vulnerability Scanner',
-    'Email Security Gateway',
-    'Web Application Firewall',
-    'Endpoint Detection',
-    'Threat Intelligence Feed',
-    'Security Training',
-    'Incident Response Service',
-  ];
-
-  return products.map((name, index) => {
-    const salesThisMonth = Math.floor(Math.random() * 80) + 10;
-    const salesLastMonth = Math.floor(Math.random() * 70) + 10;
-    const avgPrice = 500 + Math.random() * 2000;
-    const revenueThisMonth = Math.round(salesThisMonth * avgPrice);
-    const revenueLastMonth = Math.round(salesLastMonth * avgPrice);
-    const growthPercent = ((salesThisMonth - salesLastMonth) / salesLastMonth) * 100;
-
-    return {
-      productId: `prod-${(index + 1).toString().padStart(3, '0')}`,
-      productName: name,
-      salesThisMonth,
-      revenueThisMonth,
-      salesLastMonth,
-      revenueLastMonth,
-      growthPercent: Math.round(growthPercent * 10) / 10,
-    };
-  });
-};
-
-const generateDailySalesData = (): DailySales[] => {
-  const data: DailySales[] = [];
-  const today = new Date();
-
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split('T')[0];
-
-    const baseSales = 15 + Math.random() * 25;
-    const weekendMultiplier = date.getDay() === 0 || date.getDay() === 6 ? 0.6 : 1;
-    const sales = Math.round(baseSales * weekendMultiplier);
-    const avgPrice = 800 + Math.random() * 1200;
-    const revenue = Math.round(sales * avgPrice);
-
-    data.push({
-      date: dateStr,
-      sales,
-      revenue,
-    });
-  }
-
-  return data;
-};
-
-const mockProductSales = generateMockProductSales();
-const mockDailySales = generateDailySalesData();
+import { useCommercial } from './hooks/useCommercial';
 
 type SortField = 'sales' | 'revenue';
 type SortDirection = 'asc' | 'desc';
 
 export default function CommercialDashboardPage() {
+  const { productSales, dailySales } = useCommercial();
+
   // Sorting
   const [sortField, setSortField] = useState<SortField>('revenue');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Calculate summary metrics
   const summaryMetrics = useMemo(() => {
-    const totalSales = mockProductSales.reduce((sum, p) => sum + p.salesThisMonth, 0);
-    const totalRevenue = mockProductSales.reduce((sum, p) => sum + p.revenueThisMonth, 0);
+    const totalSales = productSales.reduce((sum, p) => sum + p.salesThisMonth, 0);
+    const totalRevenue = productSales.reduce((sum, p) => sum + p.revenueThisMonth, 0);
     const avgTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
-
-    return {
-      totalSales,
-      totalRevenue,
-      avgTicket,
-    };
-  }, []);
+    return { totalSales, totalRevenue, avgTicket };
+  }, [productSales]);
 
   // Sort products
   const sortedProducts = useMemo(() => {
-    const sorted = [...mockProductSales];
-
+    const sorted = [...productSales];
     sorted.sort((a, b) => {
-      let aValue: number, bValue: number;
-
-      if (sortField === 'sales') {
-        aValue = a.salesThisMonth;
-        bValue = b.salesThisMonth;
-      } else {
-        aValue = a.revenueThisMonth;
-        bValue = b.revenueThisMonth;
-      }
-
+      const aValue = sortField === 'sales' ? a.salesThisMonth : a.revenueThisMonth;
+      const bValue = sortField === 'sales' ? b.salesThisMonth : b.revenueThisMonth;
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     });
-
     return sorted;
-  }, [sortField, sortDirection]);
+  }, [productSales, sortField, sortDirection]);
 
   // Top 5 products for chart
   const top5Products = useMemo(() => {
@@ -160,7 +63,6 @@ export default function CommercialDashboardPage() {
     }));
   }, [sortedProducts]);
 
-  // Format currency
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-FR', {
       style: 'currency',
@@ -170,20 +72,17 @@ export default function CommercialDashboardPage() {
     }).format(value);
   };
 
-  // Format date for display
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
   };
 
-  // Handle sort change
   const handleSortChange = (value: string) => {
     const [field, direction] = value.split('-') as [SortField, SortDirection];
     setSortField(field);
     setSortDirection(direction);
   };
 
-  // Handle CSV export
   const handleExportCSV = () => {
     const headers = ['Produit', 'Ventes ce mois', 'Revenue ce mois', 'Croissance %'];
     const rows = sortedProducts.map((p) => [
@@ -275,7 +174,7 @@ export default function CommercialDashboardPage() {
             Ventes / Jour (30 derniers jours)
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={mockDailySales}>
+            <BarChart data={dailySales}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
@@ -298,7 +197,7 @@ export default function CommercialDashboardPage() {
             Revenue / Jour (30 derniers jours)
           </h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={mockDailySales}>
+            <LineChart data={dailySales}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"

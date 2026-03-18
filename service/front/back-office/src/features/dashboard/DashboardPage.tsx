@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -34,73 +34,7 @@ import {
   ArrowDownRight,
   Target,
 } from 'lucide-react';
-
-// ========== MOCK DATA ==========
-
-const generateMockRevenueData = (days: number) => {
-  const data = [];
-  const baseRevenue = 2500;
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      revenue: Math.round(baseRevenue + Math.random() * 1500 - 500),
-    });
-  }
-  return data;
-};
-
-const generateMockOrdersData = (days: number) => {
-  const data = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toISOString().split('T')[0],
-      orders: Math.round(15 + Math.random() * 25),
-    });
-  }
-  return data;
-};
-
-const mockTopProducts = [
-  { name: 'Premium Subscription', sales: 145 },
-  { name: 'Basic Plan', sales: 98 },
-  { name: 'Enterprise License', sales: 76 },
-  { name: 'Starter Pack', sales: 54 },
-  { name: 'Add-on Module', sales: 32 },
-];
-
-const mockTopServices = [
-  { name: 'Consulting', revenue: 12500 },
-  { name: 'Support Premium', revenue: 8900 },
-  { name: 'Formation', revenue: 6700 },
-  { name: 'Audit', revenue: 4500 },
-  { name: 'Maintenance', revenue: 3200 },
-];
-
-const mockRecentOrders = [
-  { id: 'ORD-001', client: 'Jean Dupont', amount: 299.99, status: 'completed', date: '2025-01-17' },
-  { id: 'ORD-002', client: 'Marie Martin', amount: 149.50, status: 'pending', date: '2025-01-17' },
-  { id: 'ORD-003', client: 'Pierre Bernard', amount: 599.00, status: 'processing', date: '2025-01-16' },
-  { id: 'ORD-004', client: 'Sophie Petit', amount: 89.99, status: 'completed', date: '2025-01-16' },
-  { id: 'ORD-005', client: 'Lucas Moreau', amount: 449.00, status: 'cancelled', date: '2025-01-15' },
-];
-
-const mockRecentUsers = [
-  { id: 1, email: 'jean.dupont@email.com', name: 'Jean Dupont', registeredAt: '2025-01-17', status: 'active' },
-  { id: 2, email: 'marie.martin@email.com', name: 'Marie Martin', registeredAt: '2025-01-16', status: 'active' },
-  { id: 3, email: 'pierre.b@email.com', name: 'Pierre Bernard', registeredAt: '2025-01-15', status: 'pending' },
-  { id: 4, email: 'sophie.petit@email.com', name: 'Sophie Petit', registeredAt: '2025-01-14', status: 'active' },
-  { id: 5, email: 'lucas.m@email.com', name: 'Lucas Moreau', registeredAt: '2025-01-13', status: 'inactive' },
-];
-
-const mockOutOfStockProducts = [
-  { id: 1, name: 'Module Analytics Pro', stock: 0 },
-  { id: 2, name: 'License Enterprise XL', stock: 2 },
-  { id: 3, name: 'Pack Sécurité Avancé', stock: 1 },
-];
+import { useDashboard } from './hooks/useDashboard';
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -120,20 +54,13 @@ const getStatusBadgeVariant = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   switch (status) {
-    case 'completed':
-      return 'Complété';
-    case 'pending':
-      return 'En attente';
-    case 'processing':
-      return 'En cours';
-    case 'cancelled':
-      return 'Annulé';
-    case 'active':
-      return 'Actif';
-    case 'inactive':
-      return 'Inactif';
-    default:
-      return status;
+    case 'completed': return 'Complété';
+    case 'pending': return 'En attente';
+    case 'processing': return 'En cours';
+    case 'cancelled': return 'Annulé';
+    case 'active': return 'Actif';
+    case 'inactive': return 'Inactif';
+    default: return status;
   }
 };
 
@@ -189,25 +116,16 @@ export default function DashboardPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Mock KPI data based on date range
-  const getKPIData = useCallback(() => {
-    const multiplier = dateRange === '7d' ? 0.25 : dateRange === '90d' ? 3 : 1;
-    return {
-      revenue: Math.round(45678 * multiplier),
-      revenueTrend: 12.5,
-      orders: Math.round(234 * multiplier),
-      ordersTrend: 8.3,
-      activeCustomers: Math.round(1847 * (multiplier * 0.5 + 0.5)),
-      customersTrend: 15.2,
-      conversionRate: 23.5,
-      conversionTrend: 2.1,
-    };
-  }, [dateRange]);
-
-  const kpiData = getKPIData();
-  const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
-  const revenueData = generateMockRevenueData(days);
-  const ordersData = generateMockOrdersData(days);
+  const {
+    kpiData,
+    revenueData,
+    ordersData,
+    topProducts,
+    topServices,
+    recentOrders,
+    recentUsers,
+    outOfStockProducts,
+  } = useDashboard(dateRange);
 
   // Auto-refresh every 5 minutes
   useEffect(() => {
@@ -219,7 +137,6 @@ export default function DashboardPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setLastRefresh(new Date());
     setIsRefreshing(false);
@@ -419,7 +336,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={mockTopProducts} layout="vertical">
+              <BarChart data={topProducts} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis type="number" stroke="#6b7280" fontSize={12} />
                 <YAxis
@@ -451,7 +368,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={mockTopServices} layout="vertical">
+              <BarChart data={topServices} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis
                   type="number"
@@ -504,7 +421,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRecentOrders.map((order) => (
+                {recentOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.client}</TableCell>
                     <TableCell>${order.amount.toFixed(2)}</TableCell>
@@ -548,7 +465,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockRecentUsers.map((user) => (
+                {recentUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.email}</TableCell>
                     <TableCell>{user.name}</TableCell>
@@ -591,7 +508,7 @@ export default function DashboardPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockOutOfStockProducts.map((product) => (
+              {outOfStockProducts.map((product) => (
                 <TableRow key={product.id} className="bg-white">
                   <TableCell className="font-medium">{product.name}</TableCell>
                   <TableCell>

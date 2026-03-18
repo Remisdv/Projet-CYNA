@@ -3,12 +3,12 @@ import {
   useFaqTree,
   useDeleteFaq,
   Faq,
-} from '../../services/queries';
+} from './hooks/useFaqs';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Plus, Edit, Trash2, ChevronRight, ChevronDown, FileQuestion } from 'lucide-react';
-import FaqFormModal from './FaqFormModal';
+import FaqFormModal from './FAQFormModal';
 
 interface FaqTreeItemProps {
   faq: Faq;

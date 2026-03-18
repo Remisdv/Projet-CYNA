@@ -27,66 +27,13 @@ import {
   KeyRound,
 } from 'lucide-react';
 import UserFormModal from './UserFormModal';
-
-// ========== MOCK DATA ==========
-
-interface MockUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'client' | 'admin' | 'commercial';
-  status: 'active' | 'inactive';
-  registeredAt: string;
-  lastLogin?: string;
-  ordersCount: number;
-}
-
-const generateMockUsers = (): MockUser[] => {
-  const roles: Array<'client' | 'admin' | 'commercial'> = ['admin', 'commercial'];
-  const statuses: Array<'active' | 'inactive'> = ['active', 'inactive'];
-
-  const firstNames = [
-    'Jean', 'Marie', 'Pierre', 'Sophie', 'Luc', 'Anne', 'Paul', 'Claire',
-    'Marc', 'Julie', 'Thomas', 'Emma', 'Nicolas', 'Laura', 'David', 'Sarah',
-    'François', 'Céline', 'Michel', 'Isabelle', 'Jacques', 'Nathalie', 'Philippe', 'Valérie',
-  ];
-
-  const lastNames = [
-    'Dupont', 'Martin', 'Bernard', 'Petit', 'Robert', 'Richard', 'Durand', 'Dubois',
-    'Moreau', 'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia', 'David', 'Bertrand',
-    'Roux', 'Vincent', 'Fournier', 'Morel', 'Girard', 'André', 'Lefevre', 'Mercier',
-  ];
-
-  // Only Admin and Commercial users (internal users with BO access)
-  return Array.from({ length: 35 }, (_, index) => {
-    const firstName = firstNames[index % firstNames.length];
-    const lastName = lastNames[Math.floor(index / 2) % lastNames.length];
-    const role = index < 10 ? 'admin' : 'commercial'; // 10 admins, rest are commercial
-    const status = Math.random() > 0.15 ? 'active' : 'inactive';
-    const daysAgo = Math.floor(Math.random() * 730); // Up to 2 years ago
-    const registeredAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
-
-    return {
-      id: `user-${(index + 1).toString().padStart(3, '0')}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index > 20 ? index : ''}@cyna-security.com`,
-      firstName,
-      lastName,
-      role,
-      status,
-      registeredAt,
-      lastLogin: status === 'active' ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString() : undefined,
-      ordersCount: 0, // Internal users don't have orders
-    };
-  });
-};
-
-const mockUsers = generateMockUsers();
+import { useUsers, MockUser } from './hooks/useUsers';
 
 type SortField = 'email' | 'name' | 'role' | 'registeredAt' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 export default function UsersPage() {
+  const { data: users } = useUsers();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
 
@@ -107,7 +54,7 @@ export default function UsersPage() {
 
   // Filter and sort users
   const filteredAndSortedUsers = useMemo(() => {
-    let result = [...mockUsers];
+    let result = [...users];
 
     // Apply filters
     if (roleFilter !== 'all') {
@@ -150,7 +97,7 @@ export default function UsersPage() {
     });
 
     return result;
-  }, [roleFilter, statusFilter, dateFrom, dateTo, sortField, sortDirection]);
+  }, [users, roleFilter, statusFilter, dateFrom, dateTo, sortField, sortDirection]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);

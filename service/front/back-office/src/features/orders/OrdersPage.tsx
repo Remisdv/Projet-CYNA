@@ -26,61 +26,14 @@ import {
   Filter,
   X,
 } from 'lucide-react';
-
-// ========== MOCK DATA ==========
-
-interface MockOrder {
-  id: string;
-  ref: string;
-  clientEmail: string;
-  clientName: string;
-  amount: number;
-  itemsCount: number;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
-  date: string;
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-}
-
-const generateMockOrders = (): MockOrder[] => {
-  const statuses: Array<'pending' | 'confirmed' | 'delivered' | 'cancelled'> = [
-    'pending',
-    'confirmed',
-    'delivered',
-    'cancelled',
-  ];
-  const paymentStatuses: Array<'pending' | 'paid' | 'refunded'> = ['pending', 'paid', 'refunded'];
-
-  const firstNames = ['Jean', 'Marie', 'Pierre', 'Sophie', 'Luc', 'Anne', 'Paul', 'Claire'];
-  const lastNames = ['Dupont', 'Martin', 'Bernard', 'Petit', 'Robert', 'Richard', 'Durand', 'Dubois'];
-
-  return Array.from({ length: 87 }, (_, index) => {
-    const firstName = firstNames[index % firstNames.length];
-    const lastName = lastNames[Math.floor(index / 2) % lastNames.length];
-    const daysAgo = Math.floor(Math.random() * 90); // Up to 3 months
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const paymentStatus = status === 'cancelled' ? 'refunded' : status === 'pending' ? 'pending' : 'paid';
-
-    return {
-      id: `order-${(index + 1).toString().padStart(3, '0')}`,
-      ref: `ORD-${Date.now() - index * 100000}-${(index + 1).toString().padStart(3, '0')}`,
-      clientEmail: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index > 40 ? index : ''}@email.com`,
-      clientName: `${firstName} ${lastName}`,
-      amount: Math.round((50 + Math.random() * 950) * 100) / 100,
-      itemsCount: Math.floor(1 + Math.random() * 5),
-      status,
-      date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
-      paymentStatus,
-    };
-  });
-};
-
-const mockOrders = generateMockOrders();
+import { useOrders, MockOrder } from './hooks/useOrders';
 
 type SortField = 'date' | 'amount' | 'ref';
 type SortDirection = 'asc' | 'desc';
 
 export default function OrdersPage() {
   const navigate = useNavigate();
+  const { data: orders } = useOrders();
 
   // Filters
   const [statusFilters, setStatusFilters] = useState<{
@@ -110,7 +63,7 @@ export default function OrdersPage() {
 
   // Filter and sort orders
   const filteredAndSortedOrders = useMemo(() => {
-    let result = [...mockOrders];
+    let result = [...orders];
 
     // Apply status filters
     result = result.filter((order) => statusFilters[order.status]);
@@ -152,7 +105,7 @@ export default function OrdersPage() {
     });
 
     return result;
-  }, [statusFilters, dateFrom, dateTo, amountMin, amountMax, sortField, sortDirection]);
+  }, [orders, statusFilters, dateFrom, dateTo, amountMin, amountMax, sortField, sortDirection]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedOrders.length / itemsPerPage);
@@ -235,31 +188,21 @@ export default function OrdersPage() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'En attente';
-      case 'confirmed':
-        return 'Confirmée';
-      case 'delivered':
-        return 'Livrée';
-      case 'cancelled':
-        return 'Annulée';
-      default:
-        return status;
+      case 'pending': return 'En attente';
+      case 'confirmed': return 'Confirmée';
+      case 'delivered': return 'Livrée';
+      case 'cancelled': return 'Annulée';
+      default: return status;
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'warning';
-      case 'confirmed':
-        return 'default';
-      case 'delivered':
-        return 'success';
-      case 'cancelled':
-        return 'destructive';
-      default:
-        return 'secondary';
+      case 'pending': return 'warning';
+      case 'confirmed': return 'default';
+      case 'delivered': return 'success';
+      case 'cancelled': return 'destructive';
+      default: return 'secondary';
     }
   };
 

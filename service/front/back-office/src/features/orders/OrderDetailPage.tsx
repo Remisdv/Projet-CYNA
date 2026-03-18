@@ -24,136 +24,8 @@ import {
   MapPin,
   Package,
   Calendar,
-  DollarSign,
 } from 'lucide-react';
-
-// ========== MOCK DATA ==========
-
-interface OrderItem {
-  id: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  subtotal: number;
-}
-
-interface OrderDetail {
-  id: string;
-  ref: string;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
-  date: string;
-
-  // Client info
-  clientEmail: string;
-  clientFirstName: string;
-  clientLastName: string;
-  billingAddress: {
-    street: string;
-    city: string;
-    postalCode: string;
-    country: string;
-  };
-
-  // Items
-  items: OrderItem[];
-
-  // Financial
-  subtotal: number;
-  tax: number;
-  total: number;
-
-  // Payment
-  paymentRef: string;
-  paymentAmount: number;
-  paymentStatus: 'pending' | 'paid' | 'refunded';
-  paymentDate?: string;
-
-  // History
-  history: Array<{
-    id: string;
-    action: string;
-    date: string;
-    by: string;
-  }>;
-
-  // Notes
-  notes: Array<{
-    id: string;
-    text: string;
-    date: string;
-    by: string;
-  }>;
-}
-
-const generateMockOrderDetail = (orderId: string): OrderDetail => {
-  const items: OrderItem[] = [
-    { id: '1', productName: 'SOC Monitoring Pro', quantity: 2, unitPrice: 299.99, subtotal: 599.98 },
-    { id: '2', productName: 'EDR Protection Advanced', quantity: 1, unitPrice: 499.99, subtotal: 499.99 },
-    { id: '3', productName: 'Threat Intelligence Feed', quantity: 1, unitPrice: 149.99, subtotal: 149.99 },
-  ];
-
-  const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
-  const tax = subtotal * 0.2; // 20% TVA
-  const total = subtotal + tax;
-
-  return {
-    id: orderId,
-    ref: `ORD-${Date.now()}-${orderId}`,
-    status: 'confirmed',
-    date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-
-    clientEmail: 'jean.dupont@email.com',
-    clientFirstName: 'Jean',
-    clientLastName: 'Dupont',
-    billingAddress: {
-      street: '123 Rue de la République',
-      city: 'Paris',
-      postalCode: '75001',
-      country: 'France',
-    },
-
-    items,
-
-    subtotal,
-    tax,
-    total,
-
-    paymentRef: `pi_${Math.random().toString(36).substring(7)}`,
-    paymentAmount: total,
-    paymentStatus: 'paid',
-    paymentDate: new Date(Date.now() - Math.random() * 25 * 24 * 60 * 60 * 1000).toISOString(),
-
-    history: [
-      {
-        id: '1',
-        action: 'Commande créée',
-        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-        by: 'Système',
-      },
-      {
-        id: '2',
-        action: 'Paiement confirmé',
-        date: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString(),
-        by: 'Stripe',
-      },
-      {
-        id: '3',
-        action: 'Commande confirmée',
-        date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString(),
-        by: 'Admin',
-      },
-    ],
-
-    notes: [
-      {
-        id: '1',
-        text: 'Client a demandé une livraison urgente',
-        date: new Date(Date.now() - 27 * 24 * 60 * 60 * 1000).toISOString(),
-        by: 'Jean Martin (Commercial)',
-      },
-    ],
-  };
-};
+import { useOrderDetail } from './hooks/useOrders';
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -161,8 +33,7 @@ export default function OrderDetailPage() {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
 
-  // Mock order detail
-  const order = generateMockOrderDetail(orderId || '001');
+  const { data: order } = useOrderDetail(orderId || '001');
 
   const handleConfirmPayment = () => {
     if (confirm('Confirmer le paiement de cette commande ?')) {
@@ -192,7 +63,6 @@ export default function OrderDetailPage() {
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;
-
     console.log('Adding note:', newNote);
     alert('Note ajoutée (mock)');
     setNewNote('');

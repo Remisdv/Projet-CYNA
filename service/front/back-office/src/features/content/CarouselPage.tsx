@@ -3,7 +3,7 @@ import {
   useCarouselItems,
   useDeleteCarouselItem,
   CarouselItem,
-} from '../../services/queries';
+} from './hooks/useCarousel';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import {
