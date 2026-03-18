@@ -13,11 +13,11 @@ docker compose -f dev/docker-compose.yml up -d
 Write-Host "Services demarres !" -ForegroundColor Green
 Write-Host ""
 Write-Host "URLs disponibles :" -ForegroundColor Yellow
-Write-Host "   - Swagger UI : http://localhost:3000/api"
-Write-Host "   - Gateway    : http://localhost:3000"
-Write-Host "   - BO API     : http://localhost:3001"
-Write-Host "   - WebApp API : http://localhost:3002"
-Write-Host "   - Service API: http://localhost:3003"
+Write-Host "   - Swagger UI : http://api.localhost/api"
+Write-Host "   - API Gateway: http://api.localhost"
+Write-Host "   - Back Office: http://bo.localhost"
 Write-Host "   - MailHog    : http://localhost:8025"
+Write-Host ""
+Write-Host "   (Services internes non exposés : bo-api, webapp-api, service-api)" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Pour voir les logs : docker compose -f dev/docker-compose.yml logs -f" -ForegroundColor Yellow
