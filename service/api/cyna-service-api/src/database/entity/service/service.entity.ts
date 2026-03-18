@@ -13,9 +13,9 @@ export enum ServiceStatus {
 }
 
 @Entity('services')
-@Index('IDX_services_slug')
-@Index('IDX_services_status')
-@Index('IDX_services_category')
+@Index('IDX_services_slug', ['slug'])
+@Index('IDX_services_status', ['statut'])
+@Index('IDX_services_category', ['categoryId'])
 export class ServiceEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
