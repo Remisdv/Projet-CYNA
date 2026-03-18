@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
 import { CarrouselImageModule } from './module/CarrouselImage.module';
+import { TextePromotionnelModule } from './module/TextePromotionnel.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { CarrouselImageModule } from './module/CarrouselImage.module';
     }),
     HealthModule,
     CarrouselImageModule,
+    TextePromotionnelModule,
   ],
   controllers: [AppController],
   providers: [AppService],

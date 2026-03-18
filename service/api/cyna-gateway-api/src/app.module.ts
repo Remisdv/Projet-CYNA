@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
+import { ProxyModule } from './module/proxy.module';
 import {
   LoggerMiddleware,
   RateLimitMiddleware,
@@ -14,7 +15,7 @@ import {
 } from './common';
 
 @Module({
-  imports: [HealthModule],
+  imports: [HealthModule, ProxyModule],
   controllers: [AppController],
   providers: [
     AppService,
