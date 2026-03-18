@@ -4,6 +4,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
 import { TextePromotionnelModule } from './module/TextePromotionnel.module';
+import { UserModule } from './module/User.module';
+import { BoAuthModule } from './module/BoAuth.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { TextePromotionnelModule } from './module/TextePromotionnel.module';
     }),
     HealthModule,
     TextePromotionnelModule,
+    UserModule,
+    BoAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

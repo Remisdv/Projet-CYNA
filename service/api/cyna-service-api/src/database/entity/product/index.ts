@@ -1,1 +1,1 @@
-export { ProductEntity, ProductCategory, ProductType, ProductStatus, ServicePeriodicity } from '../product.entity';
+export { ProductEntity, ProductCategory, ProductType, ProductStatus, ServicePeriodicity } from './product.entity';

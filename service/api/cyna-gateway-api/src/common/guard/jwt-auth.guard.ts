@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import * as crypto from 'crypto';
 import { AUTH_KEY } from '../decorator/auth.decorator';
 import { ROLES_KEY } from '../decorator/roles.decorator';
+import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,6 +19,16 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   canActivate(context: ExecutionContext): boolean {
+    // 0. Check if route is public with @Public()
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
     // 1. Check if route is protected by @Auth()
     const isProtected = this.reflector.getAllAndOverride<boolean>(AUTH_KEY, [
       context.getHandler(),
