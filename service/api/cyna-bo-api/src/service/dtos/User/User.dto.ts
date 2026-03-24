@@ -49,7 +49,7 @@ export class UpdateUserDto {
 }
 
 export class UserDto {
-  id: number;
+  id: string;
   email: string;
   firstName: string;
   lastName: string;

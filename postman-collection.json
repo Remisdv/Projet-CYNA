@@ -1,0 +1,373 @@
+{
+  "info": {
+    "name": "CYNA BO API Tests",
+    "description": "Collection de tests pour l'API Back Office CYNA.\n\n**Auth automatique** : le pre-request script se connecte automatiquement si aucun token n'est stocké. Modifiez les variables `email` et `password` si besoin.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "admin@example.com",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "password123",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-login : si pas de token, on se connecte avant chaque requête",
+          "const token = pm.collectionVariables.get('token');",
+          "if (token) return;",
+          "",
+          "const baseUrl  = pm.collectionVariables.get('baseUrl');",
+          "const email    = pm.collectionVariables.get('email');",
+          "const password = pm.collectionVariables.get('password');",
+          "",
+          "pm.sendRequest({",
+          "  url: baseUrl + '/api/bo/auth/login',",
+          "  method: 'POST',",
+          "  header: { 'Content-Type': 'application/json' },",
+          "  body: {",
+          "    mode: 'raw',",
+          "    raw: JSON.stringify({ email, password })",
+          "  }",
+          "}, function (err, res) {",
+          "  if (err) { console.error('[Auto-login] Erreur réseau :', err); return; }",
+          "  if (res.code !== 200 && res.code !== 201) {",
+          "    console.error('[Auto-login] Échec HTTP', res.code, res.text());",
+          "    return;",
+          "  }",
+          "  const body = res.json();",
+          "  if (body.token) {",
+          "    pm.collectionVariables.set('token', body.token);",
+          "    console.log('[Auto-login] Token stocké ✓');",
+          "  } else {",
+          "    console.error('[Auto-login] Pas de token dans la réponse :', JSON.stringify(body));",
+          "  }",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/bo/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "bo", "health"]
+        }
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Stocker le token après un login manuel",
+                  "const body = pm.response.json();",
+                  "if (body.token) {",
+                  "  pm.collectionVariables.set('token', body.token);",
+                  "  console.log('[Login] Token stocké ✓');",
+                  "  pm.test('Login réussi – token reçu', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
+                  "} else {",
+                  "  pm.test('Login réussi – token reçu', () => { throw new Error('Pas de token dans la réponse'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Effacer le token local après logout",
+                  "pm.collectionVariables.set('token', '');",
+                  "console.log('[Logout] Token effacé');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Lister tous les users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users"]
+            }
+          }
+        },
+        {
+          "name": "Lister avec pagination",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Filtrer par rôle et statut",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users?role=ADMIN&status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users"],
+              "query": [
+                { "key": "role", "value": "ADMIN" },
+                { "key": "status", "value": "ACTIVE" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un user par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Créer un user",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users"]
+            }
+          }
+        },
+        {
+          "name": "Modifier un user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.updated@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith-Updated\",\n  \"role\": \"ADMIN\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users", "1"]
+            }
+          }
+        },
+        {
+          "name": "Réinitialiser le mot de passe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users/1/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users", "1", "reset-password"]
+            }
+          }
+        },
+        {
+          "name": "Supprimer un user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "users", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Textes Promotionnels",
+      "item": [
+        {
+          "name": "Lister tous les textes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel"]
+            }
+          }
+        },
+        {
+          "name": "Récupérer le texte actif",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel", "active"]
+            }
+          }
+        },
+        {
+          "name": "Récupérer un texte par ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel", "1"]
+            }
+          }
+        },
+        {
+          "name": "Créer un texte promotionnel",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Promotion Printemps 2024\",\n  \"description\": \"Profitez de nos offres spéciales jusqu'au 31 mars\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel"]
+            }
+          }
+        },
+        {
+          "name": "Modifier un texte",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titre\": \"Promotion Printemps 2024 - UPDATED\",\n  \"description\": \"Offre limitée, saisissez l'opportunité !\",\n  \"isActive\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel", "1"]
+            }
+          }
+        },
+        {
+          "name": "Supprimer un texte",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bo", "promotionnel", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

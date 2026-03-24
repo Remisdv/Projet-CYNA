@@ -12,7 +12,7 @@ export class BoLoginDto {
 export class BoAuthResponseDto {
   token: string;
   user: {
-    id: number;
+    id: string;
     email: string;
     firstName: string;
     lastName: string;

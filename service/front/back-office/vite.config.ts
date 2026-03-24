@@ -13,7 +13,7 @@ export default defineConfig({
     },
     proxy: {
       '/api/bo': {
-        target: 'http://bo-api:3002',
+        target: 'http://cyna-gateway-api:3000',
         changeOrigin: true,
       },
       '/api/file': {
@@ -21,7 +21,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/health': {
-        target: 'http://bo-api:3002',
+        target: 'http://cyna-gateway-api:3000',
         changeOrigin: true,
       }
     }

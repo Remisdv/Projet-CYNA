@@ -1,20 +1,11 @@
-import { IsString, IsBoolean, MaxLength } from 'class-validator';
-
 export class CreateUpdateTextePromotionnelDto {
-  @IsString()
-  @MaxLength(16)
   titre: string;
-
-  @IsString()
-  @MaxLength(128)
   description: string;
-
-  @IsBoolean()
   isActive: boolean;
 }
 
 export class TextePromotionnelDto extends CreateUpdateTextePromotionnelDto {
-  id: string;
+  id: number;
   createdAt: Date;
   updatedAt: Date;
 }

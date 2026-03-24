@@ -92,6 +92,8 @@ services:
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - BO_API_URL=${BO_API_URL}
+      - BO_API_HOST=cyna-bo-api
+      - BO_API_PORT=3000
       - WEBAPP_API_URL=${WEBAPP_API_URL}
       - SERVICE_API_URL=${SERVICE_API_URL}
       # Middlewares & Guards

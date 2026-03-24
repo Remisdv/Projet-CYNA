@@ -4,7 +4,7 @@ import { Public } from '../../common/decorator/public.decorator';
 import { BoAuthService } from '../../service/bo-auth/bo-auth.service';
 import { BoLoginDto, BoAuthResponseDto } from '../../dto/bo-auth/bo-auth.dto';
 
-@Controller('bo/auth')
+@Controller('api/bo/auth')
 export class BoAuthController {
   constructor(private readonly authService: BoAuthService) {}
 

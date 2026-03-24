@@ -7,8 +7,8 @@ import { Entity,
 
 @Entity()
 export class TextePromotionnel {
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn('uuid')
+    id: string;
 
     @Column( { type: 'varchar', length: 16 } )
     titre: string;

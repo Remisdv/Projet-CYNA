@@ -4,19 +4,19 @@ import * as https from 'https';
 import { IProxyService, ProxyRequest } from './proxy.interface';
 
 @Injectable()
-export class ProxyService implements IProxyService {
-  private readonly serviceApiUrl: string;
+export class BoProxyService implements IProxyService {
+  private readonly boApiUrl: string;
 
   constructor() {
-    this.serviceApiUrl = process.env.SERVICE_API_URL || 'http://cyna-service-api:3000';
+    this.boApiUrl = process.env.BO_API_URL || 'http://cyna-bo-api:3000';
   }
 
   /**
-   * Proxy request to service API
+   * Proxy request to Back-Office API
    */
   async proxy(request: ProxyRequest): Promise<any> {
     return new Promise((resolve, reject) => {
-      const url = new URL(request.path, this.serviceApiUrl);
+      const url = new URL(request.path, this.boApiUrl);
       const isHttps = url.protocol === 'https:';
       const client = isHttps ? https : http;
 
@@ -62,7 +62,7 @@ export class ProxyService implements IProxyService {
 
       httpRequest.on('error', reject);
 
-      if (request.body) {
+      if (request.body && request.method !== 'GET' && request.method !== 'HEAD') {
         httpRequest.write(JSON.stringify(request.body));
       }
 

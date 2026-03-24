@@ -47,14 +47,22 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    
-    // Extract token from HTTP-only cookie
-    // Ensure "cookie-parser" is installed and app.use(cookieParser()) is set in main.ts
-    // The cookie name should match what is set by the authentication service
-    const token = request.cookies?.['Authentication'];
+
+    // 1. Bearer token from Authorization header (Postman / API clients)
+    const authHeader = request.headers?.['authorization'] as string;
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+
+    // 2. HTTP-only cookie (browser / front-office)
+    const cookieToken =
+      request.cookies?.['BoAuthentication'] ??
+      request.cookies?.['Authentication'];
+
+    const token = bearerToken ?? cookieToken;
 
     if (!token) {
-      throw new UnauthorizedException('Authentication cookie missing');
+      throw new UnauthorizedException('Authentication required');
     }
 
     try {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
 import { UserService } from '../../service/User/User.service';
 import { CreateUserDto, UpdateUserDto, UserDto, UserListDto } from '../../service/dtos/User/User.dto';
 import { UserStatus } from '../../database/entity/User/User.entity';
@@ -28,7 +28,7 @@ export class UserController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
+  findOne(@Param('id') id: string): Promise<UserDto> {
     return this.service.findOne(id);
   }
 
@@ -38,17 +38,17 @@ export class UserController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() data: UpdateUserDto): Promise<UserDto> {
+  update(@Param('id') id: string, @Body() data: UpdateUserDto): Promise<UserDto> {
     return this.service.update(id, data);
   }
 
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  delete(@Param('id') id: string): Promise<void> {
     return this.service.remove(id);
   }
 
   @Post(':id/reset-password')
-  resetPassword(@Param('id', ParseIntPipe) id: number): Promise<{ tempPassword: string }> {
+  resetPassword(@Param('id') id: string): Promise<{ tempPassword: string }> {
     return this.service.resetPassword(id);
   }
 }

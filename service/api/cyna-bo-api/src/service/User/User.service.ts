@@ -62,7 +62,7 @@ export class UserService {
     };
   }
 
-  async findOne(id: number): Promise<UserDto> {
+  async findOne(id: string): Promise<UserDto> {
     const user = await this.repo.findOneBy({ id });
     if (!user) throw new NotFoundException(`Utilisateur avec l'id ${id} introuvable`);
     return this.mapper.toDto(user);
@@ -87,7 +87,7 @@ export class UserService {
     return this.mapper.toDto(saved);
   }
 
-  async update(id: number, data: UpdateUserDto): Promise<UserDto> {
+  async update(id: string, data: UpdateUserDto): Promise<UserDto> {
     const entity = await this.repo.findOneBy({ id });
     if (!entity) throw new NotFoundException(`Utilisateur avec l'id ${id} introuvable`);
 
@@ -103,12 +103,12 @@ export class UserService {
     return this.mapper.toDto(saved);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const result = await this.repo.delete(id);
     if (result.affected === 0) throw new NotFoundException(`Impossible de supprimer l'id ${id}`);
   }
 
-  async resetPassword(id: number): Promise<{ tempPassword: string }> {
+  async resetPassword(id: string): Promise<{ tempPassword: string }> {
     const entity = await this.repo.findOneBy({ id });
     if (!entity) throw new NotFoundException(`Utilisateur avec l'id ${id} introuvable`);
 
