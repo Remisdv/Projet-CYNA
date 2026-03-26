@@ -10,11 +10,11 @@ export class TextePromotionnel {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column( { type: 'varchar', length: 16 } )
-    titre: string;
+    @Column( { type: 'varchar', length: 500 } )
+    textFr: string;
 
-    @Column( { type: 'varchar', length: 128 } )
-    description: string;
+    @Column( { type: 'varchar', length: 500 } )
+    textEn: string;
 
     @CreateDateColumn()
     createdAt: Date;

@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Delete } from '@nestjs/common';
 import { TextePromotionnelService } from '../../service/TextePromotionnel/TextePromotionnel.service';
 import { CreateUpdateTextePromotionnelDto, TextePromotionnelDto } from '../../service/dtos/TextPromotionnel/TextePromotionnel.dto';
 
-@Controller('promotionnel')
+@Controller('advertisements')
 export class TextePromotionnelController {
   constructor(private readonly service: TextePromotionnelService) {}
 
@@ -26,9 +26,14 @@ export class TextePromotionnelController {
     return this.service.create(data);
   }
 
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
     return this.service.update(id, data);
+  }
+
+  @Patch(':id/activate')
+  activate(@Param('id') id: string): Promise<TextePromotionnelDto> {
+    return this.service.activate(id);
   }
 
   @Delete(':id')

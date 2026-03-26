@@ -7,8 +7,8 @@ export class TextePromotionnelMapper {
   toDto(entity: TextePromotionnel): TextePromotionnelDto {
     const dto = new TextePromotionnelDto();
     dto.id = entity.id;
-    dto.titre = entity.titre;
-    dto.description = entity.description;
+    dto.textFr = entity.textFr;
+    dto.textEn = entity.textEn;
     dto.isActive = entity.isActive;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
@@ -21,9 +21,8 @@ export class TextePromotionnelMapper {
 
   toEntity(dto: CreateUpdateTextePromotionnelDto): Partial<TextePromotionnel> {
     const entity = new TextePromotionnel();
-    entity.titre = dto.titre;
-    entity.description = dto.description;
-    entity.isActive = dto.isActive;
+    entity.textFr = dto.textFr;
+    entity.textEn = dto.textEn;
     return entity;
   }
 }
