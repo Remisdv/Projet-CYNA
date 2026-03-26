@@ -1,6 +1,6 @@
-# 🚀 CYNA API - Testing & Setup Guide
+﻿#  CYNA API - Testing & Setup Guide
 
-## 📋 Table of Contents
+##  Table of Contents
 1. [Prerequisites](#prerequisites)
 2. [Environment Setup](#environment-setup)
 3. [Starting the Services](#starting-the-services)
@@ -139,13 +139,13 @@ yarn seed:users
 
 **Expected output:**
 ```
-🌱 Starting Users seed...
-✅ Created user: admin@cyna.fr
-✅ Created user: user1@cyna.fr
-✅ Created user: user2@cyna.fr
-✅ Created user: user3@cyna.fr
-✅ Created user: user4@cyna.fr
-✨ Users seed completed successfully!
+ Starting Users seed...
+ Created user: admin@cyna.fr
+ Created user: user1@cyna.fr
+ Created user: user2@cyna.fr
+ Created user: user3@cyna.fr
+ Created user: user4@cyna.fr
+ Users seed completed successfully!
 ```
 
 ### Seed Services & Categories (in cyna-service-api)
@@ -157,15 +157,15 @@ yarn seed:services
 
 **Expected output:**
 ```
-🌱 Starting Services and Categories seed...
-✅ Created category: Cybersécurité
-✅ Created category: Audit de sécurité
-✅ Created category: Conformité
-✅ Created category: Formation
-✅ Created service: Threat Intelligence
-✅ Created service: EDR - Endpoint Detection and Response
+ Starting Services and Categories seed...
+ Created category: Cybersécurité
+ Created category: Audit de sécurité
+ Created category: Conformité
+ Created category: Formation
+ Created service: Threat Intelligence
+ Created service: EDR - Endpoint Detection and Response
 ... (more services)
-✨ Services and Categories seed completed successfully!
+ Services and Categories seed completed successfully!
 ```
 
 ---
@@ -177,11 +177,11 @@ yarn seed:services
 1. Open Postman
 2. Click **Import** button
 3. Select file: `CYNA_API_Collection.postman_collection.json`
-4. Collection imported successfully! ✅
+4. Collection imported successfully! 
 
 ### Set Variables
 
-In Postman, go to **Collections** → **CYNA API Collection** → **Variables**:
+In Postman, go to **Collections**  **CYNA API Collection**  **Variables**:
 
 - `auth_token`: Will be set after login (see below)
 - `category_id`: Set to a category UUID from seed
@@ -191,7 +191,7 @@ In Postman, go to **Collections** → **CYNA API Collection** → **Variables**:
 
 #### Step 1: Login (Get Auth Token)
 
-1. Open **Authentication → BO Login**
+1. Open **Authentication  BO Login**
 2. Click **Send**
 3. Response should be:
 ```json
@@ -213,16 +213,16 @@ In Postman, go to **Collections** → **CYNA API Collection** → **Variables**:
 
 #### Step 2: Test User Management
 
-1. **Get All Users**: Click **Users Management → Get All Users**
-2. **Get User by ID**: Click **Users Management → Get User by ID** (uses ID 1)
-3. **Create User**: Click **Users Management → Create User**
-4. **Update User**: Click **Users Management → Update User** (updates ID 2)
-5. **Reset Password**: Click **Users Management → Reset User Password**
+1. **Get All Users**: Click **Users Management  Get All Users**
+2. **Get User by ID**: Click **Users Management  Get User by ID** (uses ID 1)
+3. **Create User**: Click **Users Management  Create User**
+4. **Update User**: Click **Users Management  Update User** (updates ID 2)
+5. **Reset Password**: Click **Users Management  Reset User Password**
 
 #### Step 3: Test Categories & Services
 
-1. **Get All Categories**: Click **Categories → Get All Categories**
-2. **Get All Services**: Click **Services → Get All Services**
+1. **Get All Categories**: Click **Categories  Get All Categories**
+2. **Get All Services**: Click **Services  Get All Services**
 3. **Create/Update/Delete**: Use respective endpoints
 
 ---
@@ -436,4 +436,4 @@ Once BO and Service APIs are tested:
 4. Review seed output for any errors
 5. Verify all dependencies are installed: `yarn install`
 
-**Happy Testing! 🎉**
+**Happy Testing! **

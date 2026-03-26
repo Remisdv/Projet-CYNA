@@ -12,11 +12,11 @@ async function seed() {
   const serviceRepository = dataSource.getRepository(ServiceEntity);
 
   try {
-    console.log('🌱 Starting Services and Categories seed...');
+    console.log('Starting Services and Categories seed...');
 
     const existingCategories = await categoryRepository.count();
     if (existingCategories > 0) {
-      console.log('⚠️  Categories already exist. Skipping seed.');
+      console.log('Categories already exist. Skipping seed.');
       await app.close();
       return;
     }
@@ -54,7 +54,7 @@ async function seed() {
       category.slug = catData.slug;
       await categoryRepository.save(category);
       categories.push(category);
-      console.log(`✅ Created category: ${catData.nom}`);
+      console.log(`Created category: ${catData.nom}`);
     }
 
     // Seed Services
@@ -153,12 +153,12 @@ async function seed() {
       service.meta_description = svcData.meta_description;
       service.keywords = svcData.keywords;
       await serviceRepository.save(service);
-      console.log(`✅ Created service: ${svcData.nom}`);
+      console.log(`Created service: ${svcData.nom}`);
     }
 
-    console.log('✨ Services and Categories seed completed successfully!');
+    console.log('Services and Categories seed completed successfully!');
   } catch (error) {
-    console.error('❌ Error seeding services:', error);
+    console.error('Error seeding services:', error);
     throw error;
   } finally {
     await app.close();

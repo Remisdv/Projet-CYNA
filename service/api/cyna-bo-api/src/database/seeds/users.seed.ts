@@ -11,11 +11,11 @@ async function seed() {
   const userRepository = dataSource.getRepository(User);
 
   try {
-    console.log('🌱 Starting Users seed...');
+    console.log('Starting Users seed...');
 
     const existingUsers = await userRepository.count();
     if (existingUsers > 0) {
-      console.log('⚠️  Users already exist. Skipping seed.');
+      console.log('Users already exist. Skipping seed.');
       await app.close();
       return;
     }
@@ -70,12 +70,12 @@ async function seed() {
       user.passwordHash = crypto.createHash('sha256').update(defaultPassword).digest('hex');
 
       await userRepository.save(user);
-      console.log(`✅ Created user: ${userData.email}`);
+      console.log(`Created user: ${userData.email}`);
     }
 
-    console.log('✨ Users seed completed successfully!');
+    console.log('Users seed completed successfully!');
   } catch (error) {
-    console.error('❌ Error seeding users:', error);
+    console.error('Error seeding users:', error);
     throw error;
   } finally {
     await app.close();

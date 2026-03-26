@@ -1,17 +1,17 @@
-# CYNA Back-Office
+﻿# CYNA Back-Office
 
 Interface d'administration complète pour la plateforme CYNA SaaS.
 
-## 🎯 Fonctionnalités Implémentées
+##  Fonctionnalités Implémentées
 
-### ✅ Authentification & Sécurité
+###  Authentification & Sécurité
 - Login admin avec email/password
 - 2FA (Two-Factor Authentication) par email
 - Gestion de session avec JWT tokens
 - Refresh automatique des tokens
 - Protection des routes
 
-### 📊 Dashboard
+###  Dashboard
 - Statistiques en temps réel (revenu total, abonnements actifs)
 - Graphiques interactifs avec Recharts :
   - Évolution du revenu sur 7j/30j/90j
@@ -19,7 +19,7 @@ Interface d'administration complète pour la plateforme CYNA SaaS.
 - Alertes de stock faible
 - Design moderne et responsive
 
-### 🛍️ Gestion Catalogue
+###  Gestion Catalogue
 #### Services
 - Liste complète des services avec filtres
 - Création/Modification/Suppression (CRUD complet)
@@ -35,7 +35,7 @@ Interface d'administration complète pour la plateforme CYNA SaaS.
 - Système de slug pour URLs SEO-friendly
 - Activation/Désactivation
 
-### 📝 Gestion Contenu
+###  Gestion Contenu
 #### FAQ
 - CRUD complet
 - Multi-langues (FR/EN)
@@ -53,14 +53,14 @@ Interface d'administration complète pour la plateforme CYNA SaaS.
 - Positions configurables
 - Statut actif/inactif automatique
 
-### 👥 Gestion Utilisateurs
+###  Gestion Utilisateurs
 - Liste complète des utilisateurs
 - CRUD complet
 - Gestion des rôles (CUSTOMER, SUPPORT, ADMIN, SUPERADMIN)
 - Activation/Désactivation des comptes
 - Modification des mots de passe
 
-## 🏗️ Architecture Technique
+##  Architecture Technique
 
 ### Stack Frontend
 - **React** 18.2.0 - UI Library
@@ -78,51 +78,51 @@ Interface d'administration complète pour la plateforme CYNA SaaS.
 ### Structure du Projet
 ```
 frontend/back-office/
-├── src/
-│   ├── components/
-│   │   └── ui/              # Composants UI réutilisables
-│   │       ├── Button.tsx
-│   │       ├── Input.tsx
-│   │       ├── Card.tsx
-│   │       ├── Table.tsx
-│   │       ├── Modal.tsx
-│   │       ├── Badge.tsx
-│   │       ├── Textarea.tsx
-│   │       └── Select.tsx
-│   ├── context/
-│   │   └── AuthContext.tsx  # Contexte d'authentification
-│   ├── layouts/
-│   │   └── MainLayout.tsx   # Layout principal avec sidebar
-│   ├── pages/
-│   │   ├── auth/            # Pages d'authentification
-│   │   ├── dashboard/       # Dashboard avec statistiques
-│   │   ├── catalog/         # Gestion catalogue
-│   │   │   ├── ServicesPage.tsx
-│   │   │   ├── ServiceFormModal.tsx
-│   │   │   ├── CategoriesPage.tsx
-│   │   │   └── CategoryFormModal.tsx
-│   │   ├── content/         # Gestion contenu
-│   │   │   ├── FAQPage.tsx
-│   │   │   ├── FAQFormModal.tsx
-│   │   │   ├── CarouselPage.tsx
-│   │   │   ├── CarouselFormModal.tsx
-│   │   │   ├── AdvertisementsPage.tsx
-│   │   │   └── AdvertisementFormModal.tsx
-│   │   └── users/           # Gestion utilisateurs
-│   │       ├── UsersPage.tsx
-│   │       └── UserFormModal.tsx
-│   ├── services/
-│   │   ├── api.ts           # Client Axios avec intercepteurs
-│   │   └── queries.ts       # Hooks React Query
-│   ├── lib/
-│   │   └── utils.ts         # Utilitaires (cn, etc.)
-│   ├── App.tsx              # Configuration routes
-│   └── main.tsx             # Point d'entrée
-├── Dockerfile
-└── package.json
+ src/
+    components/
+       ui/              # Composants UI réutilisables
+           Button.tsx
+           Input.tsx
+           Card.tsx
+           Table.tsx
+           Modal.tsx
+           Badge.tsx
+           Textarea.tsx
+           Select.tsx
+    context/
+       AuthContext.tsx  # Contexte d'authentification
+    layouts/
+       MainLayout.tsx   # Layout principal avec sidebar
+    pages/
+       auth/            # Pages d'authentification
+       dashboard/       # Dashboard avec statistiques
+       catalog/         # Gestion catalogue
+          ServicesPage.tsx
+          ServiceFormModal.tsx
+          CategoriesPage.tsx
+          CategoryFormModal.tsx
+       content/         # Gestion contenu
+          FAQPage.tsx
+          FAQFormModal.tsx
+          CarouselPage.tsx
+          CarouselFormModal.tsx
+          AdvertisementsPage.tsx
+          AdvertisementFormModal.tsx
+       users/           # Gestion utilisateurs
+           UsersPage.tsx
+           UserFormModal.tsx
+    services/
+       api.ts           # Client Axios avec intercepteurs
+       queries.ts       # Hooks React Query
+    lib/
+       utils.ts         # Utilitaires (cn, etc.)
+    App.tsx              # Configuration routes
+    main.tsx             # Point d'entrée
+ Dockerfile
+ package.json
 ```
 
-## 🎨 Design System
+##  Design System
 
 ### Sidebar Navigation
 - Design moderne avec dégradés (bleu)
@@ -146,7 +146,7 @@ Tous les composants suivent le même design system :
 - Footer avec actions
 - Contenu scrollable
 
-## 🔌 API Integration
+##  API Integration
 
 ### Endpoints Utilisés
 Tous les endpoints communiquent avec `/api/bo` :
@@ -188,7 +188,7 @@ Tous les endpoints communiquent avec `/api/bo` :
 - Messages d'erreur utilisateur-friendly
 - Retry automatique des requêtes (1x)
 
-## 🚀 Développement
+##  Développement
 
 ### Installation
 ```bash
@@ -211,7 +211,7 @@ npm run build
 ### Variables d'Environnement
 Le back-office utilise le proxy Traefik, donc toutes les requêtes API sont relatives à `/api/bo`.
 
-## 🐳 Docker
+##  Docker
 
 ### Build de l'image
 ```bash
@@ -225,7 +225,7 @@ docker-compose up -d back-office
 
 L'application est accessible via Traefik sur `http://localhost/admin`
 
-## 📝 Utilisation
+##  Utilisation
 
 ### Premier Login
 1. Accéder à `http://localhost/admin/login`
@@ -264,7 +264,7 @@ L'application est accessible via Traefik sur `http://localhost/admin`
 3. Modifier les champs
 4. Enregistrer
 
-## 🔒 Sécurité
+##  Sécurité
 
 ### Authentification
 - JWT stockés dans localStorage (avec mécanisme de refresh)
@@ -277,12 +277,12 @@ Les routes sont protégées par rôle au niveau backend :
 - ADMIN : Accès complet catalogue/contenu
 - SUPERADMIN : Accès complet + gestion utilisateurs
 
-## 🎯 Prochaines Évolutions
+##  Prochaines Évolutions
 
 ### Non implémenté (selon cahier des charges)
-- ❌ Système de tickets/chat temps réel (sera un microservice séparé)
-- ❌ Page contents éditable (textes marketing)
-- ❌ Gestion des abonnements détaillée
+-  Système de tickets/chat temps réel (sera un microservice séparé)
+-  Page contents éditable (textes marketing)
+-  Gestion des abonnements détaillée
 
 ### Améliorations futures
 - Export de données (CSV, Excel)
@@ -293,7 +293,7 @@ Les routes sont protégées par rôle au niveau backend :
 - Notifications push
 - Mode sombre
 
-## 🐛 Debug
+##  Debug
 
 ### Logs
 ```bash
@@ -318,10 +318,10 @@ docker-compose logs -f bo-api
 - Vérifier les types dans les fichiers modifiés
 - Nettoyer node_modules : `rm -rf node_modules && npm install`
 
-## 📄 License
+##  License
 
 Projet privé CYNA SaaS - Tous droits réservés
 
-## 👥 Contribution
+##  Contribution
 
 Interface développée pour répondre au cahier des charges CYNA_Dev_ARCHI.md

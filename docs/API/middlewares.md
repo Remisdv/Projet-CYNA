@@ -1,4 +1,4 @@
-# Middlewares
+﻿# Middlewares
 
 Les middlewares s'appliquent à toutes les requêtes entrantes avant les guards et controllers.
 
@@ -118,8 +118,8 @@ Compresse les réponses HTTP en gzip pour réduire la bande passante.
 
 Les middlewares s'exécutent dans cet ordre :
 
-1. **RequestId** → Génère l'ID de traçabilité
-2. **Helmet** → Ajoute les headers de sécurité
-3. **Logger** → Log la requête entrante
-4. **RateLimit** → Vérifie les limites
-5. **Compression** → Compresse la réponse sortante
+1. **RequestId**  Génère l'ID de traçabilité
+2. **Helmet**  Ajoute les headers de sécurité
+3. **Logger**  Log la requête entrante
+4. **RateLimit**  Vérifie les limites
+5. **Compression**  Compresse la réponse sortante

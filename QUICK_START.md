@@ -1,6 +1,6 @@
-# ⚡ CYNA API - Quick Start Guide (5 Minutes)
+﻿#  CYNA API - Quick Start Guide (5 Minutes)
 
-## 🚀 Fastest Setup
+##  Fastest Setup
 
 ### Option A: With Docker (Recommended)
 
@@ -68,7 +68,7 @@ cd service/api/cyna-gateway-api && yarn start:dev    # Terminal C
 
 ---
 
-## ✅ Verify Installation
+##  Verify Installation
 
 All three commands should return HTTP 200:
 
@@ -79,18 +79,18 @@ curl http://localhost:3001/api/bo/health  # BO API
 curl http://localhost:3002/api/health     # Service API
 ```
 
-**All working? Great! 🎉** Continue to testing...
+**All working? Great! ** Continue to testing...
 
 ---
 
-## 🧪 Test API (Choose One)
+##  Test API (Choose One)
 
 ### Option 1: Postman (Easiest)
 
 1. Open Postman
 2. Import: `CYNA_API_Collection.postman_collection.json`
 3. Import Environment: `CYNA_Postman_Environment.json`
-4. Go to **Authentication → BO Login**, click **Send**
+4. Go to **Authentication  BO Login**, click **Send**
 5. Copy token, paste in Variables
 6. Test any endpoint in the collection
 
@@ -123,7 +123,7 @@ Visit URLs in browser:
 
 ---
 
-## 📚 Default Credentials
+##  Default Credentials
 
 **Admin User:**
 - Email: `admin@cyna.fr`
@@ -137,7 +137,7 @@ Visit URLs in browser:
 
 ---
 
-## 📝 Common Commands
+##  Common Commands
 
 ### Check Database Connection
 ```bash
@@ -176,7 +176,7 @@ createdb cyna_bo_db cyna_service_db
 
 ---
 
-## 🔗 API Endpoints Quick Reference
+##  API Endpoints Quick Reference
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -191,7 +191,7 @@ createdb cyna_bo_db cyna_service_db
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 | Error | Fix |
 |-------|-----|
@@ -203,33 +203,33 @@ createdb cyna_bo_db cyna_service_db
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 service/api/
-├── cyna-bo-api/           (port 3001)
-│   ├── src/
-│   │   ├── endpoint/users/        ← User management
-│   │   ├── service/auth/          ← JWT generation
-│   │   └── database/seeds/        ← Test data
-│   └── .env.example
-├── cyna-service-api/      (port 3002)
-│   ├── src/
-│   │   ├── endpoint/services/     ← Service CRUD
-│   │   ├── endpoint/category/     ← Category CRUD
-│   │   └── database/seeds/        ← Test data
-│   └── .env.example
-└── cyna-gateway-api/      (port 3000)
-    ├── src/
-    │   ├── endpoint/bo-auth/      ← Auth endpoint
-    │   ├── service/bo-auth/       ← Auth service
-    │   └── common/guard/          ← JWT validation
-    └── .env.example
+ cyna-bo-api/           (port 3001)
+    src/
+       endpoint/users/         User management
+       service/auth/           JWT generation
+       database/seeds/         Test data
+    .env.example
+ cyna-service-api/      (port 3002)
+    src/
+       endpoint/services/      Service CRUD
+       endpoint/category/      Category CRUD
+       database/seeds/         Test data
+    .env.example
+ cyna-gateway-api/      (port 3000)
+     src/
+        endpoint/bo-auth/       Auth endpoint
+        service/bo-auth/        Auth service
+        common/guard/           JWT validation
+     .env.example
 ```
 
 ---
 
-## 🎯 Next Steps After Setup
+##  Next Steps After Setup
 
 1. **Explore APIs**: Try each endpoint in Postman
 2. **Study Authentication**: See how JWT tokens work
@@ -239,7 +239,7 @@ service/api/
 
 ---
 
-## 📞 Still Having Issues?
+##  Still Having Issues?
 
 1. Check all 3 terminal windows for error messages
 2. Verify `.env` files are properly configured
@@ -251,4 +251,4 @@ For detailed troubleshooting, see [VERIFICATION_AND_FIXES_SUMMARY.md](VERIFICATI
 
 ---
 
-**You're all set! Time to test! 🚀**
+**You're all set! Time to test! **
