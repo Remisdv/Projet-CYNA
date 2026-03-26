@@ -2,41 +2,39 @@ import { Controller, Post, Body, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { Public } from '../../common/decorator/public.decorator';
 import { BoAuthService } from '../../service/bo-auth/bo-auth.service';
-import { BoLoginDto, BoAuthResponseDto } from '../../dto/bo-auth/bo-auth.dto';
+import { BoLoginDto, BoRefreshDto } from '../../dto/bo-auth/bo-auth.dto';
 
 @Controller('api/bo/auth')
 export class BoAuthController {
   constructor(private readonly authService: BoAuthService) {}
 
-  /**
-   * POST /api/bo/auth/login
-   * Authenticate back-office user
-   * Calls BO service and sets authentication cookie
-   */
   @Public()
   @Post('login')
   async login(@Body() loginDto: BoLoginDto, @Res() res: Response): Promise<void> {
     const authResponse = await this.authService.loginBo(loginDto);
 
-    // Set JWT token as HTTP-only cookie
-    res.cookie('BoAuthentication', authResponse.token, {
+    res.cookie('BoAuthentication', authResponse.access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     res.json({
       message: 'Login successful',
       user: authResponse.user,
-      token: authResponse.token, // Also return token for flexibility
+      access_token: authResponse.access_token,
+      refresh_token: authResponse.refresh_token,
     });
   }
 
-  /**
-   * POST /api/bo/auth/logout
-   * Logout endpoint
-   */
+  @Public()
+  @Post('refresh')
+  async refresh(@Body() dto: BoRefreshDto, @Res() res: Response): Promise<void> {
+    const authResponse = await this.authService.refreshBo(dto.refresh_token);
+    res.json(authResponse);
+  }
+
   @Public()
   @Post('logout')
   async logout(@Res() res: Response): Promise<void> {

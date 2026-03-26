@@ -130,6 +130,8 @@ services:
       - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_OPTIONS=--max-old-space-size=512
     depends_on:
       postgres:
         condition: service_healthy
