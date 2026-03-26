@@ -18,7 +18,7 @@ export class TextePromotionnelService {
     return this.mapper.toDtoArray(textes);
   }
 
-  async findOne(id: number): Promise<TextePromotionnelDto> {
+  async findOne(id: string): Promise<TextePromotionnelDto> {
     const texte = await this.repo.findOneBy({ id });
     if (!texte) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
     return this.mapper.toDto(texte);
@@ -37,7 +37,7 @@ export class TextePromotionnelService {
     return this.mapper.toDto(saved);
   }
 
-  async update(id: number, data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
+  async update(id: string, data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
     const entity = await this.repo.findOneBy({ id });
     if (!entity) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
     const mappedData = this.mapper.toEntity(data);
@@ -46,7 +46,19 @@ export class TextePromotionnelService {
     return this.mapper.toDto(saved);
   }
 
-  async remove(id: number): Promise<void> {
+  async activate(id: string): Promise<TextePromotionnelDto> {
+    const entity = await this.repo.findOneBy({ id });
+    if (!entity) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
+    await this.repo.createQueryBuilder()
+      .update(TextePromotionnel)
+      .set({ isActive: false })
+      .execute();
+    entity.isActive = true;
+    const saved = await this.repo.save(entity);
+    return this.mapper.toDto(saved);
+  }
+
+  async remove(id: string): Promise<void> {
     const result = await this.repo.delete(id);
     if (result.affected === 0) throw new NotFoundException(`Impossible de supprimer l'id ${id}`);
   }

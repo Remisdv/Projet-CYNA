@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Delete } from '@nestjs/common';
 import { TextePromotionnelService } from '../../service/TextePromotionnel/TextePromotionnel.service';
 import { CreateUpdateTextePromotionnelDto, TextePromotionnelDto } from '../../service/dtos/TextPromotionnel/TextePromotionnel.dto';
 
-@Controller('promotionnel')
+@Controller('advertisements')
 export class TextePromotionnelController {
   constructor(private readonly service: TextePromotionnelService) {}
 
@@ -17,7 +17,7 @@ export class TextePromotionnelController {
   }
 
   @Get(':id')
-  getById(@Param('id', ParseIntPipe) id: number): Promise<TextePromotionnelDto> {
+  getById(@Param('id') id: string): Promise<TextePromotionnelDto> {
     return this.service.findOne(id);
   }
 
@@ -26,13 +26,18 @@ export class TextePromotionnelController {
     return this.service.create(data);
   }
 
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
     return this.service.update(id, data);
   }
 
+  @Patch(':id/activate')
+  activate(@Param('id') id: string): Promise<TextePromotionnelDto> {
+    return this.service.activate(id);
+  }
+
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
+  delete(@Param('id') id: string): Promise<void> {
     return this.service.remove(id);
   }
 }

@@ -16,10 +16,13 @@ import {
 import { Request, Response } from 'express';
 import { ProxyService } from '../service/proxy.service';
 import { Public, Roles } from '../common';
+import { BaseProxyController } from './base-proxy.controller';
 
 @Controller('api/products')
-export class ProductProxyController {
-  constructor(private readonly proxyService: ProxyService) {}
+export class ProductProxyController extends BaseProxyController {
+  constructor(readonly proxyService: ProxyService) {
+    super(proxyService);
+  }
 
   /**
    * GET /api/products
@@ -191,48 +194,5 @@ export class ProductProxyController {
     @Res() res: Response,
   ): Promise<void> {
     await this.proxy(req, res, `/products/${id}/images/order`);
-  }
-
-  /**
-   * Proxy request to service-api
-   */
-  private async proxy(
-    req: Request,
-    res: Response,
-    path: string,
-  ): Promise<void> {
-    try {
-      // Copy relevant headers
-      const headers: Record<string, string> = {};
-      const headersToForward = [
-        'authorization',
-        'content-type',
-        'x-request-id',
-        'x-correlation-id',
-      ];
-
-      headersToForward.forEach((headerName) => {
-        if (req.headers[headerName]) {
-          headers[headerName] = String(req.headers[headerName]);
-        }
-      });
-
-      // Make the proxy request
-      const proxyResponse = await this.proxyService.proxy({
-        method: req.method,
-        path,
-        headers,
-        body: req.body,
-      });
-
-      // Send response back
-      res.status(proxyResponse.status).json(proxyResponse.data);
-    } catch (error) {
-      console.error('Proxy error:', error);
-      throw new HttpException(
-        'Service unavailable',
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
   }
 }

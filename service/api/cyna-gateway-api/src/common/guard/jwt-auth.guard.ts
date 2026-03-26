@@ -8,6 +8,7 @@ import { Reflector } from '@nestjs/core';
 import * as crypto from 'crypto';
 import { AUTH_KEY } from '../decorator/auth.decorator';
 import { ROLES_KEY } from '../decorator/roles.decorator';
+import { IS_PUBLIC_KEY } from '../decorator/public.decorator';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -18,6 +19,16 @@ export class JwtAuthGuard implements CanActivate {
   }
 
   canActivate(context: ExecutionContext): boolean {
+    // 0. Check if route is public with @Public()
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
     // 1. Check if route is protected by @Auth()
     const isProtected = this.reflector.getAllAndOverride<boolean>(AUTH_KEY, [
       context.getHandler(),
@@ -36,14 +47,22 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    
-    // Extract token from HTTP-only cookie
-    // Ensure "cookie-parser" is installed and app.use(cookieParser()) is set in main.ts
-    // The cookie name should match what is set by the authentication service
-    const token = request.cookies?.['Authentication'];
+
+    // 1. Bearer token from Authorization header (Postman / API clients)
+    const authHeader = request.headers?.['authorization'] as string;
+    const bearerToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : null;
+
+    // 2. HTTP-only cookie (browser / front-office)
+    const cookieToken =
+      request.cookies?.['BoAuthentication'] ??
+      request.cookies?.['Authentication'];
+
+    const token = bearerToken ?? cookieToken;
 
     if (!token) {
-      throw new UnauthorizedException('Authentication cookie missing');
+      throw new UnauthorizedException('Authentication required');
     }
 
     try {

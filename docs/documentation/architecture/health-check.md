@@ -1,4 +1,4 @@
-# Health Check
+﻿# Health Check
 
 ## Vue d'ensemble
 
@@ -10,12 +10,12 @@ Les modules Health suivent une architecture en couches :
 
 ```
 src/
-├── endpoint/
-│   └── health.controller.ts    # Controller HTTP
-├── service/
-│   └── health.service.ts       # Logique métier
-└── module/
-    └── health.module.ts        # Configuration NestJS
+ endpoint/
+    health.controller.ts    # Controller HTTP
+ service/
+    health.service.ts       # Logique métier
+ module/
+     health.module.ts        # Configuration NestJS
 ```
 
 ## Services avec TypeORM

@@ -14,8 +14,10 @@ import {
   RolesGuard,
 } from './common';
 
+import { BoAuthModule } from './module/bo-auth.module';
+
 @Module({
-  imports: [HealthModule, ProxyModule],
+  imports: [HealthModule, ProxyModule, BoAuthModule],
   controllers: [AppController],
   providers: [
     AppService,

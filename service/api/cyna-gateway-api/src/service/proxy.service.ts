@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import * as http from 'http';
 import * as https from 'https';
-
-export interface ProxyRequest {
-  method: string;
-  path: string;
-  headers?: Record<string, string>;
-  body?: any;
-}
+import { IProxyService, ProxyRequest } from './proxy.interface';
 
 @Injectable()
-export class ProxyService {
+export class ProxyService implements IProxyService {
   private readonly serviceApiUrl: string;
 
   constructor() {
@@ -26,15 +20,19 @@ export class ProxyService {
       const isHttps = url.protocol === 'https:';
       const client = isHttps ? https : http;
 
+      const headers: any = { ...(request.headers || {}) };
+      
+      // Only add Content-Type for requests with a body
+      if (request.body && request.method !== 'GET' && request.method !== 'HEAD') {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const options: any = {
         hostname: url.hostname,
         port: url.port,
         path: url.pathname + url.search,
         method: request.method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(request.headers || {}),
-        },
+        headers,
       };
 
       const httpRequest = client.request(options, (response) => {

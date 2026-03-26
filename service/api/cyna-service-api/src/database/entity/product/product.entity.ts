@@ -31,10 +31,10 @@ export enum ServicePeriodicity {
 }
 
 @Entity('products')
-@Index('IDX_products_slug')
-@Index('IDX_products_status')
-@Index('IDX_products_category')
-@Index('IDX_products_type')
+@Index('IDX_products_slug', ['slug'])
+@Index('IDX_products_status', ['statut'])
+@Index('IDX_products_category', ['categorie'])
+@Index('IDX_products_type', ['type'])
 export class ProductEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
