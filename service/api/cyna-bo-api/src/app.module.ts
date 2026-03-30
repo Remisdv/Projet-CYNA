@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
+import { CarrouselImageModule } from './module/CarrouselImage.module';
 import { TextePromotionnelModule } from './module/TextePromotionnel.module';
 import { UserModule } from './module/User.module';
 import { BoAuthModule } from './module/BoAuth.module';
@@ -16,6 +17,7 @@ import { BoAuthModule } from './module/BoAuth.module';
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     HealthModule,
+    CarrouselImageModule,
     TextePromotionnelModule,
     UserModule,
     BoAuthModule,
