@@ -1,63 +1,70 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../../services/api';
+
 // ========== TYPES ==========
 
-export interface MockUser {
+export interface UserDto {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: 'client' | 'admin' | 'commercial';
-  status: 'active' | 'inactive';
-  registeredAt: string;
-  lastLogin?: string;
-  ordersCount: number;
+  role: 'ADMIN' | 'USER';
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt: string;
+  updatedAt: string;
 }
 
-// ========== MOCK DATA ==========
+export interface UsersResponse {
+  data: UserDto[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
-const generateMockUsers = (): MockUser[] => {
-  const firstNames = [
-    'Jean', 'Marie', 'Pierre', 'Sophie', 'Luc', 'Anne', 'Paul', 'Claire',
-    'Marc', 'Julie', 'Thomas', 'Emma', 'Nicolas', 'Laura', 'David', 'Sarah',
-    'François', 'Céline', 'Michel', 'Isabelle', 'Jacques', 'Nathalie', 'Philippe', 'Valérie',
-  ];
+/** @deprecated Use UserDto instead */
+export type MockUser = UserDto;
 
-  const lastNames = [
-    'Dupont', 'Martin', 'Bernard', 'Petit', 'Robert', 'Richard', 'Durand', 'Dubois',
-    'Moreau', 'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia', 'David', 'Bertrand',
-    'Roux', 'Vincent', 'Fournier', 'Morel', 'Girard', 'André', 'Lefevre', 'Mercier',
-  ];
+// ========== HOOKS ==========
 
-  // Only Admin and Commercial users (internal users with BO access)
-  return Array.from({ length: 35 }, (_, index) => {
-    const firstName = firstNames[index % firstNames.length];
-    const lastName = lastNames[Math.floor(index / 2) % lastNames.length];
-    const role: MockUser['role'] = index < 10 ? 'admin' : 'commercial';
-    const status: MockUser['status'] = Math.random() > 0.15 ? 'active' : 'inactive';
-    const daysAgo = Math.floor(Math.random() * 730);
-    const registeredAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
-
-    return {
-      id: `user-${(index + 1).toString().padStart(3, '0')}`,
-      email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${index > 20 ? index : ''}@cyna-security.com`,
-      firstName,
-      lastName,
-      role,
-      status,
-      registeredAt,
-      lastLogin: status === 'active'
-        ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-        : undefined,
-      ordersCount: 0,
-    };
+export const useUsers = (params?: { page?: number; limit?: number; role?: string; status?: string }) => {
+  return useQuery<UsersResponse>({
+    queryKey: ['bo-users', params],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      if (params?.page) searchParams.set('page', String(params.page));
+      if (params?.limit) searchParams.set('limit', String(params.limit));
+      if (params?.role && params.role !== 'all') searchParams.set('role', params.role);
+      if (params?.status && params.status !== 'all') searchParams.set('status', params.status);
+      const qs = searchParams.toString();
+      const { data } = await api.get<UsersResponse>(`/users${qs ? `?${qs}` : ''}`);
+      return data;
+    },
+    staleTime: 30_000,
   });
 };
 
-const mockUsers = generateMockUsers();
+export const useCreateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Omit<UserDto, 'id' | 'createdAt' | 'updatedAt'> & { password?: string }) =>
+      api.post('/users', body).then(r => r.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
+  });
+};
 
-// ========== HOOK ==========
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }: Partial<UserDto> & { id: string }) =>
+      api.put(`/users/${id}`, body).then(r => r.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
+  });
+};
 
-export const useUsers = () => ({
-  data: mockUsers,
-  isLoading: false as const,
-  isError: false as const,
-});
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`/users/${id}`).then(r => r.data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
+  });
+};

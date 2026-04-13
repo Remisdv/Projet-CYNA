@@ -17,6 +17,7 @@ import {
   Star,
   Info,
 } from 'lucide-react';
+import { useCreateService, useUpdateService } from './hooks/useServices';
 
 // ========== TYPES ==========
 
@@ -82,10 +83,10 @@ const tabs: Tab[] = [
 
 const categories = [
   { value: '', label: 'Sélectionner une catégorie' },
-  { value: 'soc', label: 'SOC' },
-  { value: 'edr', label: 'EDR' },
-  { value: 'xdr', label: 'XDR' },
-  { value: 'service', label: 'Service' },
+  { value: 'SOC', label: 'SOC' },
+  { value: 'EDR', label: 'EDR' },
+  { value: 'XDR', label: 'XDR' },
+  { value: 'Service', label: 'Service' },
 ];
 
 const availableTags = [
@@ -100,6 +101,8 @@ export default function ServiceFormModal({
   onClose,
   service,
 }: ServiceFormModalProps) {
+  const createService = useCreateService();
+  const updateService = useUpdateService();
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -135,7 +138,7 @@ export default function ServiceFormModal({
           name: service.name || '',
           shortDescription: service.shortDescription || '',
           longDescription: service.description || '',
-          category: service.categorySlug || '',
+          category: service.category || '',
           type: service.type || 'product',
           tags: service.tags || [],
           price: service.price || 0,
@@ -312,14 +315,31 @@ export default function ServiceFormModal({
     setIsSubmitting(true);
 
     try {
-      const dataToSave = {
-        ...formData,
-        status: publish ? 'published' : 'draft',
+      const payload: Record<string, any> = {
+        name: formData.name,
+        shortDescription: formData.shortDescription,
+        longDescription: formData.longDescription,
+        category: formData.category,
+        type: formData.type === 'product' ? 'produit' : 'service',
+        tags: formData.tags,
+        price: formData.type === 'product' ? formData.price : undefined,
+        monthlyPrice: formData.type === 'service' ? formData.monthlyPrice : undefined,
+        annualPrice: formData.type === 'service' ? formData.annualPrice : undefined,
+        stock: formData.type === 'product' && formData.stockQuantity !== 'unlimited' ? formData.stockQuantity : undefined,
+        unlimitedStock: formData.type === 'service' || formData.stockQuantity === 'unlimited' ? true : undefined,
+        lowStockThreshold: formData.lowStockThreshold,
+        slug: formData.slug,
+        metaTitle: formData.metaTitle,
+        metaDescription: formData.metaDescription,
+        keywords: formData.keywords,
+        status: publish ? 'published' : formData.status,
       };
 
-      // Mock save
-      console.log('Saving service:', dataToSave);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (service?.id) {
+        await updateService.mutateAsync({ id: service.id, ...payload });
+      } else {
+        await createService.mutateAsync(payload);
+      }
 
       onClose();
     } catch (error) {

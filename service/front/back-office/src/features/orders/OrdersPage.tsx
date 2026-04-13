@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+﻿import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import {
   Table,
   TableBody,
@@ -26,27 +27,24 @@ import {
   Filter,
   X,
 } from 'lucide-react';
-import { useOrders, MockOrder } from './hooks/useOrders';
+import { useOrders, Order } from './hooks/useOrders';
 
-type SortField = 'date' | 'amount' | 'ref';
+type SortField = 'createdAt' | 'amount' | 'ref';
 type SortDirection = 'asc' | 'desc';
 
 export default function OrdersPage() {
   const navigate = useNavigate();
-  const { data: orders } = useOrders();
 
-  // Filters
-  const [statusFilters, setStatusFilters] = useState<{
-    pending: boolean;
-    confirmed: boolean;
-    delivered: boolean;
-    cancelled: boolean;
-  }>({
-    pending: true,
-    confirmed: true,
-    delivered: true,
-    cancelled: true,
-  });
+  // Server-side filters
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'delivered' | 'cancelled'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { data, isLoading } = useOrders({ page: currentPage, status: statusFilter });
+  const orders = data?.items ?? [];
+  const totalPages = data?.total_pages ?? 1;
+  const totalCount = data?.total ?? 0;
+
+  // Client-side filters (on current page)
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [amountMin, setAmountMin] = useState('');
@@ -54,32 +52,23 @@ export default function OrdersPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Sorting
-  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 25;
 
-  // Filter and sort orders
   const filteredAndSortedOrders = useMemo(() => {
     let result = [...orders];
 
-    // Apply status filters
-    result = result.filter((order) => statusFilters[order.status]);
-
-    // Apply date range filter
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
-      result = result.filter((order) => new Date(order.date) >= fromDate);
+      result = result.filter((order) => new Date(order.createdAt) >= fromDate);
     }
     if (dateTo) {
       const toDate = new Date(dateTo);
       toDate.setHours(23, 59, 59, 999);
-      result = result.filter((order) => new Date(order.date) <= toDate);
+      result = result.filter((order) => new Date(order.createdAt) <= toDate);
     }
-
-    // Apply amount range filter
     if (amountMin) {
       result = result.filter((order) => order.amount >= parseFloat(amountMin));
     }
@@ -87,12 +76,11 @@ export default function OrdersPage() {
       result = result.filter((order) => order.amount <= parseFloat(amountMax));
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
-        case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'amount':
           comparison = a.amount - b.amount;
@@ -105,14 +93,7 @@ export default function OrdersPage() {
     });
 
     return result;
-  }, [orders, statusFilters, dateFrom, dateTo, amountMin, amountMax, sortField, sortDirection]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedOrders.length / itemsPerPage);
-  const paginatedOrders = filteredAndSortedOrders.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  }, [orders, dateFrom, dateTo, amountMin, amountMax, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -134,41 +115,29 @@ export default function OrdersPage() {
     );
   };
 
-  const toggleStatusFilter = (status: keyof typeof statusFilters) => {
-    setStatusFilters((prev) => ({ ...prev, [status]: !prev[status] }));
-    setCurrentPage(1);
-  };
-
   const handleViewDetails = (orderId: string) => {
     navigate(`/orders/${orderId}`);
   };
 
-  const handlePrint = (order: MockOrder) => {
+  const handlePrint = (order: Order) => {
     console.log('Printing order:', order.ref);
-    alert(`Impression de la commande ${order.ref} (mock)`);
+    alert(`Impression de la commande ${order.ref}`);
   };
 
-  const handleMarkPaid = (order: MockOrder) => {
+  const handleMarkPaid = (order: Order) => {
     if (confirm(`Marquer la commande ${order.ref} comme payée ?`)) {
       console.log('Marking order as paid:', order.ref);
-      alert('Commande marquée comme payée (mock)');
     }
   };
 
-  const handleCancel = (order: MockOrder) => {
+  const handleCancel = (order: Order) => {
     if (confirm(`Êtes-vous sûr de vouloir annuler la commande ${order.ref} ?`)) {
       console.log('Cancelling order:', order.ref);
-      alert('Commande annulée (mock)');
     }
   };
 
   const clearFilters = () => {
-    setStatusFilters({
-      pending: true,
-      confirmed: true,
-      delivered: true,
-      cancelled: true,
-    });
+    setStatusFilter('all');
     setDateFrom('');
     setDateTo('');
     setAmountMin('');
@@ -176,15 +145,7 @@ export default function OrdersPage() {
     setCurrentPage(1);
   };
 
-  const hasActiveFilters =
-    !statusFilters.pending ||
-    !statusFilters.confirmed ||
-    !statusFilters.delivered ||
-    !statusFilters.cancelled ||
-    dateFrom ||
-    dateTo ||
-    amountMin ||
-    amountMax;
+  const hasActiveFilters = statusFilter !== 'all' || dateFrom || dateTo || amountMin || amountMax;
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -213,7 +174,7 @@ export default function OrdersPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Commandes</h1>
           <p className="text-gray-500 mt-1">
-            Gérez vos {filteredAndSortedOrders.length} commandes
+            {isLoading ? 'Chargement...' : `${totalCount} commandes au total`}
           </p>
         </div>
       </div>
@@ -245,78 +206,62 @@ export default function OrdersPage() {
         </CardHeader>
         {showFilters && (
           <CardContent>
-            <div className="space-y-4">
-              {/* Status checkboxes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Statut
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  {Object.entries(statusFilters).map(([status, checked]) => (
-                    <label
-                      key={status}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleStatusFilter(status as keyof typeof statusFilters)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700 capitalize">
-                        {getStatusLabel(status)}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Date and Amount filters */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Input
-                  label="Date début"
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => {
-                    setDateFrom(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
-
-                <Input
-                  label="Date fin"
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => {
-                    setDateTo(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
-
-                <Input
-                  label="Montant min (€)"
-                  type="number"
-                  step="0.01"
-                  value={amountMin}
-                  onChange={(e) => {
-                    setAmountMin(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="0"
-                />
-
-                <Input
-                  label="Montant max (€)"
-                  type="number"
-                  step="0.01"
-                  value={amountMax}
-                  onChange={(e) => {
-                    setAmountMax(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  placeholder="1000"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Select
+                label="Statut"
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as typeof statusFilter);
+                  setCurrentPage(1);
+                }}
+                options={[
+                  { value: 'all', label: 'Tous les statuts' },
+                  { value: 'pending', label: 'En attente' },
+                  { value: 'confirmed', label: 'Confirmée' },
+                  { value: 'delivered', label: 'Livrée' },
+                  { value: 'cancelled', label: 'Annulée' },
+                ]}
+              />
+              <Input
+                label="Date début"
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+              <Input
+                label="Date fin"
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+              <Input
+                label="Montant min (€)"
+                type="number"
+                step="0.01"
+                value={amountMin}
+                onChange={(e) => {
+                  setAmountMin(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="0"
+              />
+              <Input
+                label="Montant max (€)"
+                type="number"
+                step="0.01"
+                value={amountMax}
+                onChange={(e) => {
+                  setAmountMax(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="1000"
+              />
             </div>
           </CardContent>
         )}
@@ -325,7 +270,9 @@ export default function OrdersPage() {
       {/* Orders Table */}
       <Card>
         <CardContent className="p-0">
-          {paginatedOrders.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-500">Chargement des commandes...</div>
+          ) : filteredAndSortedOrders.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Aucune commande trouvée</p>
@@ -363,18 +310,18 @@ export default function OrdersPage() {
                     <TableHead>Statut</TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('date')}
+                      onClick={() => handleSort('createdAt')}
                     >
                       <div className="flex items-center">
                         Date
-                        {getSortIcon('date')}
+                        {getSortIcon('createdAt')}
                       </div>
                     </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedOrders.map((order) => (
+                  {filteredAndSortedOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium font-mono text-sm">
                         {order.ref}
@@ -397,11 +344,11 @@ export default function OrdersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-gray-500">
-                        {new Date(order.date).toLocaleDateString('fr-FR', {
+                        {order.createdAt ? new Date(order.createdAt).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        })}
+                        }) : '-'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
@@ -426,7 +373,7 @@ export default function OrdersPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleMarkPaid(order)}
-                              title="Marquer comme payée"
+                              title="Marquer comme payÃ©e"
                             >
                               <Check className="h-4 w-4 text-green-600" />
                             </Button>
@@ -451,7 +398,7 @@ export default function OrdersPage() {
               {/* Pagination */}
               <div className="flex items-center justify-between px-6 py-4 border-t">
                 <div className="text-sm text-gray-500">
-                  Affichage {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredAndSortedOrders.length)} sur {filteredAndSortedOrders.length} résultats
+                  Page {currentPage} sur {totalPages} ({totalCount} commandes)
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -465,7 +412,7 @@ export default function OrdersPage() {
                   </Button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNum;
+                      let pageNum: number;
                       if (totalPages <= 5) {
                         pageNum = i + 1;
                       } else if (currentPage <= 3) {
@@ -494,7 +441,7 @@ export default function OrdersPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage >= totalPages}
                   >
                     Suivant
                     <ChevronRight className="h-4 w-4 ml-1" />
@@ -508,3 +455,4 @@ export default function OrdersPage() {
     </div>
   );
 }
+

@@ -12,6 +12,7 @@ import UsersPage from './features/users/UsersPage';
 import OrdersPage from './features/orders/OrdersPage';
 import OrderDetailPage from './features/orders/OrderDetailPage';
 import CommercialDashboardPage from './features/commercial/CommercialDashboardPage';
+import CarouselPage from './features/content/CarouselPage';
 import MainLayout from './layouts/MainLayout';
 
 const queryClient = new QueryClient({
@@ -48,7 +49,7 @@ function RoleProtectedRoute({ children, allowedRoles }: { children: JSX.Element;
     return <Navigate to="/login" replace />;
   }
 
-  if (user?.role && !allowedRoles.includes(user.role)) {
+  if (user && !user.roles?.some(r => allowedRoles.includes(r.toLowerCase()))) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -81,6 +82,7 @@ function AppRoutes() {
         {/* Content */}
         <Route path="content/faq" element={<FaqsPage />} />
         <Route path="content/advertisements" element={<AdvertisementsPage />} />
+        <Route path="content/carousel" element={<CarouselPage />} />
 
         {/* Users */}
         <Route path="users" element={<UsersPage />} />

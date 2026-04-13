@@ -29,25 +29,25 @@ export class ProductController {
    */
   @Get()
   async findAll(
-    @Query('page') page?: number,
-    @Query('per_page') per_page?: number,
+    @Query('page') page?: string,
+    @Query('per_page') per_page?: string,
     @Query('categorie') categorie?: string,
     @Query('type') type?: string,
     @Query('statut') statut?: string,
-    @Query('prix_min') prix_min?: number,
-    @Query('prix_max') prix_max?: number,
-    @Query('disponible') disponible?: boolean,
+    @Query('prix_min') prix_min?: string,
+    @Query('prix_max') prix_max?: string,
+    @Query('disponible') disponible?: string,
     @Query('sort') sort?: string,
   ) {
     return this.productService.findAll({
-      page,
-      per_page,
+      page: page ? Number(page) : undefined,
+      per_page: per_page ? Number(per_page) : undefined,
       categorie: categorie as any,
       type: type as any,
       statut: statut as any,
-      prix_min,
-      prix_max,
-      disponible,
+      prix_min: prix_min ? parseFloat(prix_min) : undefined,
+      prix_max: prix_max ? parseFloat(prix_max) : undefined,
+      disponible: disponible === 'true' ? true : undefined,
       sort,
     });
   }

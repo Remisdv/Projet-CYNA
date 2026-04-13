@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "CYNA BO API Tests",
-    "description": "Collection de tests pour l'API Back Office CYNA.\n\n**Auth automatique** : le pre-request script se connecte automatiquement si aucun token n'est stocké. Modifiez les variables `email` et `password` si besoin.",
+    "description": "Collection de tests pour l'API Back Office CYNA.\n\n**Auth automatique** : le pre-request script se connecte automatiquement si aucun token n'est stocke. Les tests de creation stockent automatiquement les IDs pour les requetes suivantes.\n\nVariables : `baseUrl`, `email`, `password`, `access_token`, `refresh_token`, `lastAdId`, `lastCategoryId`, `lastCarouselId`, `lastFaqId`, `lastFaqChildId`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -9,32 +9,22 @@
     "bearer": [
       {
         "key": "token",
-        "value": "{{token}}",
+        "value": "{{access_token}}",
         "type": "string"
       }
     ]
   },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost",
-      "type": "string"
-    },
-    {
-      "key": "token",
-      "value": "",
-      "type": "string"
-    },
-    {
-      "key": "email",
-      "value": "admin@example.com",
-      "type": "string"
-    },
-    {
-      "key": "password",
-      "value": "password123",
-      "type": "string"
-    }
+    { "key": "baseUrl", "value": "http://localhost", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "email", "value": "admin@example.com", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" },
+    { "key": "lastAdId", "value": "", "type": "string" },
+    { "key": "lastCategoryId", "value": "", "type": "string" },
+    { "key": "lastCarouselId", "value": "", "type": "string" },
+    { "key": "lastFaqId", "value": "", "type": "string" },
+    { "key": "lastFaqChildId", "value": "", "type": "string" }
   ],
   "event": [
     {
@@ -42,34 +32,25 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Auto-login : si pas de token, on se connecte avant chaque requête",
-          "const token = pm.collectionVariables.get('token');",
+          "const token = pm.collectionVariables.get('access_token');",
           "if (token) return;",
-          "",
           "const baseUrl  = pm.collectionVariables.get('baseUrl');",
           "const email    = pm.collectionVariables.get('email');",
           "const password = pm.collectionVariables.get('password');",
-          "",
           "pm.sendRequest({",
           "  url: baseUrl + '/api/bo/auth/login',",
           "  method: 'POST',",
           "  header: { 'Content-Type': 'application/json' },",
-          "  body: {",
-          "    mode: 'raw',",
-          "    raw: JSON.stringify({ email, password })",
-          "  }",
+          "  body: { mode: 'raw', raw: JSON.stringify({ email, password }) }",
           "}, function (err, res) {",
-          "  if (err) { console.error('[Auto-login] Erreur réseau :', err); return; }",
-          "  if (res.code !== 200 && res.code !== 201) {",
-          "    console.error('[Auto-login] Échec HTTP', res.code, res.text());",
-          "    return;",
+          "  if (err || (res.code !== 200 && res.code !== 201)) {",
+          "    console.error('[Auto-login] Echec', err || res.code); return;",
           "  }",
           "  const body = res.json();",
-          "  if (body.token) {",
-          "    pm.collectionVariables.set('token', body.token);",
-          "    console.log('[Auto-login] Token stocké ✓');",
-          "  } else {",
-          "    console.error('[Auto-login] Pas de token dans la réponse :', JSON.stringify(body));",
+          "  if (body.access_token) {",
+          "    pm.collectionVariables.set('access_token', body.access_token);",
+          "    pm.collectionVariables.set('refresh_token', body.refresh_token || '');",
+          "    console.log('[Auto-login] Tokens stockes');",
           "  }",
           "});"
         ]
@@ -83,11 +64,7 @@
         "auth": { "type": "noauth" },
         "method": "GET",
         "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/bo/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "bo", "health"]
-        }
+        "url": { "raw": "{{baseUrl}}/api/bo/health", "host": ["{{baseUrl}}"], "path": ["api","bo","health"] }
       }
     },
     {
@@ -95,65 +72,63 @@
       "item": [
         {
           "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Stocker le token après un login manuel",
-                  "const body = pm.response.json();",
-                  "if (body.token) {",
-                  "  pm.collectionVariables.set('token', body.token);",
-                  "  console.log('[Login] Token stocké ✓');",
-                  "  pm.test('Login réussi – token reçu', () => pm.expect(body.token).to.be.a('string').and.not.empty);",
-                  "} else {",
-                  "  pm.test('Login réussi – token reçu', () => { throw new Error('Pas de token dans la réponse'); });",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const body = pm.response.json();",
+              "pm.test('access_token present', () => pm.expect(body.access_token).to.be.a('string').and.not.empty);",
+              "pm.test('refresh_token present', () => pm.expect(body.refresh_token).to.be.a('string').and.not.empty);",
+              "if (body.access_token) {",
+              "  pm.collectionVariables.set('access_token', body.access_token);",
+              "  pm.collectionVariables.set('refresh_token', body.refresh_token || '');",
+              "}"
+            ]}
+          }],
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "auth", "login"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/auth/login", "host": ["{{baseUrl}}"], "path": ["api","bo","auth","login"] }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const body = pm.response.json();",
+              "pm.test('Nouveau access_token recu', () => pm.expect(body.access_token).to.be.a('string').and.not.empty);",
+              "if (body.access_token) {",
+              "  pm.collectionVariables.set('access_token', body.access_token);",
+              "  if (body.refresh_token) pm.collectionVariables.set('refresh_token', body.refresh_token);",
+              "}"
+            ]}
+          }],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/auth/refresh", "host": ["{{baseUrl}}"], "path": ["api","bo","auth","refresh"] }
           }
         },
         {
           "name": "Logout",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "// Effacer le token local après logout",
-                  "pm.collectionVariables.set('token', '');",
-                  "console.log('[Logout] Token effacé');"
-                ]
-              }
-            }
-          ],
+          "event": [{
+            "listen": "test",
+            "script": { "type": "text/javascript", "exec": [
+              "pm.collectionVariables.set('access_token', '');",
+              "pm.collectionVariables.set('refresh_token', '');",
+              "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"
+            ]}
+          }],
           "request": {
             "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/auth/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "auth", "logout"]
-            }
+            "url": { "raw": "{{baseUrl}}/api/bo/auth/logout", "host": ["{{baseUrl}}"], "path": ["api","bo","auth","logout"] }
           }
         }
       ]
@@ -163,208 +138,425 @@
       "item": [
         {
           "name": "Lister tous les users",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Reponse est un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ]}}],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users", "host": ["{{baseUrl}}"], "path": ["api","bo","users"] }
           }
         },
         {
           "name": "Lister avec pagination",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
-              ]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users?page=1&limit=10", "host": ["{{baseUrl}}"], "path": ["api","bo","users"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }] }
           }
         },
         {
-          "name": "Filtrer par rôle et statut",
+          "name": "Filtrer par role et statut",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users?role=ADMIN&status=ACTIVE",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users"],
-              "query": [
-                { "key": "role", "value": "ADMIN" },
-                { "key": "status", "value": "ACTIVE" }
-              ]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users?role=ADMIN&status=ACTIVE", "host": ["{{baseUrl}}"], "path": ["api","bo","users"], "query": [{ "key": "role", "value": "ADMIN" }, { "key": "status", "value": "ACTIVE" }] }
           }
         },
         {
-          "name": "Récupérer un user par ID",
+          "name": "Recuperer un user par ID",
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users", "1"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users/1", "host": ["{{baseUrl}}"], "path": ["api","bo","users","1"] }
           }
         },
         {
-          "name": "Créer un user",
+          "name": "Creer un user",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/users", "host": ["{{baseUrl}}"], "path": ["api","bo","users"] }
           }
         },
         {
           "name": "Modifier un user",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"jane.updated@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith-Updated\",\n  \"role\": \"ADMIN\",\n  \"status\": \"ACTIVE\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users", "1"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"jane.updated@example.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith-Updated\",\n  \"role\": \"ADMIN\",\n  \"status\": \"ACTIVE\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/users/1", "host": ["{{baseUrl}}"], "path": ["api","bo","users","1"] }
           }
         },
         {
-          "name": "Réinitialiser le mot de passe",
+          "name": "Reinitialiser le mot de passe",
           "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users/1/reset-password",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users", "1", "reset-password"]
-            }
+            "method": "POST", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users/1/reset-password", "host": ["{{baseUrl}}"], "path": ["api","bo","users","1","reset-password"] }
           }
         },
         {
           "name": "Supprimer un user",
           "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/users/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "users", "1"]
-            }
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/users/1", "host": ["{{baseUrl}}"], "path": ["api","bo","users","1"] }
           }
         }
       ]
     },
     {
-      "name": "Textes Promotionnels",
+      "name": "Advertisements",
       "item": [
         {
           "name": "Lister tous les textes",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Reponse est un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ]}}],
           "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel"]
-            }
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements"] }
           }
         },
         {
-          "name": "Récupérer le texte actif",
+          "name": "Recuperer le texte actif",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ]}}],
           "request": {
-            "auth": { "type": "noauth" },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel/active",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel", "active"]
-            }
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements/active", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements","active"] }
           }
         },
         {
-          "name": "Récupérer un texte par ID",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel", "1"]
-            }
-          }
-        },
-        {
-          "name": "Créer un texte promotionnel",
+          "name": "Creer un texte promotionnel",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+            "const body = pm.response.json();",
+            "pm.test('ID present', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+            "if (body.id) { pm.collectionVariables.set('lastAdId', body.id); console.log('[Ad] ID stocke :', body.id); }"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titre\": \"Promotion Printemps 2024\",\n  \"description\": \"Profitez de nos offres spéciales jusqu'au 31 mars\",\n  \"isActive\": true\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel"]
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"textFr\": \"Profitez de nos offres speciales jusqu'au 31 mars !\",\n  \"textEn\": \"Take advantage of our special offers until March 31st!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements"] }
           }
         },
         {
-          "name": "Modifier un texte",
+          "name": "Recuperer un texte par ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
           "request": {
-            "method": "PATCH",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"titre\": \"Promotion Printemps 2024 - UPDATED\",\n  \"description\": \"Offre limitée, saisissez l'opportunité !\",\n  \"isActive\": false\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel", "1"]
-            }
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements/{{lastAdId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements","{{lastAdId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un texte (PUT)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"textFr\": \"Nouvelle promotion : -20% sur tous nos services !\",\n  \"textEn\": \"New promotion: -20% on all our services!\"\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements/{{lastAdId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements","{{lastAdId}}"] }
+          }
+        },
+        {
+          "name": "Activer un texte",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "const body = pm.response.json();",
+            "pm.test('isActive = true', () => pm.expect(body.isActive).to.equal(true));"
+          ]}}],
+          "request": {
+            "method": "PATCH", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements/{{lastAdId}}/activate", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements","{{lastAdId}}","activate"] }
           }
         },
         {
           "name": "Supprimer un texte",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+          ]}}],
           "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bo/promotionnel/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "bo", "promotionnel", "1"]
-            }
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/advertisements/{{lastAdId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","advertisements","{{lastAdId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Lister toutes les categories",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Reponse est un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));",
+            "const body = pm.response.json();",
+            "if (body.length > 0) {",
+            "  pm.test('Chaque categorie a 2 translations', () => body.forEach(c => pm.expect(c.translations).to.be.an('array').with.lengthOf(2)));",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/categories", "host": ["{{baseUrl}}"], "path": ["api","bo","categories"] }
+          }
+        },
+        {
+          "name": "Creer une categorie",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+            "const body = pm.response.json();",
+            "pm.test('ID present', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+            "pm.test('translations contient fr et en', () => {",
+            "  pm.expect(body.translations).to.be.an('array').with.lengthOf(2);",
+            "  const langs = body.translations.map(t => t.lang);",
+            "  pm.expect(langs).to.include('fr');",
+            "  pm.expect(langs).to.include('en');",
+            "});",
+            "if (body.id) { pm.collectionVariables.set('lastCategoryId', body.id); console.log('[Category] ID stocke :', body.id); }"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"slug\": \"cybersecurity\",\n  \"isActive\": true,\n  \"translations\": [\n    { \"lang\": \"fr\", \"name\": \"Cybersecurite\", \"description\": \"Solutions de protection pour entreprises\" },\n    { \"lang\": \"en\", \"name\": \"Cybersecurity\", \"description\": \"Enterprise protection solutions\" }\n  ]\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/categories", "host": ["{{baseUrl}}"], "path": ["api","bo","categories"] }
+          }
+        },
+        {
+          "name": "Recuperer une categorie par ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "const body = pm.response.json();",
+            "pm.test('translations presente', () => pm.expect(body.translations).to.be.an('array').with.lengthOf(2));"
+          ]}}],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/categories/{{lastCategoryId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","categories","{{lastCategoryId}}"] }
+          }
+        },
+        {
+          "name": "Modifier une categorie",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"slug\": \"cybersecurity\",\n  \"isActive\": true,\n  \"translations\": [\n    { \"lang\": \"fr\", \"name\": \"Cybersecurite - Mise a jour\", \"description\": \"Solutions de protection avancees pour entreprises\" },\n    { \"lang\": \"en\", \"name\": \"Cybersecurity - Updated\", \"description\": \"Advanced enterprise protection solutions\" }\n  ]\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/categories/{{lastCategoryId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","categories","{{lastCategoryId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer une categorie",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+          ]}}],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/categories/{{lastCategoryId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","categories","{{lastCategoryId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Carousel",
+      "item": [
+        {
+          "name": "Lister tous les slides",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Reponse est un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/carousel", "host": ["{{baseUrl}}"], "path": ["api","bo","carousel"] }
+          }
+        },
+        {
+          "name": "Creer un slide",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+            "const body = pm.response.json();",
+            "pm.test('ID present', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+            "pm.test('image present', () => pm.expect(body.image).to.be.an('object'));",
+            "if (body.id) { pm.collectionVariables.set('lastCarouselId', body.id); console.log('[Carousel] ID stocke :', body.id); }"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"imageId\": \"https://example.com/images/banner1.jpg\",\n  \"imageAlt\": \"Banniere principale CYNA\",\n  \"title\": \"Protegez votre entreprise\",\n  \"text\": \"Des solutions de cybersecurite adaptees a vos besoins\",\n  \"link\": \"/services\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/carousel", "host": ["{{baseUrl}}"], "path": ["api","bo","carousel"] }
+          }
+        },
+        {
+          "name": "Recuperer un slide par ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/carousel/{{lastCarouselId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","carousel","{{lastCarouselId}}"] }
+          }
+        },
+        {
+          "name": "Modifier un slide",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"imageId\": \"https://example.com/images/banner1-updated.jpg\",\n  \"imageAlt\": \"Banniere principale CYNA - MAJ\",\n  \"title\": \"Protegez votre entreprise - Nouvelle offre\",\n  \"text\": \"Decouvrez nos nouvelles solutions SOC\",\n  \"link\": \"/services/soc\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/carousel/{{lastCarouselId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","carousel","{{lastCarouselId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer un slide",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+          ]}}],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/carousel/{{lastCarouselId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","carousel","{{lastCarouselId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "FAQs",
+      "item": [
+        {
+          "name": "Arbre FAQ (toutes langues)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Reponse est un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/tree", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","tree"] }
+          }
+        },
+        {
+          "name": "Arbre FAQ en francais",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "const body = pm.response.json();",
+            "if (body.length > 0) {",
+            "  pm.test('Toutes les entrees sont en fr', () => body.forEach(f => pm.expect(f.lang).to.equal('fr')));",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/tree?lang=fr", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","tree"], "query": [{ "key": "lang", "value": "fr" }] }
+          }
+        },
+        {
+          "name": "Arbre FAQ en anglais",
+          "request": {
+            "auth": { "type": "noauth" }, "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/tree?lang=en", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","tree"], "query": [{ "key": "lang", "value": "en" }] }
+          }
+        },
+        {
+          "name": "Creer une FAQ racine (FR)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+            "const body = pm.response.json();",
+            "pm.test('ID present', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+            "if (body.id) { pm.collectionVariables.set('lastFaqId', body.id); console.log('[FAQ] ID racine stocke :', body.id); }"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"Qu'est-ce que CYNA ?\",\n  \"answer\": \"CYNA est une plateforme de cybersecurite pour les entreprises.\",\n  \"lang\": \"fr\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs"] }
+          }
+        },
+        {
+          "name": "Creer une FAQ enfant (FR)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 201', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+            "const body = pm.response.json();",
+            "pm.test('ID present', () => pm.expect(body.id).to.be.a('string').and.not.empty);",
+            "pm.test('parentId correct', () => pm.expect(body.parentId).to.equal(pm.collectionVariables.get('lastFaqId')));",
+            "if (body.id) { pm.collectionVariables.set('lastFaqChildId', body.id); console.log('[FAQ] ID enfant stocke :', body.id); }"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"parentId\": \"{{lastFaqId}}\",\n  \"question\": \"Comment souscrire a un service CYNA ?\",\n  \"answer\": \"Rendez-vous sur notre page Tarifs et choisissez la formule adaptee.\",\n  \"lang\": \"fr\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs"] }
+          }
+        },
+        {
+          "name": "Creer une FAQ racine (EN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"What is CYNA?\",\n  \"answer\": \"CYNA is a cybersecurity platform for businesses.\",\n  \"lang\": \"en\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs"] }
+          }
+        },
+        {
+          "name": "Recuperer une FAQ par ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "const body = pm.response.json();",
+            "pm.test('children est un tableau', () => pm.expect(body.children).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "method": "GET", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/{{lastFaqId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","{{lastFaqId}}"] }
+          }
+        },
+        {
+          "name": "Modifier une FAQ",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"question\": \"Qu'est-ce que CYNA ? (mis a jour)\",\n  \"answer\": \"CYNA est une plateforme SaaS de cybersecurite pour les TPE/PME.\",\n  \"lang\": \"fr\",\n  \"order\": 1\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/{{lastFaqId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","{{lastFaqId}}"] }
+          }
+        },
+        {
+          "name": "Reordonner une FAQ",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.expect(pm.response.code).to.equal(200));",
+            "const body = pm.response.json();",
+            "pm.test('order = 5', () => pm.expect(body.order).to.equal(5));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"order\": 5\n}" },
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/{{lastFaqId}}/reorder", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","{{lastFaqId}}","reorder"] }
+          }
+        },
+        {
+          "name": "Supprimer FAQ enfant",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+          ]}}],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/{{lastFaqChildId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","{{lastFaqChildId}}"] }
+          }
+        },
+        {
+          "name": "Supprimer FAQ racine",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 ou 204', () => pm.expect(pm.response.code).to.be.oneOf([200,204]));"
+          ]}}],
+          "request": {
+            "method": "DELETE", "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bo/faqs/{{lastFaqId}}", "host": ["{{baseUrl}}"], "path": ["api","bo","faqs","{{lastFaqId}}"] }
           }
         }
       ]

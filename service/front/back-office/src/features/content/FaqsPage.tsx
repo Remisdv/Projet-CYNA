@@ -188,14 +188,14 @@ export default function FaqsPage() {
           size="sm"
           onClick={() => setSelectedLang('fr')}
         >
-          🇫🇷 Français
+          FR Français
         </Button>
         <Button
           variant={selectedLang === 'en' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setSelectedLang('en')}
         >
-          🇬🇧 English
+          EN English
         </Button>
       </div>
 

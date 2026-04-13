@@ -8,8 +8,14 @@ export default defineConfig({
     port: 5173,
     host: '0.0.0.0',
     strictPort: true,
+    allowedHosts: ['bo.localhost'],
+    hmr: {
+      host: 'bo.localhost',
+      port: 80,
+      protocol: 'ws',
+    },
     watch: {
-      usePolling: true
+      usePolling: false,
     },
     proxy: {
       '/api/bo': {

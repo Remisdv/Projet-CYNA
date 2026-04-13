@@ -237,11 +237,9 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Taux de Conversion"
-          value={`${kpiData.conversionRate}%`}
-          trend={kpiData.conversionTrend}
+          value="--"
+          trend={0}
           icon={<TrendingUp className="h-5 w-5 text-orange-600" />}
-          goal={25}
-          goalLabel="Objectif: 25%"
         />
       </div>
 

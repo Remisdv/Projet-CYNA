@@ -15,11 +15,12 @@ export class BoAuthService {
     this.boApiPort = parseInt(process.env.BO_API_PORT || '3001', 10);
   }
 
-  /**
-   * Call BO authentication service for user login
-   */
   async loginBo(loginDto: BoLoginDto): Promise<BoAuthResponseDto> {
     return this.callBoAuthEndpoint('/api/bo/auth/login', loginDto);
+  }
+
+  async refreshBo(refreshToken: string): Promise<BoAuthResponseDto> {
+    return this.callBoAuthEndpoint('/api/bo/auth/refresh', { refresh_token: refreshToken });
   }
 
   /**

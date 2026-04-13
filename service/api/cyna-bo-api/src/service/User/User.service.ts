@@ -50,15 +50,17 @@ export class UserService {
     }
 
     // Appliquer la pagination
-    query.skip((page - 1) * limit).take(limit);
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
+    query.skip((pageNum - 1) * limitNum).take(limitNum);
 
     const [users, total] = await query.getManyAndCount();
 
     return {
       items: this.mapper.toDtoArray(users),
       total,
-      page,
-      limit,
+      page: pageNum,
+      limit: limitNum,
     };
   }
 

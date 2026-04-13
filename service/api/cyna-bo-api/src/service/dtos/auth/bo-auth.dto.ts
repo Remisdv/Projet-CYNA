@@ -9,8 +9,14 @@ export class BoLoginDto {
   password: string;
 }
 
+export class BoRefreshDto {
+  @IsString()
+  refresh_token: string;
+}
+
 export class BoAuthResponseDto {
-  token: string;
+  access_token: string;
+  refresh_token: string;
   user: {
     id: string;
     email: string;

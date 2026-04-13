@@ -21,7 +21,7 @@ export enum ProductType {
 
 export enum ProductStatus {
   DRAFT = 'brouillon',
-  PUBLISHED = 'publié',
+  PUBLISHED = 'publi\u00e9',
 }
 
 export enum ServicePeriodicity {
@@ -118,7 +118,7 @@ export class ProductEntity {
 
   @Column({
     type: 'varchar',
-    default: 'illimité',
+    default: 'illimit\u00e9',
     nullable: true,
   })
   stock_illimite: string;

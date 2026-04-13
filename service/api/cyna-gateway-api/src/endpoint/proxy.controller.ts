@@ -31,7 +31,8 @@ export class ProductProxyController extends BaseProxyController {
   @Get()
   @Public()
   async findAll(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/products');
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxy(req, res, `/api/products${qs}`);
   }
 
   /**
@@ -41,7 +42,8 @@ export class ProductProxyController extends BaseProxyController {
   @Get('search')
   @Public()
   async search(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, `/products/search${req.url.slice(req.url.indexOf('?'))}`);
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxy(req, res, `/api/products/search${qs}`);
   }
 
   /**
@@ -51,7 +53,7 @@ export class ProductProxyController extends BaseProxyController {
   @Post()
   @Roles('admin')
   async create(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/products');
+    await this.proxy(req, res, '/api/products');
   }
 
   /**
@@ -65,7 +67,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}`);
+    await this.proxy(req, res, `/api/products/${id}`);
   }
 
   /**
@@ -79,7 +81,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}`);
+    await this.proxy(req, res, `/api/products/${id}`);
   }
 
   /**
@@ -93,7 +95,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}`);
+    await this.proxy(req, res, `/api/products/${id}`);
   }
 
   /**
@@ -107,7 +109,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/publish`);
+    await this.proxy(req, res, `/api/products/${id}/publish`);
   }
 
   /**
@@ -121,7 +123,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/duplicate`);
+    await this.proxy(req, res, `/api/products/${id}/duplicate`);
   }
 
   /**
@@ -135,7 +137,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/demo`);
+    await this.proxy(req, res, `/api/products/${id}/demo`);
   }
 
   /**
@@ -149,7 +151,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/images`);
+    await this.proxy(req, res, `/api/products/${id}/images`);
   }
 
   /**
@@ -164,7 +166,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/images/${imageId}`);
+    await this.proxy(req, res, `/api/products/${id}/images/${imageId}`);
   }
 
   /**
@@ -179,7 +181,7 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/images/${imageId}/main`);
+    await this.proxy(req, res, `/api/products/${id}/images/${imageId}/main`);
   }
 
   /**
@@ -193,6 +195,6 @@ export class ProductProxyController extends BaseProxyController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/products/${id}/images/order`);
+    await this.proxy(req, res, `/api/products/${id}/images/order`);
   }
 }
