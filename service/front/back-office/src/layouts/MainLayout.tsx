@@ -13,6 +13,7 @@ import {
   Megaphone,
   ShoppingCart,
   TrendingUp,
+  ImageIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -62,8 +63,8 @@ export default function MainLayout() {
         <nav className="mt-8 px-3 space-y-2 overflow-y-auto h-[calc(100vh-160px)]">
           {navigation.map((item) => {
             // Check role-based access
-            if ('roles' in item && item.roles && user?.role) {
-              if (!item.roles.includes(user.role)) {
+            if ('roles' in item && item.roles) {
+              if (!user?.roles?.some(r => item.roles!.includes(r.toLowerCase()))) {
                 return null; // Hide menu item if user doesn't have required role
               }
             }

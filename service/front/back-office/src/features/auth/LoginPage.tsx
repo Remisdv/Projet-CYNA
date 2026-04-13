@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 const schema = z.object({
   email: z.string().email(),
@@ -14,20 +15,28 @@ type FormData = z.infer<typeof schema>;
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data: FormData) => {
-    const mockUser = {
-      id: 'mock-admin-1',
-      email: data.email,
-      firstName: 'Admin',
-      lastName: 'Mock',
-      roles: ['admin'],
-    };
-    login('mock-token', 'mock-refresh-token', mockUser);
-    navigate('/dashboard');
+  const onSubmit = async (data: FormData) => {
+    try {
+      const response = await api.post('/auth/login', {
+        email: data.email,
+        password: data.password,
+      });
+      const { access_token, refresh_token, user } = response.data;
+      login(access_token, refresh_token, {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        roles: [user.role ?? 'admin'],
+      });
+      navigate('/dashboard');
+    } catch {
+      setError('root', { message: 'Email ou mot de passe incorrect' });
+    }
   };
 
   return (
@@ -57,8 +66,9 @@ export default function LoginPage() {
             disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            {isSubmitting ? 'Loading...' : 'Login'}
+            {isSubmitting ? 'Connexion...' : 'Login'}
           </button>
+          {errors.root && <p className="text-red-500 text-sm text-center">{errors.root.message}</p>}
         </form>
       </div>
     </div>

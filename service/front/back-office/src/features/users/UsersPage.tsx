@@ -27,25 +27,26 @@ import {
   KeyRound,
 } from 'lucide-react';
 import UserFormModal from './UserFormModal';
-import { useUsers, MockUser } from './hooks/useUsers';
+import { useUsers, UserDto } from './hooks/useUsers';
 
-type SortField = 'email' | 'name' | 'role' | 'registeredAt' | 'status';
+type SortField = 'email' | 'name' | 'role' | 'createdAt' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 export default function UsersPage() {
-  const { data: users } = useUsers();
+  const { data: usersResponse, isLoading } = useUsers();
+  const users: UserDto[] = usersResponse?.data ?? [];
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
   // Filters
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'commercial'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'ADMIN' | 'USER'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'INACTIVE'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   // Sorting
-  const [sortField, setSortField] = useState<SortField>('registeredAt');
+  const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Pagination
@@ -65,12 +66,12 @@ export default function UsersPage() {
     }
     if (dateFrom) {
       const fromDate = new Date(dateFrom);
-      result = result.filter(u => new Date(u.registeredAt) >= fromDate);
+      result = result.filter(u => new Date(u.createdAt) >= fromDate);
     }
     if (dateTo) {
       const toDate = new Date(dateTo);
       toDate.setHours(23, 59, 59, 999);
-      result = result.filter(u => new Date(u.registeredAt) <= toDate);
+      result = result.filter(u => new Date(u.createdAt) <= toDate);
     }
 
     // Apply sorting
@@ -86,8 +87,8 @@ export default function UsersPage() {
         case 'role':
           comparison = a.role.localeCompare(b.role);
           break;
-        case 'registeredAt':
-          comparison = new Date(a.registeredAt).getTime() - new Date(b.registeredAt).getTime();
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'status':
           comparison = a.status.localeCompare(b.status);
@@ -126,19 +127,19 @@ export default function UsersPage() {
     );
   };
 
-  const handleEdit = (user: MockUser) => {
+  const handleEdit = (user: UserDto) => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };
 
-  const handleResetPassword = (user: MockUser) => {
+  const handleResetPassword = (user: UserDto) => {
     if (confirm(`Envoyer un email de réinitialisation de mot de passe à ${user.email} ?`)) {
       console.log('Sending password reset email to:', user.email);
       alert(`Email de réinitialisation envoyé à ${user.email}`);
     }
   };
 
-  const handleDelete = (user: MockUser) => {
+  const handleDelete = (user: UserDto) => {
     if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) {
       console.log('Deleting user:', user.id);
       alert('Utilisateur supprimé (mock)');
@@ -158,25 +159,31 @@ export default function UsersPage() {
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = roleFilter !== 'all' || statusFilter !== 'all' || dateFrom || dateTo;
+  const hasActiveFilters = roleFilter !== 'all' || statusFilter !== 'all' || !!dateFrom || !!dateTo;
 
   const getRoleLabel = (role: string) => {
-    switch (role) {
-      case 'client': return 'Client';
-      case 'admin': return 'Admin';
-      case 'commercial': return 'Commercial';
+    switch (role?.toUpperCase()) {
+      case 'ADMIN': return 'Admin';
+      case 'USER': return 'Utilisateur';
       default: return role;
     }
   };
 
   const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin': return 'destructive';
-      case 'commercial': return 'warning';
-      case 'client': return 'default';
+    switch (role?.toUpperCase()) {
+      case 'ADMIN': return 'destructive';
+      case 'USER': return 'default';
       default: return 'secondary';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -231,8 +238,8 @@ export default function UsersPage() {
                 }}
                 options={[
                   { value: 'all', label: 'Tous les rôles' },
-                  { value: 'admin', label: 'Admin' },
-                  { value: 'commercial', label: 'Commercial' },
+                  { value: 'ADMIN', label: 'Admin' },
+                  { value: 'USER', label: 'Utilisateur' },
                 ]}
               />
 
@@ -241,7 +248,7 @@ export default function UsersPage() {
                   Statut
                 </label>
                 <div className="flex gap-2">
-                  {(['all', 'active', 'inactive'] as const).map((status) => (
+                  {(['all', 'ACTIVE', 'INACTIVE'] as const).map((status) => (
                     <button
                       key={status}
                       onClick={() => {
@@ -254,7 +261,7 @@ export default function UsersPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {status === 'all' ? 'Tous' : status === 'active' ? 'Actif' : 'Inactif'}
+                      {status === 'all' ? 'Tous' : status === 'ACTIVE' ? 'Actif' : 'Inactif'}
                     </button>
                   ))}
                 </div>
@@ -331,11 +338,11 @@ export default function UsersPage() {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('registeredAt')}
+                      onClick={() => handleSort('createdAt')}
                     >
                       <div className="flex items-center">
                         Date inscription
-                        {getSortIcon('registeredAt')}
+                        {getSortIcon('createdAt')}
                       </div>
                     </TableHead>
                     <TableHead
@@ -363,15 +370,15 @@ export default function UsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-gray-500">
-                        {new Date(user.registeredAt).toLocaleDateString('fr-FR', {
+                        {new Date(user.createdAt).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
                         })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.status === 'active' ? 'success' : 'secondary'}>
-                          {user.status === 'active' ? 'Actif' : 'Inactif'}
+                        <Badge variant={user.status?.toUpperCase() === 'ACTIVE' ? 'success' : 'secondary'}>
+                          {user.status?.toUpperCase() === 'ACTIVE' ? 'Actif' : 'Inactif'}
                         </Badge>
                       </TableCell>
                       <TableCell>

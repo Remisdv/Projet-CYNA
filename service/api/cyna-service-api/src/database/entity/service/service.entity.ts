@@ -9,7 +9,7 @@ import {
 
 export enum ServiceStatus {
   DRAFT = 'brouillon',
-  PUBLISHED = 'publié',
+  PUBLISHED = 'publi\u00e9',
 }
 
 @Entity('services')

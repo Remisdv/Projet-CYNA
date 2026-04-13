@@ -33,38 +33,47 @@ export default function OrderDetailPage() {
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
 
-  const { data: order } = useOrderDetail(orderId || '001');
+  const { data: order, isLoading, isError } = useOrderDetail(orderId ?? '');
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64 text-gray-500">Chargement...</div>;
+  }
+
+  if (isError || !order) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <p className="text-gray-500">Commande introuvable.</p>
+        <button onClick={() => navigate('/orders')} className="text-blue-600 underline text-sm">Retour aux commandes</button>
+      </div>
+    );
+  }
 
   const handleConfirmPayment = () => {
     if (confirm('Confirmer le paiement de cette commande ?')) {
       console.log('Confirming payment for order:', order.ref);
-      alert('Paiement confirmé (mock)');
     }
   };
 
   const handleGenerateInvoice = () => {
     console.log('Generating invoice for order:', order.ref);
-    alert(`Génération de la facture pour ${order.ref} (mock)`);
+    alert(`Génération de la facture pour ${order.ref}`);
   };
 
   const handleMarkDelivered = () => {
     if (confirm('Marquer cette commande comme livrée ?')) {
       console.log('Marking order as delivered:', order.ref);
-      alert('Commande marquée comme livrée (mock)');
     }
   };
 
   const handleCancel = () => {
     if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
       console.log('Cancelling order:', order.ref);
-      alert('Commande annulée (mock)');
     }
   };
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;
     console.log('Adding note:', newNote);
-    alert('Note ajoutée (mock)');
     setNewNote('');
     setIsAddingNote(false);
   };
@@ -121,7 +130,7 @@ export default function OrderDetailPage() {
               Commande {order.ref}
             </h1>
             <p className="text-gray-500 mt-1">
-              Créée le {new Date(order.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+              Créée le {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           </div>
         </div>

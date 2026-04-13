@@ -53,10 +53,8 @@ export class ProductService {
 
     Object.assign(product, createProductDto);
 
-    // Generate slug if not provided
-    if (!product.slug) {
-      product.slug = await this.generateUniqueSlug(product.nom);
-    }
+    // Always generate a unique slug (use provided slug as base, or the name)
+    product.slug = await this.generateUniqueSlug(product.slug || product.nom);
 
     // For services, calculate annual discount if both prices provided
     if (product.type === ProductType.SERVICE && product.prix_mensuel && product.prix_annuel) {
@@ -68,7 +66,7 @@ export class ProductService {
 
     // Ensure stock defaults
     if (product.type === ProductType.PRODUCT && product.stock === undefined && !product.stock_illimite) {
-      product.stock_illimite = 'illimité';
+      product.stock_illimite = 'illimit\u00e9';
     }
 
     const saved = await this.productRepository.save(product);
@@ -83,7 +81,7 @@ export class ProductService {
     per_page?: number;
     categorie?: ProductCategory;
     type?: ProductType;
-    statut?: ProductStatus;
+    statut?: ProductStatus | 'all';
     prix_min?: number;
     prix_max?: number;
     disponible?: boolean;
@@ -101,7 +99,9 @@ export class ProductService {
     let queryBuilder = this.productRepository.createQueryBuilder('product');
 
     // Apply filters
-    if (query.statut) {
+    if (query.statut === 'all') {
+      // No status filter: admin sees all statuses
+    } else if (query.statut) {
       queryBuilder = queryBuilder.where('product.statut = :statut', { statut: query.statut });
     } else {
       // Default: show only published products to public
@@ -122,19 +122,19 @@ export class ProductService {
 
     if (query.disponible !== undefined && query.disponible) {
       queryBuilder = queryBuilder.andWhere('(product.stock > 0 OR product.stock_illimite = :illimite)', {
-        illimite: 'illimité',
+        illimite: 'illimit\u00e9',
       });
     }
 
     // Price range filter
-    if (query.prix_min !== undefined) {
+    if (Number.isFinite(query.prix_min)) {
       queryBuilder = queryBuilder.andWhere(
         '(product.prix >= :prix_min OR product.prix_mensuel >= :prix_min)',
         { prix_min: query.prix_min },
       );
     }
 
-    if (query.prix_max !== undefined) {
+    if (Number.isFinite(query.prix_max)) {
       queryBuilder = queryBuilder.andWhere(
         '(product.prix <= :prix_max OR product.prix_mensuel <= :prix_max)',
         { prix_max: query.prix_max },
@@ -483,7 +483,7 @@ export class ProductService {
 
     // Handle stock display
     if (entity.type === ProductType.PRODUCT) {
-      dto.stock = entity.stock_illimite === 'illimité' ? 'illimité' : entity.stock;
+      dto.stock = entity.stock_illimite === 'illimit\u00e9' ? 'illimit\u00e9' : entity.stock;
     }
 
     return dto;

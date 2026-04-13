@@ -4,12 +4,13 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Mail, CheckCircle } from 'lucide-react';
+import { useCreateUser, useUpdateUser } from './hooks/useUsers';
 
 interface UserFormData {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'commercial';
+  role: 'ADMIN' | 'USER';
   status: 'active' | 'inactive';
 }
 
@@ -24,6 +25,8 @@ export default function UserFormModal({
   onClose,
   user,
 }: UserFormModalProps) {
+  const createUser = useCreateUser();
+  const updateUser = useUpdateUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [createdUserEmail, setCreatedUserEmail] = useState('');
@@ -33,7 +36,7 @@ export default function UserFormModal({
     email: '',
     firstName: '',
     lastName: '',
-    role: 'commercial',
+    role: 'USER',
     status: 'active',
   });
 
@@ -48,15 +51,15 @@ export default function UserFormModal({
           email: user.email || '',
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          role: user.role || 'commercial',
-          status: user.status || 'active',
+          role: (user.role === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
+          status: (user.status?.toLowerCase() === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
         });
       } else {
         setFormData({
           email: '',
           firstName: '',
           lastName: '',
-          role: 'commercial',
+          role: 'USER',
           status: 'active',
         });
       }
@@ -111,32 +114,25 @@ export default function UserFormModal({
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Mock unique email check
-      if (!user && formData.email === 'test@test.com') {
-        setErrors({ email: 'Cet email est déjà utilisé' });
-        setIsSubmitting(false);
-        return;
-      }
+      const apiPayload = {
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role as 'ADMIN' | 'USER',
+        status: formData.status === 'active' ? 'ACTIVE' : 'INACTIVE' as 'ACTIVE' | 'INACTIVE',
+      };
 
       if (!user) {
-        // Create mode - show success message
+        await createUser.mutateAsync(apiPayload);
         setCreatedUserEmail(formData.email);
         setShowSuccessMessage(true);
-
-        // Mock sending email with credentials
-        console.log('Sending welcome email to:', formData.email);
-        console.log('User created:', formData);
       } else {
-        // Update mode - close immediately
-        console.log('User updated:', formData);
+        await updateUser.mutateAsync({ id: user.id, ...apiPayload });
         onClose();
       }
-    } catch (error) {
-      console.error('Error saving user:', error);
-      alert('Erreur lors de la sauvegarde');
+    } catch (error: any) {
+      const message = error?.response?.data?.message ?? 'Erreur lors de la sauvegarde';
+      alert(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -207,8 +203,8 @@ export default function UserFormModal({
             onChange={(e) => updateField('role', e.target.value as any)}
             error={errors.role}
             options={[
-              { value: 'admin', label: 'Admin' },
-              { value: 'commercial', label: 'Commercial' },
+              { value: 'ADMIN', label: 'Admin' },
+              { value: 'USER', label: 'Utilisateur' },
             ]}
           />
 

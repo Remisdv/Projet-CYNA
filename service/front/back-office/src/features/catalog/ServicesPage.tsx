@@ -27,17 +27,19 @@ import {
   X,
 } from 'lucide-react';
 import ServiceFormModal from './ServiceFormModal';
-import { useServices, useServiceCategories, MockService } from './hooks/useServices';
+import { useServices, useServiceCategories, useDeleteService, useDuplicateService, Service } from './hooks/useServices';
 
 type SortField = 'name' | 'category' | 'price' | 'stock' | 'status' | 'lastModified';
 type SortDirection = 'asc' | 'desc';
 
 export default function ServicesPage() {
-  const { data: services } = useServices();
+  const { data: services = [], isLoading: servicesLoading } = useServices();
   const { data: categories } = useServiceCategories();
+  const deleteService = useDeleteService();
+  const duplicateService = useDuplicateService();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<MockService | null>(null);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -60,7 +62,7 @@ export default function ServicesPage() {
 
     // Apply filters
     if (categoryFilter) {
-      result = result.filter(s => s.categorySlug === categoryFilter);
+      result = result.filter(s => s.category === categoryFilter);
     }
     if (statusFilter !== 'all') {
       result = result.filter(s => s.status === statusFilter);
@@ -95,7 +97,7 @@ export default function ServicesPage() {
           comparison = a.status.localeCompare(b.status);
           break;
         case 'lastModified':
-          comparison = new Date(a.lastModified).getTime() - new Date(b.lastModified).getTime();
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
           break;
       }
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -131,26 +133,18 @@ export default function ServicesPage() {
     );
   };
 
-  const handleEdit = (service: MockService) => {
+  const handleEdit = (service: Service) => {
     setSelectedService(service);
     setIsModalOpen(true);
   };
 
-  const handleDuplicate = (service: MockService) => {
-    const duplicated = {
-      ...service,
-      id: `srv-${Date.now()}`,
-      name: `${service.name} (copie)`,
-      slug: `${service.slug}-copie`,
-      status: 'draft' as const,
-    };
-    setSelectedService(duplicated);
-    setIsModalOpen(true);
+  const handleDuplicate = (service: Service) => {
+    duplicateService.mutate(service.id);
   };
 
-  const handleArchive = (service: MockService) => {
+  const handleArchive = (service: Service) => {
     if (confirm(`Êtes-vous sûr de vouloir archiver "${service.name}" ?`)) {
-      console.log('Archiving service:', service.id);
+      deleteService.mutate(service.id);
     }
   };
 
@@ -176,7 +170,7 @@ export default function ServicesPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Services</h1>
           <p className="text-gray-500 mt-1">
-            Gérez vos {filteredAndSortedServices.length} services et produits
+            {servicesLoading ? 'Chargement...' : `Gérez vos ${filteredAndSortedServices.length} services et produits`}
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -389,11 +383,11 @@ export default function ServicesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-gray-500 text-sm">
-                        {new Date(service.lastModified).toLocaleDateString('fr-FR', {
+                        {service.updatedAt ? new Date(service.updatedAt).toLocaleDateString('fr-FR', {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        })}
+                        }) : '-'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">

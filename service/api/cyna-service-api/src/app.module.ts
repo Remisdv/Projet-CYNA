@@ -6,6 +6,8 @@ import { HealthModule } from './module/health/health.module';
 import { ProductModule } from './module/product/product.module';
 import { ServiceFeatureModule } from './module/service/service.module';
 import { CategoryModule } from './module/category/category.module';
+import { OrderModule } from './module/order/order.module';
+import { StatsModule } from './module/stats/stats.module';
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { CategoryModule } from './module/category/category.module';
     ProductModule,
     ServiceFeatureModule,
     CategoryModule,
+    OrderModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsArray, IsOptional, IsDecimal, IsBoolean, IsInt, MaxLength, Length } from 'class-validator';
+import { IsString, IsEnum, IsArray, IsOptional, IsNumber, IsBoolean, IsInt, MaxLength, Length } from 'class-validator';
 import { ProductCategory, ProductType, ServicePeriodicity, ProductStatus } from '../../database/entity/product';
 
 export class CreateProductDto {
@@ -42,9 +42,13 @@ export class CreateProductDto {
   @IsString()
   keywords?: string;
 
+  @IsOptional()
+  @IsEnum(ProductStatus)
+  statut?: ProductStatus;
+
   // Product-specific
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   prix?: number;
 
   @IsOptional()
@@ -61,11 +65,11 @@ export class CreateProductDto {
 
   // Service-specific
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   prix_mensuel?: number;
 
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   prix_annuel?: number;
 
   @IsOptional()
@@ -127,7 +131,11 @@ export class UpdateProductDto {
   keywords?: string;
 
   @IsOptional()
-  @IsDecimal()
+  @IsEnum(ProductStatus)
+  statut?: ProductStatus;
+
+  @IsOptional()
+  @IsNumber()
   prix?: number;
 
   @IsOptional()
@@ -143,11 +151,11 @@ export class UpdateProductDto {
   seuil_alerte_stock?: number;
 
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   prix_mensuel?: number;
 
   @IsOptional()
-  @IsDecimal()
+  @IsNumber()
   prix_annuel?: number;
 
   @IsOptional()
