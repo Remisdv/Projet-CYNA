@@ -1,0 +1,20 @@
+import { useQuery } from '@tanstack/react-query';
+import api from '../../../services/api';
+
+export interface Advertisement {
+  id: string;
+  texteFr?: string;
+  texteEn?: string;
+  actif?: boolean;
+}
+
+export function useActiveAdvertisement() {
+  return useQuery({
+    queryKey: ['advertisement', 'active'],
+    queryFn: async () => {
+      const { data } = await api.get('/bo/texte-promotionnel/active');
+      return (data?.data ?? data) as Advertisement | null;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
