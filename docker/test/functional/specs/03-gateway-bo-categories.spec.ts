@@ -105,10 +105,10 @@ describe('Gateway — BO Categories endpoints', () => {
       }
     });
 
-    it('should return 200 when deleting an existing category', async () => {
+    it('should return 204 when deleting an existing category', async () => {
       if (!tempId) return;
       const res = await del(`${GATEWAY}/api/bo/categories/${tempId}`, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       tempId = '';
     });
 

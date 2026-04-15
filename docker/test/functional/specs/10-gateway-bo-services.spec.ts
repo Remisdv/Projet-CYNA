@@ -115,10 +115,10 @@ describe('Gateway — BO Services endpoints (→ service-api products)', () => {
   });
 
   describe('POST /api/bo/services/:id/publish', () => {
-    it('should return 200 when publishing an existing service', async () => {
+    it('should return 201 when publishing an existing service', async () => {
       if (!createdId) return;
       const res = await post(`${GATEWAY}/api/bo/services/${createdId}/publish`, {}, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
     });
 
     it('should return 401 without authentication token', async () => {
@@ -159,10 +159,10 @@ describe('Gateway — BO Services endpoints (→ service-api products)', () => {
       }
     });
 
-    it('should return 200 when deleting an existing service', async () => {
+    it('should return 204 when deleting an existing service', async () => {
       if (!tempId) return;
       const res = await del(`${GATEWAY}/api/bo/services/${tempId}`, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       tempId = '';
     });
 

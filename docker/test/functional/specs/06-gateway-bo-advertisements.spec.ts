@@ -16,14 +16,14 @@ describe('Gateway — BO Advertisements (TextePromotionnel) endpoints', () => {
     if (res.ok) {
       const body = await res.json() as any;
       createdId = body.id;
+      // Activate it so GET /active returns 200
+      await patch(`${GATEWAY}/api/bo/advertisements/${createdId}/activate`, undefined, adminToken);
     }
   });
 
-  afterAll(async () => {
-    if (createdId) {
-      await del(`${GATEWAY}/api/bo/advertisements/${createdId}`, adminToken);
-    }
-  });
+  // Note: we intentionally do NOT delete `createdId` here so that the active
+  // advertisement persists for spec 14 (webapp-api GET /promotionnel/active).
+  // The entire DB is torn down with `docker compose down -v` after the test run.
 
   describe('GET /api/bo/advertisements', () => {
     it('should return 200 with the list of advertisements (public)', async () => {

@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
+import { TextePromotionnelModule } from './module/TextePromotionnel.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { HealthModule } from './module/health.module';
       synchronize: process.env.NODE_ENV !== 'production',
     }),
     HealthModule,
+    TextePromotionnelModule,
   ],
   controllers: [AppController],
   providers: [AppService],

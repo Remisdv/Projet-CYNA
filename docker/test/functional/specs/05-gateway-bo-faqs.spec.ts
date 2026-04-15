@@ -133,10 +133,10 @@ describe('Gateway — BO FAQ endpoints', () => {
       }
     });
 
-    it('should return 200 when deleting an existing FAQ', async () => {
+    it('should return 204 when deleting an existing FAQ', async () => {
       if (!tempId) return;
       const res = await del(`${GATEWAY}/api/bo/faqs/${tempId}`, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       tempId = '';
     });
 

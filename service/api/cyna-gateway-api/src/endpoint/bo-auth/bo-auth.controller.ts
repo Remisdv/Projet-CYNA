@@ -20,7 +20,7 @@ export class BoAuthController {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.json({
+    res.status(200).json({
       message: 'Login successful',
       user: authResponse.user,
       access_token: authResponse.access_token,
@@ -32,13 +32,13 @@ export class BoAuthController {
   @Post('refresh')
   async refresh(@Body() dto: BoRefreshDto, @Res() res: Response): Promise<void> {
     const authResponse = await this.authService.refreshBo(dto.refresh_token);
-    res.json(authResponse);
+    res.status(200).json(authResponse);
   }
 
   @Public()
   @Post('logout')
   async logout(@Res() res: Response): Promise<void> {
     res.clearCookie('BoAuthentication');
-    res.json({ message: 'Logout successful' });
+    res.status(200).json({ message: 'Logout successful' });
   }
 }

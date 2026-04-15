@@ -21,9 +21,16 @@ export class BoProxyService implements IProxyService {
       const client = isHttps ? https : http;
 
       const headers: any = { ...(request.headers || {}) };
-      
-      // Only add Content-Type for requests with a body
-      if (request.body && request.method !== 'GET' && request.method !== 'HEAD') {
+
+      // Only add Content-Type/body for requests that actually have a non-empty body.
+      // Express sets req.body = {} by default; an empty object must not be forwarded
+      // because APIs with forbidNonWhitelisted:true reject unexpected bodies.
+      const hasBody =
+        request.body !== undefined &&
+        request.body !== null &&
+        !(typeof request.body === 'object' && Object.keys(request.body).length === 0);
+
+      if (hasBody && request.method !== 'GET' && request.method !== 'HEAD') {
         headers['Content-Type'] = 'application/json';
       }
 
@@ -62,7 +69,7 @@ export class BoProxyService implements IProxyService {
 
       httpRequest.on('error', reject);
 
-      if (request.body && request.method !== 'GET' && request.method !== 'HEAD') {
+      if (hasBody && request.method !== 'GET' && request.method !== 'HEAD') {
         httpRequest.write(JSON.stringify(request.body));
       }
 

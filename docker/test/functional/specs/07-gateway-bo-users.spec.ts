@@ -127,10 +127,10 @@ describe('Gateway — BO Users endpoints', () => {
   });
 
   describe('POST /api/bo/users/:id/reset-password', () => {
-    it('should return 200 when resetting password for an existing user', async () => {
+    it('should return 201 when resetting password for an existing user', async () => {
       if (!createdId) return;
       const res = await post(`${GATEWAY}/api/bo/users/${createdId}/reset-password`, {}, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
     });
 
     it('should return 404 when resetting password for a non-existent user', async () => {

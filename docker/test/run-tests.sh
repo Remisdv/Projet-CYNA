@@ -104,7 +104,7 @@ log "[4/5] Seeding test data..."
 
 # Seed users via bo-api
 if docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" \
-    exec -T cyna-test-bo-api yarn seed:users 2>&1 | grep -v "^$"; then
+    exec -T cyna-test-bo-api npm run seed:users 2>&1 | grep -v "^$"; then
   ok "Users seeded."
 else
   warn "User seed may have been skipped (already exists)."
@@ -112,7 +112,7 @@ fi
 
 # Seed services/categories via service-api
 if docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" \
-    exec -T cyna-test-service-api yarn seed:services 2>&1 | grep -v "^$"; then
+    exec -T cyna-test-service-api npm run seed:services 2>&1 | grep -v "^$"; then
   ok "Services and categories seeded."
 else
   warn "Service seed may have been skipped (already exists)."

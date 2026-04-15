@@ -105,10 +105,10 @@ describe('service-api — Products endpoints (direct)', () => {
   });
 
   describe('POST /api/products/:id/publish', () => {
-    it('should return 200 when publishing an existing product', async () => {
+    it('should return 201 when publishing an existing product', async () => {
       if (!createdId) return;
       const res = await post(`${SERVICE_API}/api/products/${createdId}/publish`, {});
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
     });
 
     it('should return 404 when publishing a non-existent product', async () => {
@@ -149,10 +149,10 @@ describe('service-api — Products endpoints (direct)', () => {
       }
     });
 
-    it('should return 200 when deleting an existing product', async () => {
+    it('should return 204 when deleting an existing product', async () => {
       if (!tempId) return;
       const res = await del(`${SERVICE_API}/api/products/${tempId}`);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       tempId = '';
     });
 

@@ -111,14 +111,14 @@ try {
     # ------------------------------------------
     log "[4/5] Seeding test data..."
 
-    & docker compose -f $ComposeFile --env-file $EnvFile exec -T cyna-test-bo-api yarn seed:users
+    & docker compose -f $ComposeFile --env-file $EnvFile exec -T cyna-test-bo-api npm run seed:users
     if ($LASTEXITCODE -eq 0) {
         ok "Users seeded."
     } else {
         warn "User seed skipped (already exists or error)."
     }
 
-    & docker compose -f $ComposeFile --env-file $EnvFile exec -T cyna-test-service-api yarn seed:services
+    & docker compose -f $ComposeFile --env-file $EnvFile exec -T cyna-test-service-api npm run seed:services
     if ($LASTEXITCODE -eq 0) {
         ok "Services and categories seeded."
     } else {

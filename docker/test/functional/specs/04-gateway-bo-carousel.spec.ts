@@ -106,10 +106,10 @@ describe('Gateway — BO Carousel endpoints', () => {
       }
     });
 
-    it('should return 200 when deleting an existing carousel item', async () => {
+    it('should return 204 when deleting an existing carousel item', async () => {
       if (!tempId) return;
       const res = await del(`${GATEWAY}/api/bo/carousel/${tempId}`, adminToken);
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(204);
       tempId = '';
     });
 
