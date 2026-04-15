@@ -356,7 +356,7 @@ export default function ServicesPage() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{service.price.toFixed(2)} €</p>
+                          <p className="font-medium">{Number(service.price).toFixed(2)} €</p>
                           {service.type === 'service' && (
                             <p className="text-xs text-gray-500">/mois</p>
                           )}

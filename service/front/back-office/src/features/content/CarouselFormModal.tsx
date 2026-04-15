@@ -53,6 +53,7 @@ export default function CarouselFormModal({
   });
 
   useEffect(() => {
+    if (!isOpen) return;
     if (item) {
       reset({
         imageId: item.imageId,
@@ -70,7 +71,7 @@ export default function CarouselFormModal({
         order: 0,
       });
     }
-  }, [item, reset]);
+  }, [isOpen, item, reset]);
 
   const onSubmit = async (data: CarouselFormData) => {
     try {

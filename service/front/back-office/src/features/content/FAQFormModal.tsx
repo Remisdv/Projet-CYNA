@@ -58,6 +58,7 @@ export default function FaqFormModal({
   const isLeaf = answer && answer.trim().length > 0;
 
   useEffect(() => {
+    if (!isOpen) return;
     if (faq) {
       reset({
         question: faq.question,
@@ -73,7 +74,7 @@ export default function FaqFormModal({
         order: 0,
       });
     }
-  }, [faq, reset]);
+  }, [isOpen, faq, reset]);
 
   const onSubmit = async (data: FaqFormData) => {
     try {

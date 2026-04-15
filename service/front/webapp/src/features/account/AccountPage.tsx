@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   ShoppingBag,
@@ -6,40 +7,18 @@ import {
   Bell,
   Lock,
   LogOut,
+  Download,
 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-
-/* ─── Mock data ──────────────────────────────────────────────────── */
-const MOCK_USER = {
-  prenom: 'Jean',
-  nom: 'Dupont',
-  email: 'jean.dupont@exemple.fr',
-  telephone: '+33 6 12 34 56 78',
-  entreprise: 'Acme Corp',
-};
-
-const MOCK_ORDERS = [
-  {
-    id: 'CYNA-ABC123',
-    date: '2024-06-10',
-    statut: 'active',
-    produits: ['SOC Essentiel', 'EDR Pro'],
-    total: 349.0,
-  },
-  {
-    id: 'CYNA-DEF456',
-    date: '2024-01-15',
-    statut: 'terminée',
-    produits: ['Audit de sécurité'],
-    total: 1200.0,
-  },
-];
-
-const MOCK_SUBSCRIPTIONS = [
-  { id: '1', nom: 'SOC Essentiel', periodicite: 'mensuel', prix: 199, prochaine: '2024-07-10', statut: 'actif' },
-  { id: '2', nom: 'EDR Pro', periodicite: 'mensuel', prix: 150, prochaine: '2024-07-10', statut: 'actif' },
-];
+import { Input } from '../../components/ui/Input';
+import { useAuth } from '../../context/AuthContext';
+import { useProfile, useUpdateProfile, useChangePassword } from './hooks/useAccount';
+import { useOrders, downloadInvoice } from './hooks/useOrders';
+import { useSubscriptions } from './hooks/useSubscriptions';
 
 /* ─── Tabs ───────────────────────────────────────────────────────── */
 const TABS = [
@@ -52,6 +31,13 @@ const TABS = [
 
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState('profil');
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -61,12 +47,12 @@ export default function AccountPage() {
         <aside className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:col-span-1">
           <div className="mb-4 flex flex-col items-center text-center">
             <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-xl font-bold text-white">
-              {MOCK_USER.prenom[0]}{MOCK_USER.nom[0]}
+              {user?.firstName?.[0] ?? '?'}{user?.lastName?.[0] ?? '?'}
             </div>
             <p className="font-semibold text-gray-900">
-              {MOCK_USER.prenom} {MOCK_USER.nom}
+              {user?.firstName} {user?.lastName}
             </p>
-            <p className="text-xs text-gray-500">{MOCK_USER.email}</p>
+            <p className="text-xs text-gray-500">{user?.email}</p>
           </div>
           <nav className="space-y-1">
             {TABS.map(tab => {
@@ -86,7 +72,10 @@ export default function AccountPage() {
                 </button>
               );
             })}
-            <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-500 transition hover:bg-red-50">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-500 transition hover:bg-red-50"
+            >
               <LogOut size={16} /> Déconnexion
             </button>
           </nav>
@@ -107,16 +96,22 @@ export default function AccountPage() {
 
 /* ─── Profile tab ─────────────────────────────────────────────────── */
 function ProfileTab() {
+  const { data: profile, isLoading } = useProfile();
+  const updateProfile = useUpdateProfile();
+  const [editing, setEditing] = useState(false);
+
+  if (isLoading) return <div className="text-center py-8 text-gray-500">Chargement...</div>;
+  if (!profile) return <div className="text-center py-8 text-gray-500">Profil introuvable</div>;
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="mb-6 text-lg font-semibold text-gray-900">Informations personnelles</h2>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[
-          { label: 'Prénom', value: MOCK_USER.prenom },
-          { label: 'Nom', value: MOCK_USER.nom },
-          { label: 'Email', value: MOCK_USER.email },
-          { label: 'Téléphone', value: MOCK_USER.telephone },
-          { label: 'Entreprise', value: MOCK_USER.entreprise },
+          { label: 'Prénom', value: profile.firstName },
+          { label: 'Nom', value: profile.lastName },
+          { label: 'Email', value: profile.email },
+          { label: 'Téléphone', value: profile.phone || '—' },
         ].map(({ label, value }) => (
           <div key={label}>
             <p className="text-xs font-medium uppercase text-gray-400">{label}</p>
@@ -124,68 +119,141 @@ function ProfileTab() {
           </div>
         ))}
       </div>
-      <Button variant="outline" size="sm" className="mt-6">
-        Modifier mes informations
+      <Button variant="outline" size="sm" className="mt-6" onClick={() => setEditing(!editing)}>
+        {editing ? 'Annuler' : 'Modifier mes informations'}
       </Button>
+      {editing && <ProfileEditForm profile={profile} onSave={() => setEditing(false)} />}
     </div>
+  );
+}
+
+function ProfileEditForm({ profile, onSave }: { profile: any; onSave: () => void }) {
+  const updateProfile = useUpdateProfile();
+  const [firstName, setFirstName] = useState(profile.firstName);
+  const [lastName, setLastName] = useState(profile.lastName);
+  const [phone, setPhone] = useState(profile.phone || '');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await updateProfile.mutateAsync({ firstName, lastName, phone: phone || undefined });
+    onSave();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Prénom</label>
+          <input value={firstName} onChange={e => setFirstName(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Nom</label>
+          <input value={lastName} onChange={e => setLastName(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Téléphone</label>
+        <input value={phone} onChange={e => setPhone(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+      </div>
+      <Button type="submit" size="sm" disabled={updateProfile.isPending}>
+        {updateProfile.isPending ? 'Enregistrement...' : 'Enregistrer'}
+      </Button>
+    </form>
   );
 }
 
 /* ─── Orders tab ──────────────────────────────────────────────────── */
 function OrdersTab() {
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useOrders(page);
+
+  if (isLoading) return <div className="text-center py-8 text-gray-500">Chargement...</div>;
+
+  const orders = data?.data || [];
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-gray-900">Mes commandes</h2>
-      {MOCK_ORDERS.map(order => (
-        <div
-          key={order.id}
-          className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-        >
-          <div className="mb-2 flex items-center justify-between">
-            <span className="font-mono text-sm font-semibold text-gray-700">{order.id}</span>
-            <Badge variant={order.statut === 'active' ? 'default' : 'secondary'}>
-              {order.statut}
-            </Badge>
+      {orders.length === 0 ? (
+        <p className="text-sm text-gray-500">Aucune commande pour le moment.</p>
+      ) : (
+        orders.map(order => (
+          <div
+            key={order.id}
+            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <span className="font-mono text-sm font-semibold text-gray-700">{order.ref}</span>
+              <Badge variant={order.status === 'paid' ? 'success' : order.status === 'pending' ? 'warning' : 'secondary'}>
+                {order.status}
+              </Badge>
+            </div>
+            <p className="mb-1 text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString('fr-FR')}</p>
+            <p className="mb-2 text-sm text-gray-600">
+              {order.items.map((i: any) => i.productName).join(', ')}
+            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-blue-600">{Number(order.amount).toFixed(2)} €</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => downloadInvoice(order.id)}
+              >
+                <Download size={14} className="mr-1" /> Facture
+              </Button>
+            </div>
           </div>
-          <p className="mb-1 text-xs text-gray-400">{order.date}</p>
-          <p className="mb-2 text-sm text-gray-600">{order.produits.join(', ')}</p>
-          <p className="text-sm font-bold text-blue-600">{order.total.toFixed(2)} €</p>
+        ))
+      )}
+      {data && data.total > data.limit && (
+        <div className="flex justify-center gap-2 pt-2">
+          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+            Précédent
+          </Button>
+          <span className="text-sm text-gray-500 flex items-center">Page {page}</span>
+          <Button size="sm" variant="outline" disabled={page * data.limit >= data.total} onClick={() => setPage(p => p + 1)}>
+            Suivant
+          </Button>
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
 /* ─── Subscriptions tab ───────────────────────────────────────────── */
 function SubscriptionsTab() {
+  const { data: subscriptions, isLoading } = useSubscriptions();
+
+  if (isLoading) return <div className="text-center py-8 text-gray-500">Chargement...</div>;
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold text-gray-900">Mes abonnements</h2>
-      {MOCK_SUBSCRIPTIONS.map(sub => (
-        <div
-          key={sub.id}
-          className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-        >
-          <div className="mb-1 flex items-center justify-between">
-            <p className="font-semibold text-gray-900">{sub.nom}</p>
-            <Badge variant="default">{sub.statut}</Badge>
+      {!subscriptions || subscriptions.length === 0 ? (
+        <p className="text-sm text-gray-500">Aucun abonnement actif.</p>
+      ) : (
+        subscriptions.map(sub => (
+          <div
+            key={sub.id}
+            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+          >
+            <div className="mb-1 flex items-center justify-between">
+              <p className="font-semibold text-gray-900">{sub.productName}</p>
+              <Badge variant={sub.status === 'active' ? 'success' : sub.status === 'cancelled' ? 'destructive' : 'secondary'}>
+                {sub.status}
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-400">
+              {sub.planType} — {Number(sub.price).toFixed(2)} €/{sub.planType === 'mensuel' ? 'mois' : 'an'}
+            </p>
+            {sub.renewalDate && (
+              <p className="mt-1 text-xs text-gray-500">
+                Prochain renouvellement : {new Date(sub.renewalDate).toLocaleDateString('fr-FR')}
+              </p>
+            )}
           </div>
-          <p className="text-xs text-gray-400">
-            {sub.periodicite} — {sub.prix} €/{sub.periodicite === 'mensuel' ? 'mois' : 'an'}
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            Prochain renouvellement : {sub.prochaine}
-          </p>
-          <div className="mt-3 flex gap-2">
-            <Button size="sm" variant="outline">
-              Modifier
-            </Button>
-            <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600">
-              Résilier
-            </Button>
-          </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
@@ -221,43 +289,78 @@ function NotificationsTab() {
 }
 
 /* ─── Security tab ────────────────────────────────────────────────── */
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
+    newPassword: z.string().min(6, 'Minimum 6 caractères'),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.newPassword === d.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  });
+
 function SecurityTab() {
+  const changePassword = useChangePassword();
+  const [success, setSuccess] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({ resolver: zodResolver(passwordSchema) });
+
+  const onSubmit = async (data: any) => {
+    try {
+      setSuccess(false);
+      await changePassword.mutateAsync({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      setSuccess(true);
+      reset();
+    } catch {
+      // error handled by mutation
+    }
+  };
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <h2 className="mb-4 text-lg font-semibold text-gray-900">Sécurité du compte</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Mot de passe actuel
-          </label>
-          <input
-            type="password"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="••••••••"
-          />
+      {success && (
+        <div className="mb-4 p-3 text-sm text-green-600 bg-green-50 rounded-lg">
+          Mot de passe modifié avec succès.
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Nouveau mot de passe
-          </label>
-          <input
-            type="password"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="••••••••"
-          />
+      )}
+      {changePassword.isError && (
+        <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+          {(changePassword.error as any)?.response?.data?.message || 'Erreur lors du changement de mot de passe'}
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Confirmer le nouveau mot de passe
-          </label>
-          <input
-            type="password"
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            placeholder="••••••••"
-          />
-        </div>
-      </div>
-      <Button size="sm" className="mt-6">Changer le mot de passe</Button>
+      )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="Mot de passe actuel"
+          type="password"
+          {...register('currentPassword')}
+          error={errors.currentPassword?.message as string}
+        />
+        <Input
+          label="Nouveau mot de passe"
+          type="password"
+          {...register('newPassword')}
+          error={errors.newPassword?.message as string}
+        />
+        <Input
+          label="Confirmer le nouveau mot de passe"
+          type="password"
+          {...register('confirmPassword')}
+          error={errors.confirmPassword?.message as string}
+        />
+        <Button type="submit" size="sm" disabled={isSubmitting}>
+          {isSubmitting ? 'Modification...' : 'Changer le mot de passe'}
+        </Button>
+      </form>
     </div>
   );
 }

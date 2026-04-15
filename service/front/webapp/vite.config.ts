@@ -10,13 +10,17 @@ export default defineConfig({
     allowedHosts: ['app.localhost', 'localhost'],
     hmr: {
       host: 'localhost',
-      port: 5174,
+      port: 80,
     },
     watch: {
       usePolling: false,
     },
     proxy: {
       '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/uploads': {
         target: 'http://localhost:3000',
         changeOrigin: true,
       },

@@ -56,6 +56,7 @@ export default function CategoryFormModal({
   });
 
   useEffect(() => {
+    if (!isOpen) return;
     if (category) {
       reset({
         slug: category.slug,
@@ -74,7 +75,7 @@ export default function CategoryFormModal({
         ],
       });
     }
-  }, [category, reset]);
+  }, [isOpen, category, reset]);
 
   const onSubmit = async (data: CategoryFormData) => {
     try {

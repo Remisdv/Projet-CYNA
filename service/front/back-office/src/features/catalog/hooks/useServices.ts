@@ -22,7 +22,7 @@ export interface Service {
   metaTitle: string;
   metaDescription: string;
   keywords: string;
-  images: Array<{ url: string; altText: string; isPrimary: boolean }>;
+  images: Array<{ id?: string; url: string; altText: string; isPrimary: boolean }>;
   updatedAt: string;
   createdAt: string;
   autoRenewal?: boolean;
@@ -59,6 +59,7 @@ function normalizeService(raw: any): Service {
     metaDescription: raw.metaDescription ?? '',
     keywords: raw.keywords ?? '',
     images: (raw.images ?? []).map((img: any) => ({
+      id: img.id ?? '',
       url: img.url ?? '',
       altText: img.altText ?? img.alt_text ?? '',
       isPrimary: img.isPrimary ?? img.est_principale ?? false,
@@ -175,6 +176,45 @@ export const useDuplicateService = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['services'] });
+    },
+  });
+};
+
+export const useAddServiceImages = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, images }: { id: string; images: Array<{ url: string; est_principale?: boolean }> }) => {
+      const { data } = await api.post(`/services/${id}/images`, { images });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    },
+  });
+};
+
+export const useDeleteServiceImage = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ serviceId, imageId }: { serviceId: string; imageId: string }) => {
+      const { data } = await api.delete(`/services/${serviceId}/images/${imageId}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services'] });
+    },
+  });
+};
+
+export const useUploadImages = () => {
+  return useMutation({
+    mutationFn: async (files: File[]): Promise<string[]> => {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      const { data } = await api.post('/upload/images', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data.urls as string[];
     },
   });
 };

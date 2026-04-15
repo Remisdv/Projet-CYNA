@@ -123,7 +123,9 @@ export class ServicesProxyController extends BaseProxyController {
         proxyResponse.data && typeof proxyResponse.data === 'object'
           ? Array.isArray(proxyResponse.data)
             ? proxyResponse.data.map((item: any) => this.toCamelCase(item))
-            : proxyResponse.data.items
+            : proxyResponse.data.data && Array.isArray(proxyResponse.data.data)
+            ? { ...proxyResponse.data, data: proxyResponse.data.data.map((i: any) => this.toCamelCase(i)) }
+            : proxyResponse.data.items && Array.isArray(proxyResponse.data.items)
             ? { ...proxyResponse.data, items: proxyResponse.data.items.map((i: any) => this.toCamelCase(i)) }
             : this.toCamelCase(proxyResponse.data)
           : proxyResponse.data;

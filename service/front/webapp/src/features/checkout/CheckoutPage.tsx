@@ -1,12 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Check, CreditCard, User, ShoppingBag, PartyPopper } from 'lucide-react';
+import { Check, CreditCard, User, ShoppingBag, PartyPopper, Loader2 } from 'lucide-react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { useProfile } from '../account/hooks/useAccount';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { useCreatePaymentIntent } from './hooks/usePayment';
+
+const stripePromise = loadStripe(
+  (import.meta as any).env?.VITE_STRIPE_PK || '',
+);
 
 /* ─── Step schemas ──────────────────────────────────────────────── */
 const infoSchema = z.object({
@@ -20,14 +29,6 @@ const infoSchema = z.object({
   pays: z.string().min(1, 'Pays requis'),
 });
 type InfoForm = z.infer<typeof infoSchema>;
-
-const paymentSchema = z.object({
-  cardNumber: z.string().regex(/^\d{16}$/, 'Numéro de carte invalide (16 chiffres)'),
-  expiry: z.string().regex(/^(0[1-9]|1[0-2])\/\d{2}$/, 'Format MM/AA'),
-  cvv: z.string().regex(/^\d{3,4}$/, 'CVV invalide'),
-  cardName: z.string().min(1, 'Nom du titulaire requis'),
-});
-type PaymentForm = z.infer<typeof paymentSchema>;
 
 /* ─── Step indicator ─────────────────────────────────────────────── */
 const STEPS = [
@@ -81,12 +82,27 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 /* ─── Step 1 — Contact / Address info ───────────────────────────── */
-function Step1Info({ onNext }: { onNext: (data: InfoForm) => void }) {
+function Step1Info({
+  onNext,
+  defaults,
+}: {
+  onNext: (data: InfoForm) => void;
+  defaults?: Partial<InfoForm>;
+}) {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<InfoForm>({ resolver: zodResolver(infoSchema) });
+    reset,
+  } = useForm<InfoForm>({
+    resolver: zodResolver(infoSchema),
+    defaultValues: defaults,
+  });
+
+  // Reset form when defaults arrive (profile loaded async)
+  useEffect(() => {
+    if (defaults) reset(defaults);
+  }, [defaults, reset]);
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-4">
@@ -203,49 +219,144 @@ function Step2Summary({
   );
 }
 
-/* ─── Step 3 — Payment ───────────────────────────────────────────── */
-function Step3Payment({
+/* ─── Step 3 — Payment with Stripe Elements ──────────────────────── */
+function Step3PaymentInner({
+  info,
   onNext,
   onBack,
 }: {
-  onNext: (data: PaymentForm) => void;
+  info: InfoForm;
+  onNext: (orderRef: string) => void;
   onBack: () => void;
 }) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<PaymentForm>({ resolver: zodResolver(paymentSchema) });
+  const { items } = useCart();
+  const createPayment = useCreatePaymentIntent();
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+
+    try {
+      setError('');
+      setProcessing(true);
+
+      const billingAddress = {
+        street: info.adresse,
+        city: info.ville,
+        postalCode: info.codePostal,
+        country: info.pays,
+      };
+
+      const paymentItems = items.map((item) => ({
+        productId: item.id,
+        productName: item.nom,
+        productType: item.type as 'produit' | 'service',
+        quantity: item.quantity,
+        unitPrice:
+          item.type === 'service'
+            ? (item.periodicity === 'mensuel' ? item.prix_mensuel ?? 0 : item.prix_annuel ?? 0)
+            : item.prix ?? 0,
+        periodicity: item.type === 'service' ? item.periodicity : undefined,
+      }));
+
+      // 1. Create PaymentIntent on server → get clientSecret
+      const result = await createPayment.mutateAsync({
+        items: paymentItems,
+        billingAddress,
+        shippingAddress: billingAddress,
+      });
+
+      const clientSecret = result.clientSecret;
+
+      if (!clientSecret) {
+        // Subscription-only or no secret → proceed directly
+        onNext(result.message || 'Commande créée');
+        return;
+      }
+
+      // 2. Confirm payment with Stripe.js using card element
+      const cardElement = elements.getElement(CardElement);
+      if (!cardElement) {
+        setError('Élément de carte introuvable');
+        return;
+      }
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: `${info.prenom} ${info.nom}`,
+              email: info.email,
+              phone: info.telephone || undefined,
+              address: {
+                line1: info.adresse,
+                city: info.ville,
+                postal_code: info.codePostal,
+                country: 'FR',
+              },
+            },
+          },
+        },
+      );
+
+      if (stripeError) {
+        setError(stripeError.message || 'Erreur de paiement');
+        return;
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        onNext(result.orderRef || 'Paiement confirmé !');
+      } else {
+        onNext(`Paiement en cours de traitement (${paymentIntent?.status})`);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Erreur lors du paiement');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit(onNext)} className="space-y-4">
+    <div className="space-y-4">
       <h2 className="text-xl font-bold text-gray-900">Paiement sécurisé</h2>
       <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-700">
-        Ceci est une interface de démonstration — aucune transaction réelle ne sera effectuée.
+        Mode sandbox Stripe — aucune transaction réelle ne sera effectuée.
+        <br />
+        Carte de test : <code className="font-mono">4242 4242 4242 4242</code> — date future — CVC quelconque
       </div>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Nom du titulaire *</label>
-        <Input {...register('cardName')} placeholder="JEAN DUPONT" />
-        {errors.cardName && <p className="mt-1 text-xs text-red-500">{errors.cardName.message}</p>}
-      </div>
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">Numéro de carte *</label>
-        <Input {...register('cardNumber')} placeholder="1234567890123456" maxLength={16} />
-        {errors.cardNumber && (
-          <p className="mt-1 text-xs text-red-500">{errors.cardNumber.message}</p>
-        )}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Expiration *</label>
-          <Input {...register('expiry')} placeholder="MM/AA" maxLength={5} />
-          {errors.expiry && <p className="mt-1 text-xs text-red-500">{errors.expiry.message}</p>}
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">CVV *</label>
-          <Input {...register('cvv')} placeholder="123" maxLength={4} type="password" />
-          {errors.cvv && <p className="mt-1 text-xs text-red-500">{errors.cvv.message}</p>}
+      {error && (
+        <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
+      )}
+
+      <div className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+        <p className="text-sm text-gray-600">
+          Adresse : {info.adresse}, {info.codePostal} {info.ville}
+        </p>
+        <p className="text-sm text-gray-600 mb-2">Email : {info.email}</p>
+
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Informations de carte bancaire
+        </label>
+        <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#1f2937',
+                  '::placeholder': { color: '#9ca3af' },
+                },
+                invalid: { color: '#dc2626' },
+              },
+              hidePostalCode: true,
+            }}
+          />
         </div>
       </div>
 
@@ -253,19 +364,37 @@ function Step3Payment({
         <Button type="button" variant="outline" onClick={onBack} className="flex-1">
           Retour
         </Button>
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+        <Button onClick={handlePay} className="flex-1" disabled={processing || !stripe}>
           <CreditCard size={16} className="mr-2" />
-          {isSubmitting ? 'Traitement…' : 'Confirmer la commande'}
+          {processing ? (
+            <>
+              <Loader2 size={16} className="mr-2 animate-spin" />
+              Traitement…
+            </>
+          ) : (
+            'Payer'
+          )}
         </Button>
       </div>
-    </form>
+    </div>
+  );
+}
+
+function Step3Payment(props: {
+  info: InfoForm;
+  onNext: (orderRef: string) => void;
+  onBack: () => void;
+}) {
+  return (
+    <Elements stripe={stripePromise}>
+      <Step3PaymentInner {...props} />
+    </Elements>
   );
 }
 
 /* ─── Step 4 — Confirmation ──────────────────────────────────────── */
-function Step4Confirmation({ info }: { info: InfoForm }) {
+function Step4Confirmation({ info, message }: { info: InfoForm; message: string }) {
   const navigate = useNavigate();
-  const orderRef = `CYNA-${Date.now().toString(36).toUpperCase()}`;
 
   return (
     <div className="py-8 text-center">
@@ -274,9 +403,7 @@ function Step4Confirmation({ info }: { info: InfoForm }) {
       <p className="mb-1 text-gray-600">
         Merci, <strong>{info.prenom}</strong>. Votre commande a bien été prise en compte.
       </p>
-      <p className="mb-6 text-sm text-gray-400">
-        Référence : <span className="font-mono font-semibold text-gray-700">{orderRef}</span>
-      </p>
+      <p className="mb-6 text-sm text-gray-400">{message}</p>
       <p className="mb-8 text-sm text-gray-500">
         Un email de confirmation a été envoyé à <strong>{info.email}</strong>.
       </p>
@@ -293,9 +420,31 @@ function Step4Confirmation({ info }: { info: InfoForm }) {
 /* ─── Main CheckoutPage ──────────────────────────────────────────── */
 export default function CheckoutPage() {
   const { items, clearCart } = useCart();
+  const { isAuthenticated } = useAuth();
+  const { data: profile } = useProfile();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [infoData, setInfoData] = useState<InfoForm | null>(null);
+  const [confirmMessage, setConfirmMessage] = useState('');
+
+  // Build default values from profile
+  const profileDefaults: Partial<InfoForm> | undefined = profile
+    ? {
+        prenom: profile.firstName || '',
+        nom: profile.lastName || '',
+        email: profile.email || '',
+        telephone: profile.phone || '',
+        adresse: profile.billingAddress?.street || '',
+        ville: profile.billingAddress?.city || '',
+        codePostal: profile.billingAddress?.postalCode || '',
+        pays: profile.billingAddress?.country || 'France',
+      }
+    : undefined;
+
+  if (!isAuthenticated) {
+    navigate('/login');
+    return null;
+  }
 
   if (items.length === 0 && step < 3) {
     return (
@@ -314,7 +463,8 @@ export default function CheckoutPage() {
     setStep(1);
   }
 
-  function handlePaymentNext(_data: PaymentForm) {
+  function handlePaymentNext(msg: string) {
+    setConfirmMessage(msg);
     clearCart();
     setStep(3);
   }
@@ -322,14 +472,14 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <StepIndicator current={step} />
-      {step === 0 && <Step1Info onNext={handleInfoNext} />}
+      {step === 0 && <Step1Info onNext={handleInfoNext} defaults={profileDefaults} />}
       {step === 1 && infoData && (
         <Step2Summary info={infoData} onNext={() => setStep(2)} onBack={() => setStep(0)} />
       )}
-      {step === 2 && (
-        <Step3Payment onNext={handlePaymentNext} onBack={() => setStep(1)} />
+      {step === 2 && infoData && (
+        <Step3Payment info={infoData} onNext={handlePaymentNext} onBack={() => setStep(1)} />
       )}
-      {step === 3 && infoData && <Step4Confirmation info={infoData} />}
+      {step === 3 && infoData && <Step4Confirmation info={infoData} message={confirmMessage} />}
     </div>
   );
 }

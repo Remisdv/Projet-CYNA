@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Search, Shield, Menu, X } from 'lucide-react';
+import { ShoppingCart, User, Search, Shield, Menu, X, LogIn } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../lib/utils';
 
 export default function Header() {
   const { itemCount } = useCart();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,14 +65,26 @@ export default function Header() {
               <Search className="h-5 w-5 text-gray-300" />
             </button>
 
-            {/* Account */}
-            <Link
-              to="/account"
-              className="p-2 rounded-lg hover:bg-gray-700 transition-colors"
-              aria-label="Mon compte"
-            >
-              <User className="h-5 w-5 text-gray-300" />
-            </Link>
+            {/* Account / Login */}
+            {isAuthenticated ? (
+              <Link
+                to="/account"
+                className="p-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-1"
+                aria-label="Mon compte"
+              >
+                <User className="h-5 w-5 text-gray-300" />
+                <span className="hidden lg:inline text-xs text-gray-300">{user?.firstName}</span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="p-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-1"
+                aria-label="Se connecter"
+              >
+                <LogIn className="h-5 w-5 text-gray-300" />
+                <span className="hidden lg:inline text-xs text-gray-300">Connexion</span>
+              </Link>
+            )}
 
             {/* Cart */}
             <Link

@@ -22,6 +22,15 @@ interface ProductFilters {
   statut?: string;
 }
 
+function normalizeImages(raw: any[]): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((img: any) => (typeof img === 'string' ? img : img?.url ?? ''));
+}
+
+function normalizeProduct(p: any): Product {
+  return { ...p, images: normalizeImages(p.images) };
+}
+
 export function useProducts(filters?: ProductFilters) {
   return useQuery({
     queryKey: ['products', filters],
@@ -32,7 +41,8 @@ export function useProducts(filters?: ProductFilters) {
       if (filters?.type) params.set('type', filters.type);
       if (filters?.q) params.set('q', filters.q);
       const { data } = await api.get(`/products?${params}`);
-      return (data?.data ?? data ?? []) as Product[];
+      const list = (data?.data ?? data ?? []) as any[];
+      return list.map(normalizeProduct);
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -43,7 +53,7 @@ export function useProductDetail(id: string | undefined) {
     queryKey: ['products', id],
     queryFn: async () => {
       const { data } = await api.get(`/products/${id}`);
-      return (data?.data ?? data) as Product;
+      return normalizeProduct(data?.data ?? data);
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 5,

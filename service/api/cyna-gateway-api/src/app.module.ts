@@ -1,5 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
@@ -15,9 +17,22 @@ import {
 } from './common';
 
 import { BoAuthModule } from './module/bo-auth.module';
+import { WebappAuthModule } from './module/webapp-auth.module';
+import { WebappProxyModule } from './module/webapp-proxy.module';
 
 @Module({
-  imports: [HealthModule, ProxyModule, BoAuthModule],
+  imports: [
+    HealthModule,
+    ProxyModule,
+    BoAuthModule,
+    WebappAuthModule,
+    WebappProxyModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'uploads'),
+      serveRoot: '/uploads',
+      serveStaticOptions: { index: false },
+    }),
+  ],
   controllers: [AppController],
   providers: [
     AppService,

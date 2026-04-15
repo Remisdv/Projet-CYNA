@@ -13,13 +13,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { addItem, isInCart } = useCart();
   const inCart = isInCart(product.id);
 
-  const displayPrice = product.type === 'service'
+  const rawPrice = product.type === 'service'
     ? product.prix_mensuel
     : product.prix;
 
-  const priceLabel = product.type === 'service'
-    ? `${displayPrice?.toFixed(2) ?? '—'} €/mois`
-    : `${displayPrice?.toFixed(2) ?? '—'} €`;
+  const displayPrice = rawPrice != null ? Number(rawPrice) : null;
+
+  const priceLabel = displayPrice != null && !isNaN(displayPrice)
+    ? `${displayPrice.toFixed(2)} €${product.type === 'service' ? '/mois' : ''}`
+    : '—';
 
   const imageUrl = product.images?.[0];
 

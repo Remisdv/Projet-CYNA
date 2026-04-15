@@ -46,7 +46,7 @@ export function Modal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
+        onMouseDown={onClose}
       />
 
       {/* Modal */}
@@ -55,6 +55,7 @@ export function Modal({
           'relative w-full mx-4 bg-white rounded-xl shadow-2xl max-h-[90vh] flex flex-col',
           sizeClasses[size]
         )}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">

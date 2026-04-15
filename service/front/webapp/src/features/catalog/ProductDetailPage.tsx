@@ -155,7 +155,7 @@ export default function ProductDetailPage() {
               >
                 Mensuel
                 {product.prix_mensuel != null && (
-                  <span className="ml-1 text-xs opacity-80">{product.prix_mensuel.toFixed(2)} €</span>
+                  <span className="ml-1 text-xs opacity-80">{Number(product.prix_mensuel).toFixed(2)} €</span>
                 )}
               </button>
               <button
@@ -168,7 +168,7 @@ export default function ProductDetailPage() {
               >
                 Annuel
                 {product.prix_annuel != null && (
-                  <span className="ml-1 text-xs opacity-80">{product.prix_annuel.toFixed(2)} €</span>
+                  <span className="ml-1 text-xs opacity-80">{Number(product.prix_annuel).toFixed(2)} €</span>
                 )}
               </button>
             </div>
@@ -177,7 +177,7 @@ export default function ProductDetailPage() {
           <div className="mb-6 text-4xl font-extrabold text-blue-600">
             {price != null ? (
               <>
-                {price.toFixed(2)} €
+                {Number(price).toFixed(2)} €
                 {isService && (
                   <span className="ml-1 text-lg font-normal text-gray-500">
                     /{selectedPeriodicity === 'mensuel' ? 'mois' : 'an'}

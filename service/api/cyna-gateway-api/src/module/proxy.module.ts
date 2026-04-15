@@ -12,6 +12,7 @@ import { FaqProxyController } from 'src/endpoint/FaqProxy.controller';
 import { ServicesProxyController } from 'src/endpoint/ServicesProxy.controller';
 import { OrdersProxyController } from 'src/endpoint/OrdersProxy.controller';
 import { StatsProxyController } from 'src/endpoint/StatsProxy.controller';
+import { UploadController } from 'src/endpoint/upload.controller';
 
 @Module({
   controllers: [
@@ -26,6 +27,7 @@ import { StatsProxyController } from 'src/endpoint/StatsProxy.controller';
     ServicesProxyController,
     OrdersProxyController,
     StatsProxyController,
+    UploadController,
   ],
   providers: [ProxyService, BoProxyService],
   exports: [ProxyService, BoProxyService],

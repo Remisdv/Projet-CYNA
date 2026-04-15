@@ -6,6 +6,7 @@ import { Mail, Phone, MessageSquare, Check } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Button } from '../../components/ui/Button';
+import { useContact } from './hooks/useContact';
 
 const schema = z.object({
   prenom: z.string().min(1, 'Prénom requis'),
@@ -18,6 +19,8 @@ type ContactForm = z.infer<typeof schema>;
 
 export default function ContactPage() {
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+  const contact = useContact();
   const {
     register,
     handleSubmit,
@@ -25,11 +28,20 @@ export default function ContactPage() {
     reset,
   } = useForm<ContactForm>({ resolver: zodResolver(schema) });
 
-  async function onSubmit(_data: ContactForm) {
-    // Simulate network delay for demo
-    await new Promise(r => setTimeout(r, 800));
-    setSent(true);
-    reset();
+  async function onSubmit(formData: ContactForm) {
+    try {
+      setError('');
+      await contact.mutateAsync({
+        name: `${formData.prenom} ${formData.nom}`,
+        email: formData.email,
+        subject: formData.sujet,
+        message: formData.message,
+      });
+      setSent(true);
+      reset();
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erreur lors de l'envoi du message");
+    }
   }
 
   return (
@@ -103,6 +115,9 @@ export default function ContactPage() {
               onSubmit={handleSubmit(onSubmit)}
               className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
             >
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
+              )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">Prénom *</label>

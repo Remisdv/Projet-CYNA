@@ -14,7 +14,7 @@ export function usePublicCarousel() {
   return useQuery({
     queryKey: ['carousel'],
     queryFn: async () => {
-      const { data } = await api.get('/bo/carousel');
+      const { data } = await api.get('/webapp/carousel');
       return (data?.data ?? data ?? []) as CarouselSlide[];
     },
     staleTime: 1000 * 60 * 10,

@@ -46,6 +46,7 @@ export default function AdvertisementFormModal({
   });
 
   useEffect(() => {
+    if (!isOpen) return;
     if (advertisement) {
       reset({
         textFr: advertisement.textFr,
@@ -57,7 +58,7 @@ export default function AdvertisementFormModal({
         textEn: '',
       });
     }
-  }, [advertisement, reset]);
+  }, [isOpen, advertisement, reset]);
 
   const onSubmit = async (data: AdFormData) => {
     try {

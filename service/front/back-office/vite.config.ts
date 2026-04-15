@@ -26,6 +26,10 @@ export default defineConfig({
         target: 'http://file-service:3004',
         changeOrigin: true,
       },
+      '/uploads': {
+        target: 'http://cyna-gateway-api:3000',
+        changeOrigin: true,
+      },
       '/health': {
         target: 'http://cyna-gateway-api:3000',
         changeOrigin: true,

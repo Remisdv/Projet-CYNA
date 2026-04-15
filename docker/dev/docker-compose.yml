@@ -158,6 +158,11 @@ services:
       - ELASTICSEARCH_URL=${ELASTICSEARCH_URL}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_CONTACT_DEST=${EMAIL_CONTACT_DEST}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - SERVICE_API_URL=http://cyna-service-api:3000
     depends_on:
       postgres:
         condition: service_healthy
@@ -206,6 +211,7 @@ services:
       - /app/node_modules
     environment:
       - VITE_API_URL=http://api.localhost
+      - VITE_STRIPE_PK=${STRIPE_PUBLISHABLE_KEY}
     networks:
       - cyna-network
 
