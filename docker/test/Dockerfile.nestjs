@@ -1,0 +1,20 @@
+# Dockerfile NestJS leger pour les tests fonctionnels
+# Pas de compilation native (--ignore-scripts), donc pas besoin de python3/make/g++
+FROM node:20-alpine
+
+ARG APP_NAME
+ENV APP_NAME=${APP_NAME}
+
+WORKDIR /app
+
+COPY ${APP_NAME}/package.json ./
+
+RUN npm install --ignore-scripts
+
+COPY ${APP_NAME}/ ./
+
+RUN rm -rf dist && npm run build
+
+EXPOSE 3000
+
+CMD ["node", "dist/main"]
