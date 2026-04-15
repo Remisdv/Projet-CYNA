@@ -68,6 +68,7 @@ services:
     depends_on:
       - cyna-gateway-api
       - cyna-bo-front
+      - cyna-webapp-front
     networks:
       - cyna-network
 
@@ -187,6 +188,24 @@ services:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
+    networks:
+      - cyna-network
+
+  # ============================================
+  # FRONTEND - WebApp
+  # ============================================
+  cyna-webapp-front:
+    build:
+      context: ../../
+      dockerfile: docker/dev/Dockerfile.react
+      args:
+        APP_PATH: service/front/webapp
+    container_name: cyna-webapp-front
+    volumes:
+      - ../../service/front/webapp:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://api.localhost
     networks:
       - cyna-network
 
