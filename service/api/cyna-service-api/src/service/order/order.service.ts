@@ -3,12 +3,60 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../../database/entity/order';
 
+export interface SyncOrderDto {
+  ref: string;
+  clientEmail: string;
+  clientFirstName?: string;
+  clientLastName?: string;
+  items: any[];
+  amount: number;
+  status?: string;
+  paymentStatus?: string;
+  billingAddress?: any;
+  shippingAddress?: any;
+  createdAt?: string;
+}
+
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
   ) { }
+
+  async syncFromWebapp(dto: SyncOrderDto): Promise<OrderEntity> {
+    // Upsert by ref to avoid duplicates
+    const existing = await this.orderRepository.findOne({ where: { ref: dto.ref } });
+    if (existing) {
+      existing.status = (dto.status as OrderStatus) || existing.status;
+      existing.paymentStatus = (dto.paymentStatus as PaymentStatus) || existing.paymentStatus;
+      return this.orderRepository.save(existing);
+    }
+
+    const order = this.orderRepository.create({
+      ref: dto.ref,
+      clientEmail: dto.clientEmail,
+      clientFirstName: dto.clientFirstName,
+      clientLastName: dto.clientLastName,
+      items: dto.items.map(i => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        subtotal: i.subtotal ?? i.unitPrice * i.quantity,
+      })),
+      amount: dto.amount,
+      status: (dto.status as OrderStatus) || OrderStatus.CONFIRMED,
+      paymentStatus: (dto.paymentStatus as PaymentStatus) || PaymentStatus.PAID,
+      billingAddress: dto.billingAddress,
+      history: [{
+        action: 'Commande synchronisée depuis webapp',
+        date: dto.createdAt || new Date().toISOString(),
+        by: 'system',
+      }],
+    });
+
+    return this.orderRepository.save(order);
+  }
 
   async findAll(params: {
     page?: number;

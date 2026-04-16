@@ -40,3 +40,12 @@ export function useCreatePaymentIntent() {
     },
   });
 }
+
+export function useConfirmPayment() {
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      const { data: result } = await api.post('/webapp/payment/confirm', { orderId });
+      return result as { message: string };
+    },
+  });
+}

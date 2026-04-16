@@ -21,4 +21,10 @@ export class WebappPaymentProxyController extends BaseProxyController {
   async webhook(@Req() req: Request, @Res() res: Response): Promise<void> {
     await this.proxy(req, res, '/api/webapp/payment/stripe/webhook');
   }
+
+  @Post('confirm')
+  @Auth()
+  async confirm(@Req() req: Request, @Res() res: Response): Promise<void> {
+    await this.proxy(req, res, '/api/webapp/payment/confirm');
+  }
 }
