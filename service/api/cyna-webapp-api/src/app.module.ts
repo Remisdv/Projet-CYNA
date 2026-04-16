@@ -15,6 +15,7 @@ import { SubscriptionModule } from './module/Subscription.module';
 import { ContactModule } from './module/Contact.module';
 import { CartModule } from './module/Cart.module';
 import { NotificationsModule } from './module/Notifications.module';
+import { AdminUsersModule } from './module/AdminUsers.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { NotificationsModule } from './module/Notifications.module';
     ContactModule,
     CartModule,
     NotificationsModule,
+    AdminUsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

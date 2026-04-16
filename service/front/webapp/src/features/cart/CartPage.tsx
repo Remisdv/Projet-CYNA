@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Monitor, Package } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { Button } from '../../components/ui/Button';
 
@@ -67,12 +67,19 @@ export default function CartPage() {
 
                 <div className="flex flex-1 flex-col">
                   <div className="mb-1 flex items-start justify-between gap-2">
-                    <Link
-                      to={`/products/${item.id}`}
-                      className="font-semibold text-gray-900 hover:text-blue-600"
-                    >
-                      {item.nom}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      {isService ? (
+                        <Monitor size={14} className="shrink-0 text-purple-500" />
+                      ) : (
+                        <Package size={14} className="shrink-0 text-blue-500" />
+                      )}
+                      <Link
+                        to={`/products/${item.id}`}
+                        className="font-semibold text-gray-900 hover:text-blue-600"
+                      >
+                        {item.nom}
+                      </Link>
+                    </div>
                     <button
                       onClick={() => removeItem(item.id)}
                       aria-label="Supprimer"
@@ -89,11 +96,10 @@ export default function CartPage() {
                         <button
                           key={p}
                           onClick={() => updatePeriodicity(item.id, p)}
-                          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition ${
-                            item.periodicity === p
+                          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition ${item.periodicity === p
                               ? 'border-blue-600 bg-blue-600 text-white'
                               : 'border-gray-300 text-gray-600 hover:border-blue-400'
-                          }`}
+                            }`}
                         >
                           {p.charAt(0).toUpperCase() + p.slice(1)}
                         </button>

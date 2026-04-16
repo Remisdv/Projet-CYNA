@@ -5,11 +5,11 @@ import api from '../../../services/api';
 
 export interface KPIData {
   revenue: number;
-  revenueTrend: number;
+  revenueTrend: number | null;
   orders: number;
-  ordersTrend: number;
+  ordersTrend: number | null;
   activeCustomers: number;
-  customersTrend: number;
+  customersTrend: number | null;
   conversionRate: number;
   logins7d: number;
   cartAdds7d: number;
@@ -32,7 +32,7 @@ export interface TopProduct {
 
 export interface TopService {
   name: string;
-  revenue: number;
+  sales: number;
 }
 
 export interface RecentOrder {
@@ -60,11 +60,11 @@ export interface OutOfStockProduct {
 interface DashboardStats {
   kpis: {
     totalRevenue: number;
-    revenueTrend: number;
+    revenueTrend: number | null;
     totalOrders: number;
-    ordersTrend: number;
+    ordersTrend: number | null;
     activeCustomers: number;
-    customersTrend: number;
+    customersTrend: number | null;
     conversionRate: number;
     logins7d: number;
     cartAdds7d: number;
@@ -98,9 +98,9 @@ export const useDashboard = (dateRange: '7d' | '30d' | '90d' | 'custom') => {
   });
 
   const { data: usersResponse } = useQuery({
-    queryKey: ['dashboard-recent-users'],
+    queryKey: ['dashboard-recent-webapp-users'],
     queryFn: async () => {
-      const { data } = await api.get<any>('/users', { params: { limit: 5 } });
+      const { data } = await api.get<any>('/webapp-users', { params: { limit: 5 } });
       return data;
     },
   });
@@ -123,11 +123,11 @@ export const useDashboard = (dateRange: '7d' | '30d' | '90d' | 'custom') => {
 
   const kpiData: KPIData = {
     revenue: stats?.kpis.totalRevenue ?? 0,
-    revenueTrend: stats?.kpis.revenueTrend ?? 0,
+    revenueTrend: stats?.kpis.revenueTrend ?? null,
     orders: stats?.kpis.totalOrders ?? ordersResponse?.total ?? 0,
-    ordersTrend: stats?.kpis.ordersTrend ?? 0,
+    ordersTrend: stats?.kpis.ordersTrend ?? null,
     activeCustomers: stats?.kpis.activeCustomers ?? usersResponse?.total ?? 0,
-    customersTrend: stats?.kpis.customersTrend ?? 0,
+    customersTrend: stats?.kpis.customersTrend ?? null,
     conversionRate: stats?.kpis.conversionRate ?? 0,
     logins7d: stats?.kpis.logins7d ?? 0,
     cartAdds7d: stats?.kpis.cartAdds7d ?? 0,
@@ -138,7 +138,7 @@ export const useDashboard = (dateRange: '7d' | '30d' | '90d' | 'custom') => {
     revenueData: stats?.revenueByDay ?? [],
     ordersData: stats?.ordersByDay ?? [],
     topProducts: stats?.topProducts ?? [],
-    topServices: (stats?.topServices ?? []).map((s) => ({ name: s.name, revenue: s.sales })),
+    topServices: stats?.topServices ?? [],
     recentOrders,
     recentUsers,
     outOfStockProducts: stats?.lowStockProducts ?? [],

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ShoppingCart, Check, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart, Check, ArrowLeft, Monitor, Package, Repeat } from 'lucide-react';
 import { useProductDetail } from '../catalog/hooks/useProducts';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -48,9 +48,8 @@ function ImageGallery({ images, nom }: { images: string[]; nom: string }) {
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition ${
-                i === current ? 'border-blue-600' : 'border-transparent'
-              }`}
+              className={`h-16 w-16 shrink-0 overflow-hidden rounded-lg border-2 transition ${i === current ? 'border-blue-600' : 'border-transparent'
+                }`}
             >
               <img src={src} alt={`Miniature ${i + 1}`} className="h-full w-full object-cover" />
             </button>
@@ -135,57 +134,86 @@ export default function ProductDetailPage() {
 
         {/* Info */}
         <div className="flex flex-col">
-          {product.categorie && (
-            <Badge variant="secondary" className="mb-3 w-fit">
-              {product.categorie}
-            </Badge>
-          )}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {product.categorie && (
+              <Badge variant="secondary" className="w-fit">
+                {product.categorie}
+              </Badge>
+            )}
+            {isService ? (
+              <Badge className="w-fit bg-purple-100 text-purple-700 border-purple-200">
+                <Monitor size={12} className="mr-1" /> Service
+              </Badge>
+            ) : (
+              <Badge className="w-fit bg-blue-100 text-blue-700 border-blue-200">
+                <Package size={12} className="mr-1" /> Produit
+              </Badge>
+            )}
+          </div>
           <h1 className="mb-3 text-3xl font-bold text-gray-900">{product.nom}</h1>
 
           {/* Periodicity selector for services */}
-          {isService && (
-            <div className="mb-4 flex gap-2">
-              <button
-                onClick={() => setSelectedPeriodicity('mensuel')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                  selectedPeriodicity === 'mensuel'
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
-                }`}
-              >
-                Mensuel
-                {product.prix_mensuel != null && (
-                  <span className="ml-1 text-xs opacity-80">{Number(product.prix_mensuel).toFixed(2)} €</span>
-                )}
-              </button>
-              <button
-                onClick={() => setSelectedPeriodicity('annuel')}
-                className={`rounded-lg border px-4 py-2 text-sm font-medium transition ${
-                  selectedPeriodicity === 'annuel'
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
-                }`}
-              >
-                Annuel
-                {product.prix_annuel != null && (
-                  <span className="ml-1 text-xs opacity-80">{Number(product.prix_annuel).toFixed(2)} €</span>
-                )}
-              </button>
-            </div>
-          )}
+          {isService && (() => {
+            const mensuel = product.prix_mensuel != null ? Number(product.prix_mensuel) : null;
+            const annuel = product.prix_annuel != null ? Number(product.prix_annuel) : null;
+            const savingsPercent = mensuel && annuel && mensuel > 0
+              ? Math.round((1 - annuel / (mensuel * 12)) * 100)
+              : 0;
 
-          <div className="mb-6 text-4xl font-extrabold text-blue-600">
-            {price != null ? (
-              <>
-                {Number(price).toFixed(2)} €
-                {isService && (
-                  <span className="ml-1 text-lg font-normal text-gray-500">
-                    /{selectedPeriodicity === 'mensuel' ? 'mois' : 'an'}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-gray-400">Prix sur devis</span>
+            return (
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setSelectedPeriodicity('mensuel')}
+                  className={`relative rounded-xl border-2 p-3 text-left transition ${selectedPeriodicity === 'mensuel'
+                      ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                      : 'border-gray-200 bg-white hover:border-blue-300'
+                    }`}
+                >
+                  <div className="text-sm font-semibold text-gray-900">Mensuel</div>
+                  {mensuel != null && (
+                    <div className="mt-1 text-lg font-bold text-blue-600">{mensuel.toFixed(2)} €<span className="text-sm font-normal text-gray-500">/mois</span></div>
+                  )}
+                </button>
+                <button
+                  onClick={() => setSelectedPeriodicity('annuel')}
+                  className={`relative rounded-xl border-2 p-3 text-left transition ${selectedPeriodicity === 'annuel'
+                      ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                      : 'border-gray-200 bg-white hover:border-blue-300'
+                    }`}
+                >
+                  {savingsPercent > 0 && (
+                    <span className="absolute -top-2.5 right-2 rounded-full bg-green-500 px-2 py-0.5 text-[10px] font-bold text-white">
+                      -{savingsPercent}%
+                    </span>
+                  )}
+                  <div className="text-sm font-semibold text-gray-900">Annuel</div>
+                  {annuel != null && (
+                    <div className="mt-1 text-lg font-bold text-blue-600">{annuel.toFixed(2)} €<span className="text-sm font-normal text-gray-500">/an</span></div>
+                  )}
+                </button>
+              </div>
+            );
+          })()}
+
+          <div className="mb-6">
+            <div className="text-4xl font-extrabold text-blue-600">
+              {price != null ? (
+                <>
+                  {Number(price).toFixed(2)} €
+                  {isService && (
+                    <span className="ml-1 text-lg font-normal text-gray-500">
+                      /{selectedPeriodicity === 'mensuel' ? 'mois' : 'an'}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">Prix sur devis</span>
+              )}
+            </div>
+            {isService && (
+              <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
+                <Repeat size={14} /> Abonnement récurrent
+              </p>
             )}
           </div>
 
