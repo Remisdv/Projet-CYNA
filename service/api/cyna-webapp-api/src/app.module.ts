@@ -14,6 +14,7 @@ import { OrderModule } from './module/Order.module';
 import { SubscriptionModule } from './module/Subscription.module';
 import { ContactModule } from './module/Contact.module';
 import { CartModule } from './module/Cart.module';
+import { NotificationsModule } from './module/Notifications.module';
 
 @Module({
   imports: [
@@ -35,8 +36,9 @@ import { CartModule } from './module/Cart.module';
     SubscriptionModule,
     ContactModule,
     CartModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

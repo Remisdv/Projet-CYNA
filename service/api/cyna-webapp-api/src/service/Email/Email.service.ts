@@ -13,12 +13,13 @@ export class EmailService {
     });
   }
 
-  async sendMail(to: string, subject: string, html: string): Promise<void> {
+  async sendMail(to: string, subject: string, html: string, attachments?: any[]): Promise<void> {
     await this.transporter.sendMail({
       from: '"CYNA" <noreply@cyna.com>',
       to,
       subject,
       html,
+      attachments,
     });
   }
 
@@ -80,6 +81,84 @@ export class EmailService {
         <hr/>
         <p>${data.message.replace(/\n/g, '<br/>')}</p>
       `,
+    );
+  }
+
+  async sendServiceCredentials(
+    to: string,
+    data: { ref: string; serviceName: string; credentials: { login: string; password: string; url: string } },
+  ): Promise<void> {
+    await this.sendMail(
+      to,
+      `CYNA - Vos identifiants pour ${data.serviceName}`,
+      `
+        <h2>Accès à votre service</h2>
+        <p>Merci pour votre commande <strong>${data.ref}</strong>.</p>
+        <p>Voici vos identifiants d'accès pour <strong>${data.serviceName}</strong> :</p>
+        <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+          <tr><td><strong>URL</strong></td><td><a href="${data.credentials.url}">${data.credentials.url}</a></td></tr>
+          <tr><td><strong>Identifiant</strong></td><td><code>${data.credentials.login}</code></td></tr>
+          <tr><td><strong>Mot de passe</strong></td><td><code>${data.credentials.password}</code></td></tr>
+        </table>
+        <p style="color: #666; font-size: 12px; margin-top: 16px;">
+          Nous vous recommandons de changer votre mot de passe dès la première connexion.
+        </p>
+        <p>L'équipe CYNA</p>
+      `,
+    );
+  }
+
+  async sendShippingUpdate(
+    to: string,
+    data: { ref: string; trackingNumber?: string; status: string },
+  ): Promise<void> {
+    const trackingHtml = data.trackingNumber
+      ? `<p>Numéro de suivi : <strong>${data.trackingNumber}</strong></p>`
+      : '';
+
+    await this.sendMail(
+      to,
+      `CYNA - Mise à jour livraison ${data.ref}`,
+      `
+        <h2>Mise à jour de votre commande</h2>
+        <p>Votre commande <strong>${data.ref}</strong> a été mise à jour :</p>
+        <p>Nouveau statut : <strong>${data.status}</strong></p>
+        ${trackingHtml}
+        <p>L'équipe CYNA</p>
+      `,
+    );
+  }
+
+  async sendOrderConfirmationWithInvoice(
+    to: string,
+    order: { ref: string; amount: number; items: any[] },
+    invoicePdf: Buffer,
+  ): Promise<void> {
+    const itemsHtml = order.items
+      .map((i) => `<tr><td>${i.productName}</td><td>${i.quantity}</td><td>${i.subtotal.toFixed(2)} €</td></tr>`)
+      .join('');
+
+    await this.sendMail(
+      to,
+      `CYNA - Confirmation de commande ${order.ref}`,
+      `
+        <h2>Merci pour votre commande !</h2>
+        <p>Votre commande <strong>${order.ref}</strong> a bien été confirmée.</p>
+        <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse;">
+          <thead><tr><th>Produit</th><th>Qté</th><th>Sous-total</th></tr></thead>
+          <tbody>${itemsHtml}</tbody>
+        </table>
+        <p><strong>Total : ${order.amount.toFixed(2)} €</strong></p>
+        <p>Vous trouverez votre facture en pièce jointe.</p>
+        <p>L'équipe CYNA</p>
+      `,
+      [
+        {
+          filename: `facture-${order.ref}.pdf`,
+          content: invoicePdf,
+          contentType: 'application/pdf',
+        },
+      ],
     );
   }
 }

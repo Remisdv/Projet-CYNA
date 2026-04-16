@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import api from '../services/api';
+import { trackEvent } from '../services/tracking';
 
 export interface User {
   id: number;
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('refresh_token', data.refresh_token);
     }
     setUser(data.user);
+    trackEvent('LOGIN', data.user?.id);
   }, []);
 
   const register = useCallback(async (registerData: RegisterData) => {

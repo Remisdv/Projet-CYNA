@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
+import { trackEvent } from '../services/tracking';
 import {
   useServerCart,
   useAddToServerCart,
@@ -114,17 +115,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   // Build the displayed items: server items when auth, local when not
   const items: CartItem[] = isAuthenticated
     ? (serverItems ?? []).map((si) => ({
-        id: si.productId,
-        nom: si.productName,
-        type: si.productType as 'produit' | 'service',
-        prix: si.prix ? Number(si.prix) : undefined,
-        prix_mensuel: si.prixMensuel ? Number(si.prixMensuel) : undefined,
-        prix_annuel: si.prixAnnuel ? Number(si.prixAnnuel) : undefined,
-        periodicity: (si.periodicity as CartPeriodicity) || undefined,
-        quantity: si.quantity,
-        image: si.image,
-        serverItemId: si.id,
-      }))
+      id: si.productId,
+      nom: si.productName,
+      type: si.productType as 'produit' | 'service',
+      prix: si.prix ? Number(si.prix) : undefined,
+      prix_mensuel: si.prixMensuel ? Number(si.prixMensuel) : undefined,
+      prix_annuel: si.prixAnnuel ? Number(si.prixAnnuel) : undefined,
+      periodicity: (si.periodicity as CartPeriodicity) || undefined,
+      quantity: si.quantity,
+      image: si.image,
+      serverItemId: si.id,
+    }))
     : localItems;
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -143,6 +144,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addItem = useCallback(
     (newItem: Omit<CartItem, 'quantity'>) => {
+      trackEvent('CART_ADD', undefined, { productId: newItem.id, productName: newItem.nom });
       if (isAuthenticated) {
         const payload: Record<string, unknown> = {
           productId: newItem.id,

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Textarea } from '../../components/ui/Textarea';
+import { Input } from '../../components/ui/Input';
 import {
   Table,
   TableBody,
@@ -25,15 +26,25 @@ import {
   Package,
   Calendar,
 } from 'lucide-react';
-import { useOrderDetail } from './hooks/useOrders';
+import {
+  useOrderDetail,
+  useUpdateOrderStatus,
+  useUpdatePaymentStatus,
+  useAddOrderNote,
+} from './hooks/useOrders';
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const navigate = useNavigate();
   const [newNote, setNewNote] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [showTrackingInput, setShowTrackingInput] = useState(false);
 
   const { data: order, isLoading, isError } = useOrderDetail(orderId ?? '');
+  const updateStatus = useUpdateOrderStatus();
+  const updatePayment = useUpdatePaymentStatus();
+  const addNote = useAddOrderNote();
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-gray-500">Chargement...</div>;
@@ -50,30 +61,43 @@ export default function OrderDetailPage() {
 
   const handleConfirmPayment = () => {
     if (confirm('Confirmer le paiement de cette commande ?')) {
-      console.log('Confirming payment for order:', order.ref);
+      updatePayment.mutate({ id: order.id, paymentStatus: 'paid' });
     }
   };
 
   const handleGenerateInvoice = () => {
-    console.log('Generating invoice for order:', order.ref);
-    alert(`Génération de la facture pour ${order.ref}`);
+    alert(`Génération de la facture pour ${order.ref} (fonctionnalité à venir)`);
   };
 
   const handleMarkDelivered = () => {
-    if (confirm('Marquer cette commande comme livrée ?')) {
-      console.log('Marking order as delivered:', order.ref);
+    if (showTrackingInput) {
+      updateStatus.mutate({
+        id: order.id,
+        status: 'delivered',
+        trackingNumber: trackingNumber || undefined,
+      });
+      setShowTrackingInput(false);
+      setTrackingNumber('');
+    } else {
+      setShowTrackingInput(true);
     }
   };
 
   const handleCancel = () => {
     if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
-      console.log('Cancelling order:', order.ref);
+      updateStatus.mutate({ id: order.id, status: 'cancelled' });
+    }
+  };
+
+  const handleConfirmOrder = () => {
+    if (confirm('Confirmer cette commande ?')) {
+      updateStatus.mutate({ id: order.id, status: 'confirmed' });
     }
   };
 
   const handleAddNote = () => {
     if (!newNote.trim()) return;
-    console.log('Adding note:', newNote);
+    addNote.mutate({ id: order.id, text: newNote });
     setNewNote('');
     setIsAddingNote(false);
   };
@@ -144,9 +168,15 @@ export default function OrderDetailPage() {
         <CardContent className="py-4">
           <div className="flex flex-wrap gap-2">
             {order.paymentStatus === 'pending' && (
-              <Button onClick={handleConfirmPayment}>
+              <Button onClick={handleConfirmPayment} disabled={updatePayment.isPending}>
                 <Check className="h-4 w-4 mr-2" />
                 Confirmer paiement
+              </Button>
+            )}
+            {order.status === 'pending' && order.paymentStatus === 'paid' && (
+              <Button onClick={handleConfirmOrder} disabled={updateStatus.isPending}>
+                <Check className="h-4 w-4 mr-2" />
+                Confirmer commande
               </Button>
             )}
             <Button variant="outline" onClick={handleGenerateInvoice}>
@@ -154,13 +184,21 @@ export default function OrderDetailPage() {
               Générer facture PDF
             </Button>
             {order.status === 'confirmed' && (
-              <Button variant="outline" onClick={handleMarkDelivered}>
+              <Button variant="outline" onClick={handleMarkDelivered} disabled={updateStatus.isPending}>
                 <Truck className="h-4 w-4 mr-2" />
-                Marquer livrée
+                {showTrackingInput ? 'Confirmer livraison' : 'Marquer livrée'}
               </Button>
             )}
+            {showTrackingInput && (
+              <Input
+                placeholder="N° de suivi (optionnel)"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                className="w-64"
+              />
+            )}
             {order.status !== 'cancelled' && order.status !== 'delivered' && (
-              <Button variant="destructive" onClick={handleCancel}>
+              <Button variant="destructive" onClick={handleCancel} disabled={updateStatus.isPending}>
                 <X className="h-4 w-4 mr-2" />
                 Annuler commande
               </Button>

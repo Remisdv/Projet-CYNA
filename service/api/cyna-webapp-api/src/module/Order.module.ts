@@ -9,5 +9,6 @@ import { OrderMapper } from '../service/mappers/Order.mapper';
   imports: [TypeOrmModule.forFeature([CustomerOrder])],
   controllers: [OrderController],
   providers: [OrderService, OrderMapper],
+  exports: [OrderService],
 })
-export class OrderModule {}
+export class OrderModule { }

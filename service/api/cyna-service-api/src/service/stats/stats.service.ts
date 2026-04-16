@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderEntity, PaymentStatus } from '../../database/entity/order';
 import { ProductEntity, ProductStatus } from '../../database/entity/product';
+import { TrackingService } from '../tracking/tracking.service';
+import { TrackingEventType } from '../../database/entity/tracking/tracking-event.entity';
 
 @Injectable()
 export class StatsService {
@@ -11,7 +13,8 @@ export class StatsService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(ProductEntity)
     private readonly productRepository: Repository<ProductEntity>,
-  ) {}
+    private readonly trackingService: TrackingService,
+  ) { }
 
   private validateDays(days: unknown): number {
     const d = Math.floor(Number(days));
@@ -117,6 +120,33 @@ export class StatsService {
       .limit(10)
       .getMany();
 
+    // Tracking-based stats
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const sinceD = new Date(Date.now() - d * 24 * 60 * 60 * 1000);
+
+    const [logins7d, cartAdds7d, cartCheckouts, topServicesRows] = await Promise.all([
+      this.trackingService.countByType(TrackingEventType.LOGIN, since7d),
+      this.trackingService.countByType(TrackingEventType.CART_ADD, since7d),
+      this.trackingService.countByType(TrackingEventType.CART_CHECKOUT, sinceD),
+      this.orderRepository.manager.query<{ name: string; sales: string }[]>(
+        `SELECT item->>'productName'         AS name,
+                SUM((item->>'quantity')::int) AS sales
+         FROM orders,
+              jsonb_array_elements(COALESCE(items, '[]'::jsonb)) AS item
+         WHERE item->>'productType' = 'service'
+           AND "createdAt" >= NOW() - make_interval(days => $1)
+         GROUP BY item->>'productName'
+         ORDER BY sales DESC
+         LIMIT 5`,
+        [d],
+      ),
+    ]);
+
+    const conversionRate =
+      cartAdds7d > 0
+        ? Math.round((cartCheckouts / cartAdds7d) * 1000) / 10
+        : 0;
+
     const curRev = parseFloat(currentRevenue[0]?.total ?? '0');
     const prevRev = parseFloat(previousRevenue[0]?.total ?? '0');
     const revenueTrend =
@@ -142,6 +172,9 @@ export class StatsService {
         ordersTrend,
         activeCustomers: curCustomers,
         customersTrend,
+        conversionRate,
+        logins7d,
+        cartAdds7d,
       },
       revenueByDay: revenueByDay.map((r) => ({
         date: r.date,
@@ -152,6 +185,10 @@ export class StatsService {
         orders: parseInt(r.orders, 10),
       })),
       topProducts: topProducts.map((r) => ({
+        name: r.name,
+        sales: parseInt(r.sales, 10),
+      })),
+      topServices: topServicesRows.map((r) => ({
         name: r.name,
         sales: parseInt(r.sales, 10),
       })),
@@ -218,8 +255,8 @@ export class StatsService {
         salesLastMonth > 0
           ? Math.round(((salesThisMonth - salesLastMonth) / salesLastMonth) * 1000) / 10
           : salesThisMonth > 0
-          ? 100
-          : 0;
+            ? 100
+            : 0;
       return {
         productId: r.product_name,
         productName: r.product_name,

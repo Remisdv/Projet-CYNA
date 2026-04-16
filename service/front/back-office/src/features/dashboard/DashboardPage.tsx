@@ -160,22 +160,20 @@ export default function DashboardPage() {
               <button
                 key={range}
                 onClick={() => setDateRange(range)}
-                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  dateRange === range
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${dateRange === range
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 {range === '7d' ? '7 jours' : range === '30d' ? '30 jours' : '90 jours'}
               </button>
             ))}
             <button
               onClick={() => setDateRange('custom')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                dateRange === 'custom'
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${dateRange === 'custom'
                   ? 'bg-blue-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <Calendar className="h-4 w-4" />
               Custom
@@ -216,7 +214,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
           title="Revenue (mois)"
           value={`$${kpiData.revenue.toLocaleString('en-US')}`}
@@ -237,9 +235,21 @@ export default function DashboardPage() {
         />
         <KPICard
           title="Taux de Conversion"
-          value="--"
+          value={`${kpiData.conversionRate}%`}
           trend={0}
           icon={<TrendingUp className="h-5 w-5 text-orange-600" />}
+        />
+        <KPICard
+          title="Connexions (7j)"
+          value={kpiData.logins7d.toString()}
+          trend={0}
+          icon={<Users className="h-5 w-5 text-indigo-600" />}
+        />
+        <KPICard
+          title="Ajouts panier (7j)"
+          value={kpiData.cartAdds7d.toString()}
+          trend={0}
+          icon={<ShoppingCart className="h-5 w-5 text-pink-600" />}
         />
       </div>
 

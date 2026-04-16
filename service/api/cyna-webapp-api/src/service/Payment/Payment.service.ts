@@ -7,6 +7,7 @@ import { WebappSubscription, SubscriptionPlan, SubscriptionStatus } from '../../
 import { StripeService } from '../Stripe/Stripe.service';
 import { EmailService } from '../Email/Email.service';
 import { CartService } from '../Cart/Cart.service';
+import { OrderService } from '../Order/Order.service';
 import { CreatePaymentIntentDto, ConfirmPaymentDto } from '../dtos/Payment/Payment.dto';
 
 @Injectable()
@@ -21,7 +22,8 @@ export class PaymentService {
     private readonly stripeService: StripeService,
     private readonly emailService: EmailService,
     private readonly cartService: CartService,
-  ) {}
+    private readonly orderService: OrderService,
+  ) { }
 
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
     const user = await this.userRepo.findOneBy({ id: userId });
@@ -157,11 +159,39 @@ export class PaymentService {
 
           const user = await this.userRepo.findOneBy({ id: order.userId });
           if (user) {
-            await this.emailService.sendOrderConfirmation(user.email, {
-              ref: order.ref,
-              amount: Number(order.amount),
-              items: order.items,
-            });
+            // Generate invoice PDF and send confirmation with attachment
+            try {
+              const invoicePdf = await this.orderService.generateInvoicePdf(order.id, order.userId);
+              await this.emailService.sendOrderConfirmationWithInvoice(user.email, {
+                ref: order.ref,
+                amount: Number(order.amount),
+                items: order.items,
+              }, invoicePdf);
+            } catch {
+              // Fallback to simple confirmation if PDF generation fails
+              await this.emailService.sendOrderConfirmation(user.email, {
+                ref: order.ref,
+                amount: Number(order.amount),
+                items: order.items,
+              });
+            }
+
+            // Send service credentials for service items (mocked)
+            const serviceItems = order.items.filter(
+              (i: any) => i.productType === 'service',
+            );
+            for (const item of serviceItems) {
+              await this.emailService.sendServiceCredentials(user.email, {
+                ref: order.ref,
+                serviceName: item.productName,
+                credentials: {
+                  login: user.email,
+                  password: `CYNA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+                  url: `https://app.cyna.com/services/${item.productId || 'default'}`,
+                },
+              });
+            }
+
             // Clear cart without releasing stock (items are purchased)
             await this.cartService.markPurchased(order.userId);
           }

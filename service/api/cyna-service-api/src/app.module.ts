@@ -8,6 +8,7 @@ import { ServiceFeatureModule } from './module/service/service.module';
 import { CategoryModule } from './module/category/category.module';
 import { OrderModule } from './module/order/order.module';
 import { StatsModule } from './module/stats/stats.module';
+import { TrackingModule } from './module/tracking/tracking.module';
 
 @Module({
   imports: [
@@ -23,8 +24,9 @@ import { StatsModule } from './module/stats/stats.module';
     CategoryModule,
     OrderModule,
     StatsModule,
+    TrackingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }

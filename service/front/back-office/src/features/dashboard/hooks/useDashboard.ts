@@ -10,6 +10,9 @@ export interface KPIData {
   ordersTrend: number;
   activeCustomers: number;
   customersTrend: number;
+  conversionRate: number;
+  logins7d: number;
+  cartAdds7d: number;
 }
 
 export interface RevenueDataPoint {
@@ -62,10 +65,14 @@ interface DashboardStats {
     ordersTrend: number;
     activeCustomers: number;
     customersTrend: number;
+    conversionRate: number;
+    logins7d: number;
+    cartAdds7d: number;
   };
   revenueByDay: RevenueDataPoint[];
   ordersByDay: OrdersDataPoint[];
   topProducts: TopProduct[];
+  topServices: { name: string; sales: number }[];
   lowStockProducts: OutOfStockProduct[];
 }
 
@@ -121,6 +128,9 @@ export const useDashboard = (dateRange: '7d' | '30d' | '90d' | 'custom') => {
     ordersTrend: stats?.kpis.ordersTrend ?? 0,
     activeCustomers: stats?.kpis.activeCustomers ?? usersResponse?.total ?? 0,
     customersTrend: stats?.kpis.customersTrend ?? 0,
+    conversionRate: stats?.kpis.conversionRate ?? 0,
+    logins7d: stats?.kpis.logins7d ?? 0,
+    cartAdds7d: stats?.kpis.cartAdds7d ?? 0,
   };
 
   return {
@@ -128,7 +138,7 @@ export const useDashboard = (dateRange: '7d' | '30d' | '90d' | 'custom') => {
     revenueData: stats?.revenueByDay ?? [],
     ordersData: stats?.ordersByDay ?? [],
     topProducts: stats?.topProducts ?? [],
-    topServices: [] as TopService[],
+    topServices: (stats?.topServices ?? []).map((s) => ({ name: s.name, revenue: s.sales })),
     recentOrders,
     recentUsers,
     outOfStockProducts: stats?.lowStockProducts ?? [],

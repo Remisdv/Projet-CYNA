@@ -12,6 +12,7 @@ import { useProfile } from '../account/hooks/useAccount';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useCreatePaymentIntent } from './hooks/usePayment';
+import { trackEvent } from '../../services/tracking';
 
 const stripePromise = loadStripe(
   (import.meta as any).env?.VITE_STRIPE_PK || '',
@@ -49,29 +50,26 @@ function StepIndicator({ current }: { current: number }) {
           <div key={i} className="flex items-center">
             <div className="flex flex-col items-center">
               <div
-                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${
-                  done
+                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${done
                     ? 'border-blue-600 bg-blue-600 text-white'
                     : active
-                    ? 'border-blue-600 bg-white text-blue-600'
-                    : 'border-gray-300 bg-white text-gray-400'
-                }`}
+                      ? 'border-blue-600 bg-white text-blue-600'
+                      : 'border-gray-300 bg-white text-gray-400'
+                  }`}
               >
                 {done ? <Check size={18} /> : <Icon size={18} />}
               </div>
               <span
-                className={`mt-1 text-xs font-medium ${
-                  active ? 'text-blue-600' : done ? 'text-blue-500' : 'text-gray-400'
-                }`}
+                className={`mt-1 text-xs font-medium ${active ? 'text-blue-600' : done ? 'text-blue-500' : 'text-gray-400'
+                  }`}
               >
                 {step.label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
               <div
-                className={`mx-2 mb-5 h-0.5 w-12 sm:w-20 ${
-                  i < current ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
+                className={`mx-2 mb-5 h-0.5 w-12 sm:w-20 ${i < current ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
               />
             )}
           </div>
@@ -310,6 +308,7 @@ function Step3PaymentInner({
       }
 
       if (paymentIntent?.status === 'succeeded') {
+        trackEvent('CART_CHECKOUT', undefined, { orderRef: result.orderRef });
         onNext(result.orderRef || 'Paiement confirmé !');
       } else {
         onNext(`Paiement en cours de traitement (${paymentIntent?.status})`);
@@ -430,15 +429,15 @@ export default function CheckoutPage() {
   // Build default values from profile
   const profileDefaults: Partial<InfoForm> | undefined = profile
     ? {
-        prenom: profile.firstName || '',
-        nom: profile.lastName || '',
-        email: profile.email || '',
-        telephone: profile.phone || '',
-        adresse: profile.billingAddress?.street || '',
-        ville: profile.billingAddress?.city || '',
-        codePostal: profile.billingAddress?.postalCode || '',
-        pays: profile.billingAddress?.country || 'France',
-      }
+      prenom: profile.firstName || '',
+      nom: profile.lastName || '',
+      email: profile.email || '',
+      telephone: profile.phone || '',
+      adresse: profile.billingAddress?.street || '',
+      ville: profile.billingAddress?.city || '',
+      codePostal: profile.billingAddress?.postalCode || '',
+      pays: profile.billingAddress?.country || 'France',
+    }
     : undefined;
 
   if (!isAuthenticated) {

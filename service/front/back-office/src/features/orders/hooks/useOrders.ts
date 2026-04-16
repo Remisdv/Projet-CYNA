@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../services/api';
 
 // ========== TYPES ==========
@@ -180,5 +180,65 @@ export const useOrderDetail = (id: string) => {
       return normalizeOrderDetail(data);
     },
     enabled: !!id,
+  });
+};
+
+export const useUpdateOrderStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      status,
+      trackingNumber,
+    }: {
+      id: string;
+      status: string;
+      trackingNumber?: string;
+    }) => {
+      const { data } = await api.patch(`/orders/${id}/status`, {
+        status,
+        trackingNumber,
+      });
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};
+
+export const useUpdatePaymentStatus = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      paymentStatus,
+    }: {
+      id: string;
+      paymentStatus: string;
+    }) => {
+      const { data } = await api.patch(`/orders/${id}/payment-status`, {
+        paymentStatus,
+      });
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+  });
+};
+
+export const useAddOrderNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, text }: { id: string; text: string }) => {
+      const { data } = await api.post(`/orders/${id}/notes`, { text });
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+    },
   });
 };

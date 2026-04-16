@@ -85,6 +85,12 @@ export class OrderEntity {
     by: string;
   }>;
 
+  @Column({ nullable: true })
+  trackingNumber: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  shippedAt: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 
