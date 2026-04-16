@@ -9,6 +9,7 @@ import {
 export enum OrderStatus {
   PENDING = 'pending',
   CONFIRMED = 'confirmed',
+  SHIPPED = 'shipped',
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
 }
@@ -68,7 +69,9 @@ export class OrderEntity {
   @Column({ type: 'jsonb', default: '[]' })
   items: Array<{
     id?: string;
+    productId?: string;
     productName: string;
+    productType?: string;
     quantity: number;
     unitPrice: number;
     subtotal: number;
@@ -83,6 +86,13 @@ export class OrderEntity {
     action: string;
     date: string;
     by: string;
+  }>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  credentials: Array<{
+    serviceName: string;
+    data: Record<string, string>;
+    sentAt: string;
   }>;
 
   @Column({ nullable: true })

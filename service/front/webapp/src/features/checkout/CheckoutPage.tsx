@@ -5,13 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Check, CreditCard, User, ShoppingBag, PartyPopper, Loader2 } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile } from '../account/hooks/useAccount';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { useCreatePaymentIntent } from './hooks/usePayment';
+import { useCreatePaymentIntent, useConfirmPayment } from './hooks/usePayment';
 import { trackEvent } from '../../services/tracking';
 
 const stripePromise = loadStripe(
@@ -51,10 +51,10 @@ function StepIndicator({ current }: { current: number }) {
             <div className="flex flex-col items-center">
               <div
                 className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition ${done
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : active
-                      ? 'border-blue-600 bg-white text-blue-600'
-                      : 'border-gray-300 bg-white text-gray-400'
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : active
+                    ? 'border-blue-600 bg-white text-blue-600'
+                    : 'border-gray-300 bg-white text-gray-400'
                   }`}
               >
                 {done ? <Check size={18} /> : <Icon size={18} />}
@@ -224,11 +224,12 @@ function Step3PaymentInner({
   onBack,
 }: {
   info: InfoForm;
-  onNext: (orderRef: string) => void;
+  onNext: (orderRef: string, orderId?: string) => void;
   onBack: () => void;
 }) {
   const { items } = useCart();
   const createPayment = useCreatePaymentIntent();
+  const confirmPayment = useConfirmPayment();
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState('');
@@ -271,12 +272,12 @@ function Step3PaymentInner({
 
       if (!clientSecret) {
         // Subscription-only or no secret → proceed directly
-        onNext(result.message || 'Commande créée');
+        onNext(result.message || 'Commande créée', result.orderId ? String(result.orderId) : undefined);
         return;
       }
 
       // 2. Confirm payment with Stripe.js using card element
-      const cardElement = elements.getElement(CardElement);
+      const cardElement = elements.getElement(CardNumberElement);
       if (!cardElement) {
         setError('Élément de carte introuvable');
         return;
@@ -308,10 +309,18 @@ function Step3PaymentInner({
       }
 
       if (paymentIntent?.status === 'succeeded') {
+        // Confirm order: sends emails + syncs to service-api for BO
+        if (result.orderId) {
+          try {
+            await confirmPayment.mutateAsync(String(result.orderId));
+          } catch (e) {
+            console.error('Order confirmation failed:', e);
+          }
+        }
         trackEvent('CART_CHECKOUT', undefined, { orderRef: result.orderRef });
-        onNext(result.orderRef || 'Paiement confirmé !');
+        onNext(result.orderRef || 'Paiement confirmé !', result.orderId ? String(result.orderId) : undefined);
       } else {
-        onNext(`Paiement en cours de traitement (${paymentIntent?.status})`);
+        onNext(`Paiement en cours de traitement (${paymentIntent?.status})`, result.orderId ? String(result.orderId) : undefined);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erreur lors du paiement');
@@ -340,10 +349,10 @@ function Step3PaymentInner({
         <p className="text-sm text-gray-600 mb-2">Email : {info.email}</p>
 
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Informations de carte bancaire
+          Numéro de carte
         </label>
-        <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
-          <CardElement
+        <div className="rounded-lg border border-gray-300 p-3 bg-gray-50 mb-3">
+          <CardNumberElement
             options={{
               style: {
                 base: {
@@ -353,9 +362,49 @@ function Step3PaymentInner({
                 },
                 invalid: { color: '#dc2626' },
               },
-              hidePostalCode: true,
             }}
           />
+        </div>
+
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Date d'expiration
+            </label>
+            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
+              <CardExpiryElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#1f2937',
+                      '::placeholder': { color: '#9ca3af' },
+                    },
+                    invalid: { color: '#dc2626' },
+                  },
+                }}
+              />
+            </div>
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              CVC
+            </label>
+            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
+              <CardCvcElement
+                options={{
+                  style: {
+                    base: {
+                      fontSize: '16px',
+                      color: '#1f2937',
+                      '::placeholder': { color: '#9ca3af' },
+                    },
+                    invalid: { color: '#dc2626' },
+                  },
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -381,7 +430,7 @@ function Step3PaymentInner({
 
 function Step3Payment(props: {
   info: InfoForm;
-  onNext: (orderRef: string) => void;
+  onNext: (orderRef: string, orderId?: string) => void;
   onBack: () => void;
 }) {
   return (
@@ -392,7 +441,7 @@ function Step3Payment(props: {
 }
 
 /* ─── Step 4 — Confirmation ──────────────────────────────────────── */
-function Step4Confirmation({ info, message }: { info: InfoForm; message: string }) {
+function Step4Confirmation({ info, message, orderId }: { info: InfoForm; message: string; orderId?: string }) {
   const navigate = useNavigate();
 
   return (
@@ -410,6 +459,11 @@ function Step4Confirmation({ info, message }: { info: InfoForm; message: string 
         <Button variant="outline" onClick={() => navigate('/catalog')}>
           Continuer mes achats
         </Button>
+        {orderId && (
+          <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>
+            Suivre ma commande
+          </Button>
+        )}
         <Button onClick={() => navigate('/account')}>Mon compte</Button>
       </div>
     </div>
@@ -425,6 +479,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [infoData, setInfoData] = useState<InfoForm | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmOrderId, setConfirmOrderId] = useState<string | undefined>();
 
   // Build default values from profile
   const profileDefaults: Partial<InfoForm> | undefined = profile
@@ -462,8 +517,9 @@ export default function CheckoutPage() {
     setStep(1);
   }
 
-  function handlePaymentNext(msg: string) {
+  function handlePaymentNext(msg: string, orderId?: string) {
     setConfirmMessage(msg);
+    setConfirmOrderId(orderId);
     clearCart();
     setStep(3);
   }
@@ -478,7 +534,7 @@ export default function CheckoutPage() {
       {step === 2 && infoData && (
         <Step3Payment info={infoData} onNext={handlePaymentNext} onBack={() => setStep(1)} />
       )}
-      {step === 3 && infoData && <Step4Confirmation info={infoData} message={confirmMessage} />}
+      {step === 3 && infoData && <Step4Confirmation info={infoData} message={confirmMessage} orderId={confirmOrderId} />}
     </div>
   );
 }

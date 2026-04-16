@@ -10,7 +10,7 @@ export interface Order {
   clientName: string;
   amount: number;
   itemsCount: number;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
   createdAt: string;
 }
@@ -32,15 +32,22 @@ export interface OrderHistoryEntry {
 export interface OrderItem {
   id: string;
   productName: string;
+  productType?: 'produit' | 'service';
   quantity: number;
   unitPrice: number;
   subtotal: number;
 }
 
+export interface OrderCredential {
+  serviceName: string;
+  data: Record<string, string>;
+  sentAt: string;
+}
+
 export interface OrderDetail {
   id: string;
   ref: string;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   clientEmail: string;
   clientFirstName: string;
@@ -59,6 +66,8 @@ export interface OrderDetail {
   paymentAmount: number;
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
   paymentDate?: string;
+  trackingNumber?: string;
+  credentials?: OrderCredential[];
   history: OrderHistoryEntry[];
   notes: OrderNote[];
 }
@@ -95,6 +104,7 @@ function normalizeOrderDetail(raw: any): OrderDetail {
   const items: OrderItem[] = (raw.items ?? []).map((item: any, idx: number) => ({
     id: item.id ?? String(idx + 1),
     productName: item.productName ?? '',
+    productType: item.productType,
     quantity: item.quantity ?? 1,
     unitPrice: parseFloat(item.unitPrice ?? 0),
     subtotal: parseFloat(item.subtotal ?? 0),
@@ -143,6 +153,8 @@ function normalizeOrderDetail(raw: any): OrderDetail {
     paymentAmount: total,
     paymentStatus: raw.paymentStatus ?? 'pending',
     paymentDate: raw.paymentDate,
+    trackingNumber: raw.trackingNumber,
+    credentials: raw.credentials ?? [],
     history,
     notes,
   };
@@ -239,6 +251,31 @@ export const useAddOrderNote = () => {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+    },
+  });
+};
+
+export const useSendCredentials = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      credentials,
+      customMessage,
+    }: {
+      id: string;
+      credentials: Array<{ serviceName: string; data: Record<string, string> }>;
+      customMessage?: string;
+    }) => {
+      const { data } = await api.post(`/orders/${id}/credentials`, {
+        credentials,
+        customMessage,
+      });
+      return data;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };

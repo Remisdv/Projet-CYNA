@@ -56,6 +56,9 @@ const getStatusLabel = (status: string) => {
   switch (status) {
     case 'completed': return 'Complété';
     case 'pending': return 'En attente';
+    case 'confirmed': return 'Confirmée';
+    case 'shipped': return 'Expédiée';
+    case 'delivered': return 'Livrée';
     case 'processing': return 'En cours';
     case 'cancelled': return 'Annulé';
     case 'active': return 'Actif';
@@ -161,8 +164,8 @@ export default function DashboardPage() {
                 key={range}
                 onClick={() => setDateRange(range)}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${dateRange === range
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 {range === '7d' ? '7 jours' : range === '30d' ? '30 jours' : '90 jours'}
@@ -171,8 +174,8 @@ export default function DashboardPage() {
             <button
               onClick={() => setDateRange('custom')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${dateRange === 'custom'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100'
                 }`}
             >
               <Calendar className="h-4 w-4" />
@@ -432,7 +435,7 @@ export default function DashboardPage() {
                 {recentOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.client}</TableCell>
-                    <TableCell>${order.amount.toFixed(2)}</TableCell>
+                    <TableCell>{parseFloat(String(order.amount)).toFixed(2)}€</TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(order.status)}>
                         {getStatusLabel(order.status)}

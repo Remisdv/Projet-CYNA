@@ -2,13 +2,95 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../../database/entity/order';
+import { EmailService } from '../email/email.service';
+
+export interface SyncOrderDto {
+  ref: string;
+  clientEmail: string;
+  clientFirstName?: string;
+  clientLastName?: string;
+  items: any[];
+  amount: number;
+  status?: string;
+  paymentStatus?: string;
+  billingAddress?: any;
+  shippingAddress?: any;
+  createdAt?: string;
+}
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly orderRepository: Repository<OrderEntity>,
+    private readonly emailService: EmailService,
   ) { }
+
+  async syncFromWebapp(dto: SyncOrderDto): Promise<OrderEntity> {
+    // Upsert by ref to avoid duplicates
+    const existing = await this.orderRepository.findOne({ where: { ref: dto.ref } });
+    if (existing) {
+      // Update all fields on re-sync
+      if (dto.status) existing.status = dto.status as OrderStatus;
+      if (dto.paymentStatus) existing.paymentStatus = dto.paymentStatus as PaymentStatus;
+      if (dto.amount != null) existing.amount = dto.amount;
+      if (dto.items?.length) {
+        existing.items = dto.items.map(i => ({
+          productId: i.productId,
+          productName: i.productName,
+          productType: i.productType,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          subtotal: i.subtotal ?? i.unitPrice * i.quantity,
+        }));
+      }
+      if (dto.billingAddress) existing.billingAddress = dto.billingAddress;
+      if (dto.clientEmail) existing.clientEmail = dto.clientEmail;
+      if (dto.clientFirstName) existing.clientFirstName = dto.clientFirstName;
+      if (dto.clientLastName) existing.clientLastName = dto.clientLastName;
+
+      // Add history entry for status changes
+      const statusChanged = dto.status && dto.status !== existing.status;
+      if (statusChanged) {
+        existing.history = [
+          ...(existing.history || []),
+          {
+            action: `Statut mis à jour: "${dto.status}"`,
+            date: new Date().toISOString(),
+            by: 'webapp-sync',
+          },
+        ];
+      }
+
+      return this.orderRepository.save(existing);
+    }
+
+    const order = this.orderRepository.create({
+      ref: dto.ref,
+      clientEmail: dto.clientEmail,
+      clientFirstName: dto.clientFirstName,
+      clientLastName: dto.clientLastName,
+      items: dto.items.map(i => ({
+        productId: i.productId,
+        productName: i.productName,
+        productType: i.productType,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+        subtotal: i.subtotal ?? i.unitPrice * i.quantity,
+      })),
+      amount: dto.amount,
+      status: (dto.status as OrderStatus) || OrderStatus.PENDING,
+      paymentStatus: (dto.paymentStatus as PaymentStatus) || PaymentStatus.PENDING,
+      billingAddress: dto.billingAddress,
+      history: [{
+        action: 'Commande créée depuis le site',
+        date: dto.createdAt || new Date().toISOString(),
+        by: 'webapp',
+      }],
+    });
+
+    return this.orderRepository.save(order);
+  }
 
   async findAll(params: {
     page?: number;
@@ -48,6 +130,10 @@ export class OrderService {
     return order;
   }
 
+  async findByRef(ref: string): Promise<OrderEntity | null> {
+    return this.orderRepository.findOne({ where: { ref } });
+  }
+
   async updateStatus(
     id: string,
     status: OrderStatus,
@@ -58,7 +144,8 @@ export class OrderService {
 
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-      [OrderStatus.CONFIRMED]: [OrderStatus.DELIVERED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+      [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
       [OrderStatus.DELIVERED]: [],
       [OrderStatus.CANCELLED]: [],
     };
@@ -71,7 +158,7 @@ export class OrderService {
 
     order.status = status;
 
-    if (status === OrderStatus.DELIVERED) {
+    if (status === OrderStatus.SHIPPED) {
       if (trackingNumber) order.trackingNumber = trackingNumber;
       order.shippedAt = new Date();
     }
@@ -85,7 +172,18 @@ export class OrderService {
       },
     ];
 
-    return this.orderRepository.save(order);
+    const saved = await this.orderRepository.save(order);
+
+    // Notify customer by email
+    if (order.clientEmail) {
+      await this.emailService.sendOrderStatusUpdate(order.clientEmail, {
+        ref: order.ref,
+        status,
+        trackingNumber: order.trackingNumber,
+      });
+    }
+
+    return saved;
   }
 
   async updatePaymentStatus(
@@ -104,13 +202,24 @@ export class OrderService {
     order.history = [
       ...(order.history || []),
       {
-        action: `Paiement change en "${paymentStatus}"`,
+        action: `Paiement changé en "${paymentStatus}"`,
         date: new Date().toISOString(),
         by,
       },
     ];
 
-    return this.orderRepository.save(order);
+    const saved = await this.orderRepository.save(order);
+
+    // Notify customer by email
+    if (order.clientEmail) {
+      await this.emailService.sendPaymentStatusUpdate(order.clientEmail, {
+        ref: order.ref,
+        paymentStatus,
+        amount: order.amount,
+      });
+    }
+
+    return saved;
   }
 
   async addNote(id: string, text: string, by: string): Promise<OrderEntity> {
@@ -129,5 +238,45 @@ export class OrderService {
     ];
 
     return this.orderRepository.save(order);
+  }
+
+  async sendCredentials(
+    id: string,
+    credentials: Array<{ serviceName: string; data: Record<string, string> }>,
+    customMessage: string | undefined,
+    by: string,
+  ): Promise<OrderEntity> {
+    const order = await this.findById(id);
+
+    const timestamped = credentials.map(c => ({
+      ...c,
+      sentAt: new Date().toISOString(),
+    }));
+
+    order.credentials = [
+      ...(order.credentials || []),
+      ...timestamped,
+    ];
+
+    order.history = [
+      ...(order.history || []),
+      {
+        action: `Identifiants envoyés pour: ${credentials.map(c => c.serviceName).join(', ')}`,
+        date: new Date().toISOString(),
+        by,
+      },
+    ];
+
+    const saved = await this.orderRepository.save(order);
+
+    if (order.clientEmail) {
+      await this.emailService.sendServiceCredentials(order.clientEmail, {
+        ref: order.ref,
+        credentials: timestamped,
+        customMessage,
+      });
+    }
+
+    return saved;
   }
 }

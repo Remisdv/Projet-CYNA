@@ -9,7 +9,7 @@ export class PaymentController {
   constructor(
     private readonly paymentService: PaymentService,
     private readonly stripeService: StripeService,
-  ) {}
+  ) { }
 
   @Post('create-intent')
   async createPaymentIntent(
@@ -25,5 +25,13 @@ export class PaymentController {
     const event = this.stripeService.constructEvent(req.rawBody, signature);
     await this.paymentService.handleWebhook(event);
     return { received: true };
+  }
+
+  @Post('confirm')
+  async confirmPayment(
+    @Headers('x-user-id') userId: string,
+    @Body() body: { orderId: string },
+  ) {
+    return this.paymentService.confirmOrder(userId, body.orderId);
   }
 }

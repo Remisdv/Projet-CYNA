@@ -11,11 +11,11 @@ RUN apk add --no-cache python3 make g++
 # Creation du repertoire de travail
 WORKDIR /app
 
-# Copie du package.json de l'application
-COPY ${APP_NAME}/package.json ./
+# Copie du package.json et package-lock.json de l'application
+COPY ${APP_NAME}/package.json ${APP_NAME}/package-lock.json* ./
 
 # Installation des dependances avec NPM
-RUN npm install --ignore-scripts
+RUN npm install
 
 # Copie du reste du code source
 COPY ${APP_NAME}/ ./
