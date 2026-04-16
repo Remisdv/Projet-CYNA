@@ -1,10 +1,10 @@
 import { Controller, Get, Put, Body, Headers } from '@nestjs/common';
 import { AccountService } from '../../service/Account/Account.service';
-import { UpdateProfileDto, ChangePasswordDto, ProfileResponseDto } from '../../service/dtos/Account/Account.dto';
+import { UpdateProfileDto, ChangePasswordDto, ProfileResponseDto } from '../../dto/Account/Account.dto';
 
 @Controller('account')
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) { }
 
   @Get('profile')
   async getProfile(@Headers('x-user-id') userId: string): Promise<ProfileResponseDto> {

@@ -16,9 +16,11 @@ import { ContactModule } from './module/Contact.module';
 import { CartModule } from './module/Cart.module';
 import { NotificationsModule } from './module/Notifications.module';
 import { AdminUsersModule } from './module/AdminUsers.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
+    CommonModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       url: process.env.DATABASE_URL,

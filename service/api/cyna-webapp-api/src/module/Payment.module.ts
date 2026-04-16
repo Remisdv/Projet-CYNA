@@ -5,14 +5,14 @@ import { CustomerOrder } from '../database/entity/Order/CustomerOrder.entity';
 import { WebappSubscription } from '../database/entity/Subscription/WebappSubscription.entity';
 import { PaymentController } from '../endpoint/Payment/Payment.controller';
 import { PaymentService } from '../service/Payment/Payment.service';
-import { CartModule } from './Cart.module';
-import { OrderModule } from './Order.module';
+import { CheckoutModule } from './Checkout.module';
+import { SyncModule } from './Sync.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([WebappUser, CustomerOrder, WebappSubscription]),
-    CartModule,
-    OrderModule,
+    CheckoutModule,
+    SyncModule,
   ],
   controllers: [PaymentController],
   providers: [PaymentService],

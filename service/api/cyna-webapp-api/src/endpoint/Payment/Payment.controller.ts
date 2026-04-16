@@ -2,7 +2,7 @@ import { Controller, Post, Body, Headers, Req, RawBodyRequest } from '@nestjs/co
 import { Request } from 'express';
 import { PaymentService } from '../../service/Payment/Payment.service';
 import { StripeService } from '../../service/Stripe/Stripe.service';
-import { CreatePaymentIntentDto, ConfirmPaymentDto } from '../../service/dtos/Payment/Payment.dto';
+import { CreatePaymentIntentDto, ConfirmOrderDto } from '../../dto/Payment/Payment.dto';
 
 @Controller('payment')
 export class PaymentController {
@@ -30,8 +30,8 @@ export class PaymentController {
   @Post('confirm')
   async confirmPayment(
     @Headers('x-user-id') userId: string,
-    @Body() body: { orderId: string },
+    @Body() dto: ConfirmOrderDto,
   ) {
-    return this.paymentService.confirmOrder(userId, body.orderId);
+    return this.paymentService.confirmOrder(userId, dto.orderId);
   }
 }

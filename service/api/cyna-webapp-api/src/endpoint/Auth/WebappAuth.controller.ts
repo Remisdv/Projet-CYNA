@@ -7,11 +7,11 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   AuthResponseDto,
-} from '../../service/dtos/auth/Auth.dto';
+} from '../../dto/Auth/Auth.dto';
 
 @Controller('auth')
 export class WebappAuthController {
-  constructor(private readonly authService: WebappAuthService) {}
+  constructor(private readonly authService: WebappAuthService) { }
 
   @Post('register')
   async register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {

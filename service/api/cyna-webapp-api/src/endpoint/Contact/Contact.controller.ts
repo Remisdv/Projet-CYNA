@@ -1,10 +1,10 @@
 import { Controller, Post, Body, Headers } from '@nestjs/common';
 import { ContactService } from '../../service/Contact/Contact.service';
-import { CreateContactDto } from '../../service/dtos/Contact/Contact.dto';
+import { CreateContactDto } from '../../dto/Contact/Contact.dto';
 
 @Controller('contact')
 export class ContactController {
-  constructor(private readonly contactService: ContactService) {}
+  constructor(private readonly contactService: ContactService) { }
 
   @Post()
   async create(
