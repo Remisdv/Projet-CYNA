@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Check } from 'lucide-react';
+import { ShoppingCart, Check, Monitor } from 'lucide-react';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { useCart } from '../../../context/CartContext';
@@ -64,6 +64,11 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.categorie}
           </Badge>
         )}
+        {product.type === 'service' && (
+          <Badge className="absolute right-2 top-2 text-xs bg-purple-100 text-purple-700 border-purple-200">
+            <Monitor size={10} className="mr-1" /> Service
+          </Badge>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-4">
@@ -75,7 +80,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-lg font-bold text-blue-600">{priceLabel}</span>
+          <div>
+            <span className="text-lg font-bold text-blue-600">{priceLabel}</span>
+            {product.type === 'service' && product.prix_annuel != null && (
+              <p className="text-xs text-gray-400">ou {Number(product.prix_annuel).toFixed(2)} €/an</p>
+            )}
+          </div>
           <Button
             size="sm"
             variant={inCart ? 'outline' : 'default'}

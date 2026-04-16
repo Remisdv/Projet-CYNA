@@ -22,19 +22,25 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {
-  DollarSign,
+  Euro,
   ShoppingCart,
   Users,
   TrendingUp,
   RefreshCw,
-  Calendar,
   Eye,
   Edit,
   ArrowUpRight,
   ArrowDownRight,
   Target,
+  LogIn,
+  MousePointerClick,
+  AlertTriangle,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboard } from './hooks/useDashboard';
+
+const formatEur = (value: number) =>
+  new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
 
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
@@ -72,14 +78,14 @@ const getStatusLabel = (status: string) => {
 interface KPICardProps {
   title: string;
   value: string;
-  trend: number;
+  trend: number | null;
   icon: React.ReactNode;
   goal?: number;
   goalLabel?: string;
 }
 
 function KPICard({ title, value, trend, icon, goal, goalLabel }: KPICardProps) {
-  const isPositive = trend >= 0;
+  const isPositive = trend !== null && trend >= 0;
 
   return (
     <Card>
@@ -90,14 +96,18 @@ function KPICard({ title, value, trend, icon, goal, goalLabel }: KPICardProps) {
       <CardContent>
         <div className="text-3xl font-bold text-gray-900">{value}</div>
         <div className="flex items-center justify-between mt-2">
-          <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-            {isPositive ? (
-              <ArrowUpRight className="h-4 w-4 mr-1" />
-            ) : (
-              <ArrowDownRight className="h-4 w-4 mr-1" />
-            )}
-            <span>{isPositive ? '+' : ''}{trend}% vs mois précédent</span>
-          </div>
+          {trend !== null ? (
+            <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+              {isPositive ? (
+                <ArrowUpRight className="h-4 w-4 mr-1" />
+              ) : (
+                <ArrowDownRight className="h-4 w-4 mr-1" />
+              )}
+              <span>{isPositive ? '+' : ''}{trend}% vs période préc.</span>
+            </div>
+          ) : (
+            <span className="text-sm text-gray-400">Pas de données précédentes</span>
+          )}
           {goal !== undefined && (
             <div className="flex items-center text-xs text-gray-500">
               <Target className="h-3 w-3 mr-1" />
@@ -113,11 +123,10 @@ function KPICard({ title, value, trend, icon, goal, goalLabel }: KPICardProps) {
 // ========== MAIN COMPONENT ==========
 
 export default function DashboardPage() {
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d'>('30d');
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const navigate = useNavigate();
 
   const {
     kpiData,
@@ -171,36 +180,7 @@ export default function DashboardPage() {
                 {range === '7d' ? '7 jours' : range === '30d' ? '30 jours' : '90 jours'}
               </button>
             ))}
-            <button
-              onClick={() => setDateRange('custom')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${dateRange === 'custom'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-700 hover:bg-gray-100'
-                }`}
-            >
-              <Calendar className="h-4 w-4" />
-              Custom
-            </button>
           </div>
-
-          {/* Custom Date Inputs */}
-          {dateRange === 'custom' && (
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={customStartDate}
-                onChange={(e) => setCustomStartDate(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-              />
-              <span className="text-gray-500">à</span>
-              <input
-                type="date"
-                value={customEndDate}
-                onChange={(e) => setCustomEndDate(e.target.value)}
-                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-          )}
 
           {/* Refresh Button */}
           <Button
@@ -219,40 +199,40 @@ export default function DashboardPage() {
       {/* KPI Widgets */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <KPICard
-          title="Revenue (mois)"
-          value={`$${kpiData.revenue.toLocaleString('en-US')}`}
+          title="Revenus"
+          value={formatEur(kpiData.revenue)}
           trend={kpiData.revenueTrend}
-          icon={<DollarSign className="h-5 w-5 text-green-600" />}
+          icon={<Euro className="h-5 w-5 text-green-600" />}
         />
         <KPICard
-          title="Commandes (mois)"
+          title="Commandes"
           value={kpiData.orders.toString()}
           trend={kpiData.ordersTrend}
           icon={<ShoppingCart className="h-5 w-5 text-blue-600" />}
         />
         <KPICard
-          title="Clients Actifs"
-          value={kpiData.activeCustomers.toLocaleString('en-US')}
+          title="Clients actifs"
+          value={kpiData.activeCustomers.toLocaleString('fr-FR')}
           trend={kpiData.customersTrend}
           icon={<Users className="h-5 w-5 text-purple-600" />}
         />
         <KPICard
-          title="Taux de Conversion"
+          title="Taux de conversion"
           value={`${kpiData.conversionRate}%`}
-          trend={0}
+          trend={null}
           icon={<TrendingUp className="h-5 w-5 text-orange-600" />}
         />
         <KPICard
           title="Connexions (7j)"
           value={kpiData.logins7d.toString()}
-          trend={0}
-          icon={<Users className="h-5 w-5 text-indigo-600" />}
+          trend={null}
+          icon={<LogIn className="h-5 w-5 text-indigo-600" />}
         />
         <KPICard
           title="Ajouts panier (7j)"
           value={kpiData.cartAdds7d.toString()}
-          trend={0}
-          icon={<ShoppingCart className="h-5 w-5 text-pink-600" />}
+          trend={null}
+          icon={<MousePointerClick className="h-5 w-5 text-pink-600" />}
         />
       </div>
 
@@ -261,7 +241,7 @@ export default function DashboardPage() {
         {/* Revenue Trend (Line Chart) */}
         <Card>
           <CardHeader>
-            <CardTitle>Tendance Revenue</CardTitle>
+            <CardTitle>Tendance des revenus</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -279,10 +259,10 @@ export default function DashboardPage() {
                 <YAxis
                   stroke="#6b7280"
                   fontSize={12}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => formatEur(value)}
                 />
                 <Tooltip
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [formatEur(value), 'Revenus']}
                   labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR')}
                   contentStyle={{
                     backgroundColor: 'white',
@@ -375,7 +355,7 @@ export default function DashboardPage() {
         {/* Top 5 Services (Horizontal Bar Chart) */}
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 Services (revenue)</CardTitle>
+            <CardTitle>Top 5 Services (ventes)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -385,7 +365,6 @@ export default function DashboardPage() {
                   type="number"
                   stroke="#6b7280"
                   fontSize={12}
-                  tickFormatter={(value) => `$${value / 1000}k`}
                 />
                 <YAxis
                   dataKey="name"
@@ -396,14 +375,14 @@ export default function DashboardPage() {
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [value, 'Ventes']}
                   contentStyle={{
                     backgroundColor: 'white',
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                   }}
                 />
-                <Bar dataKey="revenue" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="sales" fill="#f59e0b" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -416,7 +395,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Dernières Commandes</CardTitle>
-            <Button variant="ghost" size="sm" className="text-blue-600">
+            <Button variant="ghost" size="sm" className="text-blue-600" onClick={() => navigate('/orders')}>
               Voir tout
             </Button>
           </CardHeader>
@@ -435,7 +414,7 @@ export default function DashboardPage() {
                 {recentOrders.map((order) => (
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.client}</TableCell>
-                    <TableCell>{parseFloat(String(order.amount)).toFixed(2)}€</TableCell>
+                    <TableCell>{formatEur(parseFloat(String(order.amount)))}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(order.status)}>
                         {getStatusLabel(order.status)}
@@ -445,7 +424,7 @@ export default function DashboardPage() {
                       {new Date(order.date).toLocaleDateString('fr-FR')}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => navigate(`/orders/${order.id}`)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -459,8 +438,8 @@ export default function DashboardPage() {
         {/* Recent Users Table */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Utilisateurs Récents</CardTitle>
-            <Button variant="ghost" size="sm" className="text-blue-600">
+            <CardTitle>Clients Webapp Récents</CardTitle>
+            <Button variant="ghost" size="sm" className="text-blue-600" onClick={() => navigate('/users')}>
               Voir tout
             </Button>
           </CardHeader>
@@ -505,8 +484,8 @@ export default function DashboardPage() {
       <Card className="border-red-200 bg-red-50">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-red-900 flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            Produits en Rupture de Stock
+            <AlertTriangle className="h-5 w-5" />
+            Produits en rupture de stock
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -528,7 +507,7 @@ export default function DashboardPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={() => navigate(`/products/${product.id}`)}>
                       <Edit className="h-4 w-4" />
                       Éditer
                     </Button>

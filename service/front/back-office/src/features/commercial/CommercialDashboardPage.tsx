@@ -4,7 +4,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import {
   TrendingUp,
-  DollarSign,
+  Euro,
   ShoppingCart,
   Download,
   ArrowUp,
@@ -84,7 +84,7 @@ export default function CommercialDashboardPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ['Produit', 'Ventes ce mois', 'Revenue ce mois', 'Croissance %'];
+    const headers = ['Produit', 'Ventes ce mois', 'Revenus ce mois', 'Croissance %'];
     const rows = sortedProducts.map((p) => [
       p.productName,
       p.salesThisMonth.toString(),
@@ -138,14 +138,14 @@ export default function CommercialDashboardPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-sm font-medium text-gray-600">Chiffre d'affaires</p>
               <p className="text-3xl font-bold text-gray-900 mt-2">
                 {formatCurrency(summaryMetrics.totalRevenue)}
               </p>
               <p className="text-xs text-gray-500 mt-1">Ce mois</p>
             </div>
             <div className="p-3 bg-green-100 rounded-full">
-              <DollarSign className="h-8 w-8 text-green-600" />
+              <Euro className="h-8 w-8 text-green-600" />
             </div>
           </div>
         </Card>
@@ -194,7 +194,7 @@ export default function CommercialDashboardPage() {
         {/* Daily Revenue Chart */}
         <Card className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Revenue / Jour (30 derniers jours)
+            Revenus / Jour (30 derniers jours)
           </h2>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={dailySales}>
@@ -210,14 +210,14 @@ export default function CommercialDashboardPage() {
               />
               <Tooltip
                 labelFormatter={(label) => formatDate(label as string)}
-                formatter={(value: number) => [formatCurrency(value), 'Revenue']}
+                formatter={(value: number) => [formatCurrency(value), 'Revenus']}
               />
               <Line
                 type="monotone"
                 dataKey="revenue"
                 stroke="#10b981"
                 strokeWidth={2}
-                name="Revenue"
+                name="Revenus"
               />
             </LineChart>
           </ResponsiveContainer>
@@ -227,7 +227,7 @@ export default function CommercialDashboardPage() {
       {/* Top 5 Products Chart */}
       <Card className="p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Top 5 Produits (Revenue & Ventes)
+          Top 5 Produits (Revenus & Ventes)
         </h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={top5Products}>
@@ -242,13 +242,13 @@ export default function CommercialDashboardPage() {
             />
             <Tooltip
               formatter={(value: number, name: string) => {
-                if (name === 'Revenue') return [formatCurrency(value), name];
+                if (name === 'Revenus') return [formatCurrency(value), name];
                 return [value, name];
               }}
             />
             <Legend />
             <Bar yAxisId="left" dataKey="ventes" fill="#3b82f6" name="Ventes" />
-            <Bar yAxisId="right" dataKey="revenue" fill="#10b981" name="Revenue" />
+            <Bar yAxisId="right" dataKey="revenue" fill="#10b981" name="Revenus" />
           </BarChart>
         </ResponsiveContainer>
       </Card>
@@ -267,8 +267,8 @@ export default function CommercialDashboardPage() {
               options={[
                 { value: 'sales-desc', label: 'Par ventes (DESC)' },
                 { value: 'sales-asc', label: 'Par ventes (ASC)' },
-                { value: 'revenue-desc', label: 'Par revenue (DESC)' },
-                { value: 'revenue-asc', label: 'Par revenue (ASC)' },
+                { value: 'revenue-desc', label: 'Par revenus (DESC)' },
+                { value: 'revenue-asc', label: 'Par revenus (ASC)' },
               ]}
               className="w-64"
             />
@@ -286,7 +286,7 @@ export default function CommercialDashboardPage() {
                   Ventes ce mois
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Revenue ce mois
+                  Revenus ce mois
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Croissance %
@@ -319,13 +319,12 @@ export default function CommercialDashboardPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div
-                      className={`inline-flex items-center gap-1 text-sm font-medium ${
-                        product.growthPercent > 0
+                      className={`inline-flex items-center gap-1 text-sm font-medium ${product.growthPercent > 0
                           ? 'text-green-600'
                           : product.growthPercent < 0
-                          ? 'text-red-600'
-                          : 'text-gray-600'
-                      }`}
+                            ? 'text-red-600'
+                            : 'text-gray-600'
+                        }`}
                     >
                       {product.growthPercent > 0 ? (
                         <ArrowUp className="h-4 w-4" />

@@ -147,22 +147,23 @@ export class StatsService {
         ? Math.round((cartCheckouts / cartAdds7d) * 1000) / 10
         : 0;
 
+    const computeTrend = (cur: number, prev: number): number | null => {
+      if (prev > 0) return Math.round(((cur - prev) / prev) * 1000) / 10;
+      if (cur > 0) return 100;
+      return null; // no data in either period
+    };
+
     const curRev = parseFloat(currentRevenue[0]?.total ?? '0');
     const prevRev = parseFloat(previousRevenue[0]?.total ?? '0');
-    const revenueTrend =
-      prevRev > 0 ? Math.round(((curRev - prevRev) / prevRev) * 1000) / 10 : 0;
+    const revenueTrend = computeTrend(curRev, prevRev);
 
     const curOrders = parseInt(currentOrders[0]?.total ?? '0', 10);
     const prevOrders = parseInt(previousOrders[0]?.total ?? '0', 10);
-    const ordersTrend =
-      prevOrders > 0 ? Math.round(((curOrders - prevOrders) / prevOrders) * 1000) / 10 : 0;
+    const ordersTrend = computeTrend(curOrders, prevOrders);
 
     const curCustomers = parseInt(currentCustomers[0]?.total ?? '0', 10);
     const prevCustomers = parseInt(previousCustomers[0]?.total ?? '0', 10);
-    const customersTrend =
-      prevCustomers > 0
-        ? Math.round(((curCustomers - prevCustomers) / prevCustomers) * 1000) / 10
-        : 0;
+    const customersTrend = computeTrend(curCustomers, prevCustomers);
 
     return {
       kpis: {

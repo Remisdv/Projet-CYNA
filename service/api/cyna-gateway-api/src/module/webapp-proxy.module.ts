@@ -10,6 +10,7 @@ import { WebappContactProxyController } from '../endpoint/WebappContactProxy.con
 import { WebappPaymentProxyController } from '../endpoint/WebappPaymentProxy.controller';
 import { WebappCartProxyController } from '../endpoint/WebappCartProxy.controller';
 import { NotificationsProxyController } from '../endpoint/NotificationsProxy.controller';
+import { WebappUsersProxyController } from '../endpoint/WebappUsersProxy.controller';
 
 @Module({
   controllers: [
@@ -22,6 +23,7 @@ import { NotificationsProxyController } from '../endpoint/NotificationsProxy.con
     WebappPaymentProxyController,
     WebappCartProxyController,
     NotificationsProxyController,
+    WebappUsersProxyController,
   ],
   providers: [WebappProxyService, ProxyService],
   exports: [WebappProxyService],
