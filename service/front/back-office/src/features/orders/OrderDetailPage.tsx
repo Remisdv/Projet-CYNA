@@ -69,17 +69,23 @@ export default function OrderDetailPage() {
     alert(`Génération de la facture pour ${order.ref} (fonctionnalité à venir)`);
   };
 
-  const handleMarkDelivered = () => {
+  const handleMarkShipped = () => {
     if (showTrackingInput) {
       updateStatus.mutate({
         id: order.id,
-        status: 'delivered',
+        status: 'shipped',
         trackingNumber: trackingNumber || undefined,
       });
       setShowTrackingInput(false);
       setTrackingNumber('');
     } else {
       setShowTrackingInput(true);
+    }
+  };
+
+  const handleMarkDelivered = () => {
+    if (confirm('Confirmer la livraison ?')) {
+      updateStatus.mutate({ id: order.id, status: 'delivered' });
     }
   };
 
@@ -106,6 +112,7 @@ export default function OrderDetailPage() {
     switch (status) {
       case 'pending': return 'En attente';
       case 'confirmed': return 'Confirmée';
+      case 'shipped': return 'Expédiée';
       case 'delivered': return 'Livrée';
       case 'cancelled': return 'Annulée';
       default: return status;
@@ -116,6 +123,7 @@ export default function OrderDetailPage() {
     switch (status) {
       case 'pending': return 'warning';
       case 'confirmed': return 'default';
+      case 'shipped': return 'secondary';
       case 'delivered': return 'success';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
@@ -184,9 +192,9 @@ export default function OrderDetailPage() {
               Générer facture PDF
             </Button>
             {order.status === 'confirmed' && (
-              <Button variant="outline" onClick={handleMarkDelivered} disabled={updateStatus.isPending}>
+              <Button variant="outline" onClick={handleMarkShipped} disabled={updateStatus.isPending}>
                 <Truck className="h-4 w-4 mr-2" />
-                {showTrackingInput ? 'Confirmer livraison' : 'Marquer livrée'}
+                {showTrackingInput ? 'Confirmer expédition' : 'Marquer expédiée'}
               </Button>
             )}
             {showTrackingInput && (
@@ -196,6 +204,12 @@ export default function OrderDetailPage() {
                 onChange={(e) => setTrackingNumber(e.target.value)}
                 className="w-64"
               />
+            )}
+            {order.status === 'shipped' && (
+              <Button variant="outline" onClick={handleMarkDelivered} disabled={updateStatus.isPending}>
+                <Check className="h-4 w-4 mr-2" />
+                Marquer livrée
+              </Button>
             )}
             {order.status !== 'cancelled' && order.status !== 'delivered' && (
               <Button variant="destructive" onClick={handleCancel} disabled={updateStatus.isPending}>

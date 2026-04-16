@@ -9,6 +9,7 @@ import { CategoryModule } from './module/category/category.module';
 import { OrderModule } from './module/order/order.module';
 import { StatsModule } from './module/stats/stats.module';
 import { TrackingModule } from './module/tracking/tracking.module';
+import { EmailModule } from './module/email/email.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TrackingModule } from './module/tracking/tracking.module';
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV !== 'production',
     }),
+    EmailModule,
     HealthModule,
     ProductModule,
     ServiceFeatureModule,

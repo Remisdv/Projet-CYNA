@@ -27,7 +27,7 @@ import {
   Filter,
   X,
 } from 'lucide-react';
-import { useOrders, Order } from './hooks/useOrders';
+import { useOrders, useUpdateOrderStatus, useUpdatePaymentStatus, Order } from './hooks/useOrders';
 
 type SortField = 'createdAt' | 'amount' | 'ref';
 type SortDirection = 'asc' | 'desc';
@@ -36,10 +36,12 @@ export default function OrdersPage() {
   const navigate = useNavigate();
 
   // Server-side filters
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'delivered' | 'cancelled'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading } = useOrders({ page: currentPage, status: statusFilter });
+  const updateStatus = useUpdateOrderStatus();
+  const updatePayment = useUpdatePaymentStatus();
   const orders = data?.items ?? [];
   const totalPages = data?.total_pages ?? 1;
   const totalCount = data?.total ?? 0;
@@ -120,19 +122,18 @@ export default function OrdersPage() {
   };
 
   const handlePrint = (order: Order) => {
-    console.log('Printing order:', order.ref);
-    alert(`Impression de la commande ${order.ref}`);
+    navigate(`/orders/${order.id}`);
   };
 
   const handleMarkPaid = (order: Order) => {
     if (confirm(`Marquer la commande ${order.ref} comme payée ?`)) {
-      console.log('Marking order as paid:', order.ref);
+      updatePayment.mutate({ id: order.id, paymentStatus: 'paid' });
     }
   };
 
   const handleCancel = (order: Order) => {
     if (confirm(`Êtes-vous sûr de vouloir annuler la commande ${order.ref} ?`)) {
-      console.log('Cancelling order:', order.ref);
+      updateStatus.mutate({ id: order.id, status: 'cancelled' });
     }
   };
 
@@ -151,6 +152,7 @@ export default function OrdersPage() {
     switch (status) {
       case 'pending': return 'En attente';
       case 'confirmed': return 'Confirmée';
+      case 'shipped': return 'Expédiée';
       case 'delivered': return 'Livrée';
       case 'cancelled': return 'Annulée';
       default: return status;
@@ -161,6 +163,7 @@ export default function OrdersPage() {
     switch (status) {
       case 'pending': return 'warning';
       case 'confirmed': return 'default';
+      case 'shipped': return 'secondary';
       case 'delivered': return 'success';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
@@ -218,6 +221,7 @@ export default function OrdersPage() {
                   { value: 'all', label: 'Tous les statuts' },
                   { value: 'pending', label: 'En attente' },
                   { value: 'confirmed', label: 'Confirmée' },
+                  { value: 'shipped', label: 'Expédiée' },
                   { value: 'delivered', label: 'Livrée' },
                   { value: 'cancelled', label: 'Annulée' },
                 ]}
@@ -426,11 +430,10 @@ export default function OrdersPage() {
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
-                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
-                            currentPage === pageNum
+                          className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
                               ? 'bg-blue-600 text-white'
                               : 'text-gray-700 hover:bg-gray-100'
-                          }`}
+                            }`}
                         >
                           {pageNum}
                         </button>

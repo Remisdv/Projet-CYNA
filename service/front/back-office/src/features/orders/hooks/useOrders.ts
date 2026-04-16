@@ -10,7 +10,7 @@ export interface Order {
   clientName: string;
   amount: number;
   itemsCount: number;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'refunded' | 'failed';
   createdAt: string;
 }
@@ -40,7 +40,7 @@ export interface OrderItem {
 export interface OrderDetail {
   id: string;
   ref: string;
-  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
   clientEmail: string;
   clientFirstName: string;

@@ -80,6 +80,9 @@ export class PaymentService {
       });
       await this.orderRepo.save(order);
 
+      // Sync PENDING order to service-api so BO sees it immediately
+      await this.syncOrderToServiceApi(order, user);
+
       results.clientSecret = clientSecret;
       results.paymentIntentId = paymentIntentId;
       results.orderId = order.id;
@@ -132,6 +135,10 @@ export class PaymentService {
           shippingAddress: dto.shippingAddress,
         });
         await this.orderRepo.save(order);
+
+        // Sync PENDING order to service-api
+        await this.syncOrderToServiceApi(order, user);
+
         results.orderId = order.id;
         results.orderRef = order.ref;
         results.amount = totalAmount;
