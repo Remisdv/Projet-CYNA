@@ -1,11 +1,11 @@
 import { Controller, Get, Param, Query, Headers, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { OrderService } from '../../service/Order/Order.service';
-import { OrderResponseDto } from '../../service/dtos/Order/Order.dto';
+import { OrderResponseDto } from '../../dto/Order/Order.dto';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(private readonly orderService: OrderService) { }
 
   @Get()
   async findAll(

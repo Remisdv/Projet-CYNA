@@ -14,7 +14,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   AuthResponseDto,
-} from '../dtos/Auth/Auth.dto';
+} from '../../dto/Auth/Auth.dto';
 
 @Injectable()
 export class WebappAuthService {
@@ -25,7 +25,7 @@ export class WebappAuthService {
     private readonly resetTokenRepo: Repository<PasswordResetToken>,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
     const existing = await this.userRepo.findOneBy({ email: dto.email });

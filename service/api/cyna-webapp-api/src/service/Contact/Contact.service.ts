@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ContactMessage } from '../../database/entity/Contact/ContactMessage.entity';
 import { EmailService } from '../Email/Email.service';
-import { CreateContactDto } from '../dtos/Contact/Contact.dto';
+import { CreateContactDto } from '../../dto/Contact/Contact.dto';
 
 @Injectable()
 export class ContactService {
@@ -11,7 +11,7 @@ export class ContactService {
     @InjectRepository(ContactMessage)
     private readonly repo: Repository<ContactMessage>,
     private readonly emailService: EmailService,
-  ) {}
+  ) { }
 
   async create(dto: CreateContactDto, userId?: string): Promise<{ message: string }> {
     const contact = this.repo.create({

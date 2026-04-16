@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WebappSubscription } from '../../database/entity/Subscription/WebappSubscription.entity';
-import { SubscriptionMapper } from '../mappers/Subscription.mapper';
-import { SubscriptionResponseDto } from '../dtos/Subscription/Subscription.dto';
+import { SubscriptionMapper } from '../../mapper/Subscription.mapper';
+import { SubscriptionResponseDto } from '../../dto/Subscription/Subscription.dto';
 
 @Injectable()
 export class SubscriptionService {
@@ -11,7 +11,7 @@ export class SubscriptionService {
     @InjectRepository(WebappSubscription)
     private readonly repo: Repository<WebappSubscription>,
     private readonly mapper: SubscriptionMapper,
-  ) {}
+  ) { }
 
   async findAllByUser(userId: string): Promise<SubscriptionResponseDto[]> {
     const entities = await this.repo.find({

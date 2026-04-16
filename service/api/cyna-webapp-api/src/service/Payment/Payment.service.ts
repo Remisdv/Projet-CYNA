@@ -5,10 +5,9 @@ import { WebappUser } from '../../database/entity/WebappUser/WebappUser.entity';
 import { CustomerOrder, OrderStatus, PaymentStatus } from '../../database/entity/Order/CustomerOrder.entity';
 import { WebappSubscription, SubscriptionPlan, SubscriptionStatus } from '../../database/entity/Subscription/WebappSubscription.entity';
 import { StripeService } from '../Stripe/Stripe.service';
-import { EmailService } from '../Email/Email.service';
-import { CartService } from '../Cart/Cart.service';
-import { OrderService } from '../Order/Order.service';
-import { CreatePaymentIntentDto, ConfirmPaymentDto } from '../dtos/Payment/Payment.dto';
+import { CheckoutService } from '../Checkout/Checkout.service';
+import { OrderSyncService } from '../Sync/OrderSync.service';
+import { CreatePaymentIntentDto } from '../../dto/Payment/Payment.dto';
 
 @Injectable()
 export class PaymentService {
@@ -20,9 +19,8 @@ export class PaymentService {
     @InjectRepository(WebappSubscription)
     private readonly subscriptionRepo: Repository<WebappSubscription>,
     private readonly stripeService: StripeService,
-    private readonly emailService: EmailService,
-    private readonly cartService: CartService,
-    private readonly orderService: OrderService,
+    private readonly checkoutService: CheckoutService,
+    private readonly orderSyncService: OrderSyncService,
   ) { }
 
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
@@ -59,7 +57,6 @@ export class PaymentService {
         { userId, type: 'products' },
       );
 
-      // Create pending order
       const orderItems = productItems.map((i) => ({
         productId: i.productId,
         productName: i.productName,
@@ -81,7 +78,7 @@ export class PaymentService {
       await this.orderRepo.save(order);
 
       // Sync PENDING order to service-api so BO sees it immediately
-      await this.syncOrderToServiceApi(order, user);
+      await this.orderSyncService.syncOrder(order, user);
 
       results.clientSecret = clientSecret;
       results.paymentIntentId = paymentIntentId;
@@ -137,7 +134,7 @@ export class PaymentService {
         await this.orderRepo.save(order);
 
         // Sync PENDING order to service-api
-        await this.syncOrderToServiceApi(order, user);
+        await this.orderSyncService.syncOrder(order, user);
 
         results.orderId = order.id;
         results.orderRef = order.ref;
@@ -155,58 +152,7 @@ export class PaymentService {
   }
 
   async confirmOrder(userId: string, orderId: string): Promise<{ message: string }> {
-    const order = await this.orderRepo.findOneBy({ id: orderId, userId });
-    if (!order) throw new NotFoundException('Commande introuvable');
-
-    // Skip if already confirmed
-    if (order.status === OrderStatus.CONFIRMED && order.paymentStatus === PaymentStatus.PAID) {
-      return { message: `Commande ${order.ref} déjà confirmée` };
-    }
-
-    order.paymentStatus = PaymentStatus.PAID;
-    order.status = OrderStatus.CONFIRMED;
-    await this.orderRepo.save(order);
-
-    const user = await this.userRepo.findOneBy({ id: userId });
-    if (user) {
-      // Send confirmation email with invoice PDF
-      try {
-        const invoicePdf = await this.orderService.generateInvoicePdf(order.id, order.userId);
-        await this.emailService.sendOrderConfirmationWithInvoice(user.email, {
-          ref: order.ref,
-          amount: Number(order.amount),
-          items: order.items,
-        }, invoicePdf);
-      } catch {
-        await this.emailService.sendOrderConfirmation(user.email, {
-          ref: order.ref,
-          amount: Number(order.amount),
-          items: order.items,
-        });
-      }
-
-      // Send service credentials (mocked)
-      const serviceItems = order.items.filter((i: any) => i.productType === 'service');
-      for (const item of serviceItems) {
-        await this.emailService.sendServiceCredentials(user.email, {
-          ref: order.ref,
-          serviceName: item.productName,
-          credentials: {
-            login: user.email,
-            password: `CYNA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-            url: `https://app.cyna.com/services/${item.productId || 'default'}`,
-          },
-        });
-      }
-
-      // Clear cart
-      await this.cartService.markPurchased(order.userId);
-    }
-
-    // Sync order to service-api for BO visibility
-    await this.syncOrderToServiceApi(order, user);
-
-    return { message: `Commande ${order.ref} confirmée` };
+    return this.checkoutService.confirmOrderByUserAndId(userId, orderId);
   }
 
   async handleWebhook(event: any): Promise<void> {
@@ -215,51 +161,7 @@ export class PaymentService {
         const paymentIntent = event.data.object;
         const order = await this.orderRepo.findOneBy({ paymentIntentId: paymentIntent.id });
         if (order) {
-          order.paymentStatus = PaymentStatus.PAID;
-          order.status = OrderStatus.CONFIRMED;
-          await this.orderRepo.save(order);
-
-          const user = await this.userRepo.findOneBy({ id: order.userId });
-          if (user) {
-            // Generate invoice PDF and send confirmation with attachment
-            try {
-              const invoicePdf = await this.orderService.generateInvoicePdf(order.id, order.userId);
-              await this.emailService.sendOrderConfirmationWithInvoice(user.email, {
-                ref: order.ref,
-                amount: Number(order.amount),
-                items: order.items,
-              }, invoicePdf);
-            } catch {
-              // Fallback to simple confirmation if PDF generation fails
-              await this.emailService.sendOrderConfirmation(user.email, {
-                ref: order.ref,
-                amount: Number(order.amount),
-                items: order.items,
-              });
-            }
-
-            // Send service credentials for service items (mocked)
-            const serviceItems = order.items.filter(
-              (i: any) => i.productType === 'service',
-            );
-            for (const item of serviceItems) {
-              await this.emailService.sendServiceCredentials(user.email, {
-                ref: order.ref,
-                serviceName: item.productName,
-                credentials: {
-                  login: user.email,
-                  password: `CYNA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-                  url: `https://app.cyna.com/services/${item.productId || 'default'}`,
-                },
-              });
-            }
-
-            // Clear cart without releasing stock (items are purchased)
-            await this.cartService.markPurchased(order.userId);
-
-            // Sync order to service-api for BO
-            await this.syncOrderToServiceApi(order, user);
-          }
+          await this.checkoutService.confirmOrder(order);
         }
         break;
       }
@@ -298,29 +200,5 @@ export class PaymentService {
     const year = new Date().getFullYear();
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `CYNA-${year}-${random}`;
-  }
-
-  private async syncOrderToServiceApi(order: CustomerOrder, user?: WebappUser): Promise<void> {
-    try {
-      const axios = require('axios');
-      await axios.post(
-        `${process.env.SERVICE_API_URL || 'http://cyna-service-api:3000'}/api/orders/sync`,
-        {
-          ref: order.ref,
-          clientEmail: user?.email || 'unknown',
-          clientFirstName: user?.firstName,
-          clientLastName: user?.lastName,
-          items: order.items,
-          amount: Number(order.amount),
-          status: order.status,
-          paymentStatus: order.paymentStatus,
-          billingAddress: order.billingAddress,
-          shippingAddress: order.shippingAddress,
-          createdAt: order.createdAt,
-        },
-      );
-    } catch (err) {
-      console.error('Failed to sync order to service-api:', err?.message);
-    }
   }
 }

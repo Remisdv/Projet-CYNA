@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { WebappUser } from '../../database/entity/WebappUser/WebappUser.entity';
-import { AccountMapper } from '../mappers/Account.mapper';
-import { UpdateProfileDto, ChangePasswordDto, ProfileResponseDto } from '../dtos/Account/Account.dto';
+import { AccountMapper } from '../../mapper/Account.mapper';
+import { UpdateProfileDto, ChangePasswordDto, ProfileResponseDto } from '../../dto/Account/Account.dto';
 
 @Injectable()
 export class AccountService {
@@ -12,7 +12,7 @@ export class AccountService {
     @InjectRepository(WebappUser)
     private readonly userRepo: Repository<WebappUser>,
     private readonly mapper: AccountMapper,
-  ) {}
+  ) { }
 
   async getProfile(userId: string): Promise<ProfileResponseDto> {
     const user = await this.userRepo.findOneBy({ id: userId });

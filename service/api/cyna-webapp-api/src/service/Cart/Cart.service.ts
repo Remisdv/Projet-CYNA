@@ -2,23 +2,21 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import * as http from 'http';
 import { CartItem } from '../../database/entity/Cart/CartItem.entity';
-import { AddCartItemDto, UpdateCartItemDto, MergeCartDto } from '../dtos/Cart/Cart.dto';
+import { AddCartItemDto, UpdateCartItemDto, MergeCartDto } from '../../dto/Cart/Cart.dto';
+import { HttpClientService } from '../../common/services/http-client.service';
 
 const RESERVATION_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
 @Injectable()
 export class CartService {
   private readonly logger = new Logger(CartService.name);
-  private readonly serviceApiUrl: string;
 
   constructor(
     @InjectRepository(CartItem)
     private readonly cartRepo: Repository<CartItem>,
-  ) {
-    this.serviceApiUrl = process.env.SERVICE_API_URL || 'http://cyna-service-api:3000';
-  }
+    private readonly httpClient: HttpClientService,
+  ) { }
 
   async getCart(userId: string): Promise<CartItem[]> {
     return this.cartRepo.find({ where: { userId }, order: { createdAt: 'ASC' } });
@@ -128,14 +126,14 @@ export class CartService {
 
   private async reserveStock(productId: string, quantity: number): Promise<void> {
     try {
-      const product = await this.callServiceApi('GET', `/api/products/${productId}`);
+      const product = await this.httpClient.get(`/api/products/${productId}`);
       const data = product?.data ?? product;
       if (data.stock_illimite === 'illimité') return; // unlimited stock
       const currentStock = data.stock ?? 0;
       if (currentStock < quantity) {
         throw new BadRequestException(`Stock insuffisant (disponible: ${currentStock})`);
       }
-      await this.callServiceApi('PUT', `/api/products/${productId}`, {
+      await this.httpClient.put(`/api/products/${productId}`, {
         stock: currentStock - quantity,
       });
       this.logger.log(`Reserved ${quantity} stock for product ${productId}`);
@@ -148,56 +146,17 @@ export class CartService {
 
   private async releaseStock(productId: string, quantity: number): Promise<void> {
     try {
-      const product = await this.callServiceApi('GET', `/api/products/${productId}`);
+      const product = await this.httpClient.get(`/api/products/${productId}`);
       const data = product?.data ?? product;
       if (data.stock_illimite === 'illimité') return;
       const currentStock = data.stock ?? 0;
-      await this.callServiceApi('PUT', `/api/products/${productId}`, {
+      await this.httpClient.put(`/api/products/${productId}`, {
         stock: currentStock + quantity,
       });
       this.logger.log(`Released ${quantity} stock for product ${productId}`);
     } catch (err) {
       this.logger.error(`Failed to release stock: ${err.message}`);
     }
-  }
-
-  private callServiceApi(method: string, path: string, body?: any): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const url = new URL(path, this.serviceApiUrl);
-      const headers: Record<string, string> = {};
-      let bodyStr: string | undefined;
-
-      if (body) {
-        bodyStr = JSON.stringify(body);
-        headers['Content-Type'] = 'application/json';
-        headers['Content-Length'] = Buffer.byteLength(bodyStr).toString();
-      }
-
-      const req = http.request(
-        {
-          hostname: url.hostname,
-          port: url.port,
-          path: url.pathname,
-          method,
-          headers,
-        },
-        (res) => {
-          const chunks: Buffer[] = [];
-          res.on('data', (c) => chunks.push(c));
-          res.on('end', () => {
-            try {
-              resolve(JSON.parse(Buffer.concat(chunks).toString()));
-            } catch {
-              resolve(null);
-            }
-          });
-        },
-      );
-
-      req.on('error', reject);
-      if (bodyStr) req.write(bodyStr);
-      req.end();
-    });
   }
 
   /* ─── Cron: release expired reservations ───────────────────── */
