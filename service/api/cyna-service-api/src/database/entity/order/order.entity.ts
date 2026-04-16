@@ -88,6 +88,13 @@ export class OrderEntity {
     by: string;
   }>;
 
+  @Column({ type: 'jsonb', nullable: true })
+  credentials: Array<{
+    serviceName: string;
+    data: Record<string, string>;
+    sentAt: string;
+  }>;
+
   @Column({ nullable: true })
   trackingNumber: string;
 

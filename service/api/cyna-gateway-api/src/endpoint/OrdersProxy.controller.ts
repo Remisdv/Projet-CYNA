@@ -56,4 +56,14 @@ export class OrdersProxyController extends BaseProxyController {
   ): Promise<void> {
     await this.proxy(req, res, `/api/orders/${id}/notes`);
   }
+
+  @Post(':id/credentials')
+  @Roles('admin')
+  async sendCredentials(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.proxy(req, res, `/api/orders/${id}/credentials`);
+  }
 }

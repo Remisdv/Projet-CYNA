@@ -119,5 +119,54 @@ export class EmailService {
       `,
         );
     }
+
+    async sendServiceCredentials(
+        to: string,
+        data: {
+            ref: string;
+            credentials: Array<{ serviceName: string; data: Record<string, string>; sentAt: string }>;
+            customMessage?: string;
+        },
+    ): Promise<void> {
+        const credentialsHtml = data.credentials.map(cred => {
+            const fields = Object.entries(cred.data)
+                .map(([key, value]) => `<tr><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; color: #64748b;">${key}</td><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600;">${value}</td></tr>`)
+                .join('');
+            return `
+                <div style="margin: 15px 0;">
+                    <h3 style="color: #1e293b; margin-bottom: 8px;">${cred.serviceName}</h3>
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        ${fields}
+                    </table>
+                </div>`;
+        }).join('');
+
+        const customHtml = data.customMessage
+            ? `<div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px;"><p style="margin: 0; color: #1e40af;">${data.customMessage}</p></div>`
+            : '';
+
+        await this.send(
+            to,
+            `CYNA - Vos identifiants pour la commande ${data.ref}`,
+            `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: #1e293b; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0;">CYNA</h1>
+          </div>
+          <div style="padding: 30px; background: #f8fafc;">
+            <h2>Vos identifiants de service</h2>
+            <p>Bonjour,</p>
+            <p>Voici les identifiants pour votre commande <strong>${data.ref}</strong> :</p>
+            ${credentialsHtml}
+            ${customHtml}
+            <p style="margin-top: 20px;">Conservez ces informations en lieu sûr.</p>
+            <p style="color: #64748b; font-size: 12px; margin-top: 30px;">
+              Cet email a été envoyé automatiquement par CYNA. Merci de ne pas y répondre.
+            </p>
+          </div>
+        </div>
+      `,
+        );
+    }
 }
 

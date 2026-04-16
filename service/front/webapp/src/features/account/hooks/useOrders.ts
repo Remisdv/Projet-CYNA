@@ -4,10 +4,17 @@ import api from '../../../services/api';
 export interface OrderItem {
   productId: string;
   productName: string;
+  productType?: 'produit' | 'service';
   type: 'produit' | 'service';
   quantity: number;
   unitPrice: number;
   periodicity?: string;
+}
+
+export interface OrderCredential {
+  serviceName: string;
+  data: Record<string, string>;
+  sentAt: string;
 }
 
 export interface Order {
@@ -19,6 +26,8 @@ export interface Order {
   paymentStatus: string;
   billingAddress: Record<string, string>;
   shippingAddress?: Record<string, string>;
+  trackingNumber?: string;
+  credentials?: OrderCredential[];
   createdAt: string;
 }
 
@@ -38,6 +47,25 @@ export function useOrder(id: number | string) {
     queryFn: async () => {
       const { data } = await api.get(`/webapp/orders/${id}`);
       return data as Order;
+    },
+    enabled: !!id,
+  });
+}
+
+export interface TrackingData {
+  trackingNumber: string | null;
+  credentials: OrderCredential[];
+  status: string;
+  shippedAt: string | null;
+  history: Array<{ action: string; date: string; by: string }>;
+}
+
+export function useOrderTracking(id: number | string) {
+  return useQuery({
+    queryKey: ['orders', id, 'tracking'],
+    queryFn: async () => {
+      const { data } = await api.get(`/webapp/orders/${id}/tracking`);
+      return data as TrackingData;
     },
     enabled: !!id,
   });

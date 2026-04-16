@@ -8,6 +8,7 @@ import {
   Lock,
   LogOut,
   Download,
+  Eye,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -61,11 +62,10 @@ export default function AccountPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
-                    activeTab === tab.id
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${activeTab === tab.id
                       ? 'bg-blue-50 font-semibold text-blue-600'
                       : 'text-gray-600 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <Icon size={16} />
                   {tab.label}
@@ -165,6 +165,7 @@ function ProfileEditForm({ profile, onSave }: { profile: any; onSave: () => void
 /* ─── Orders tab ──────────────────────────────────────────────────── */
 function OrdersTab() {
   const [page, setPage] = useState(1);
+  const navigate = useNavigate();
   const { data, isLoading } = useOrders(page);
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Chargement...</div>;
@@ -194,13 +195,22 @@ function OrdersTab() {
             </p>
             <div className="flex items-center justify-between">
               <p className="text-sm font-bold text-blue-600">{Number(order.amount).toFixed(2)} €</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => downloadInvoice(order.id)}
-              >
-                <Download size={14} className="mr-1" /> Facture
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(`/orders/${order.id}`)}
+                >
+                  <Eye size={14} className="mr-1" /> Suivre
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => downloadInvoice(order.id)}
+                >
+                  <Download size={14} className="mr-1" /> Facture
+                </Button>
+              </div>
             </div>
           </div>
         ))

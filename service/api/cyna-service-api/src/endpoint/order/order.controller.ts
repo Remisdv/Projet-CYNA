@@ -23,6 +23,15 @@ class AddNoteDto {
   text: string;
 }
 
+class SendCredentialsDto {
+  @IsArray()
+  credentials: Array<{ serviceName: string; data: Record<string, string> }>;
+
+  @IsOptional()
+  @IsString()
+  customMessage?: string;
+}
+
 class SyncOrderBodyDto {
   @IsString()
   ref: string;
@@ -79,6 +88,11 @@ export class OrderController {
     return this.orderService.findAll({ page, per_page, status });
   }
 
+  @Get('by-ref/:ref')
+  async findByRef(@Param('ref') ref: string) {
+    return this.orderService.findByRef(ref);
+  }
+
   @Get(':id')
   async findById(@Param('id') id: string) {
     return this.orderService.findById(id);
@@ -123,5 +137,19 @@ export class OrderController {
     @Headers('x-user-id') userId: string,
   ) {
     return this.orderService.addNote(id, body.text, userId || 'admin');
+  }
+
+  @Post(':id/credentials')
+  async sendCredentials(
+    @Param('id') id: string,
+    @Body() body: SendCredentialsDto,
+    @Headers('x-user-id') userId: string,
+  ) {
+    return this.orderService.sendCredentials(
+      id,
+      body.credentials,
+      body.customMessage,
+      userId || 'admin',
+    );
   }
 }

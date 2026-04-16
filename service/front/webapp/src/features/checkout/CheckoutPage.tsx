@@ -224,7 +224,7 @@ function Step3PaymentInner({
   onBack,
 }: {
   info: InfoForm;
-  onNext: (orderRef: string) => void;
+  onNext: (orderRef: string, orderId?: string) => void;
   onBack: () => void;
 }) {
   const { items } = useCart();
@@ -272,7 +272,7 @@ function Step3PaymentInner({
 
       if (!clientSecret) {
         // Subscription-only or no secret → proceed directly
-        onNext(result.message || 'Commande créée');
+        onNext(result.message || 'Commande créée', result.orderId ? String(result.orderId) : undefined);
         return;
       }
 
@@ -318,9 +318,9 @@ function Step3PaymentInner({
           }
         }
         trackEvent('CART_CHECKOUT', undefined, { orderRef: result.orderRef });
-        onNext(result.orderRef || 'Paiement confirmé !');
+        onNext(result.orderRef || 'Paiement confirmé !', result.orderId ? String(result.orderId) : undefined);
       } else {
-        onNext(`Paiement en cours de traitement (${paymentIntent?.status})`);
+        onNext(`Paiement en cours de traitement (${paymentIntent?.status})`, result.orderId ? String(result.orderId) : undefined);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Erreur lors du paiement');
@@ -430,7 +430,7 @@ function Step3PaymentInner({
 
 function Step3Payment(props: {
   info: InfoForm;
-  onNext: (orderRef: string) => void;
+  onNext: (orderRef: string, orderId?: string) => void;
   onBack: () => void;
 }) {
   return (
@@ -441,7 +441,7 @@ function Step3Payment(props: {
 }
 
 /* ─── Step 4 — Confirmation ──────────────────────────────────────── */
-function Step4Confirmation({ info, message }: { info: InfoForm; message: string }) {
+function Step4Confirmation({ info, message, orderId }: { info: InfoForm; message: string; orderId?: string }) {
   const navigate = useNavigate();
 
   return (
@@ -459,6 +459,11 @@ function Step4Confirmation({ info, message }: { info: InfoForm; message: string 
         <Button variant="outline" onClick={() => navigate('/catalog')}>
           Continuer mes achats
         </Button>
+        {orderId && (
+          <Button variant="outline" onClick={() => navigate(`/orders/${orderId}`)}>
+            Suivre ma commande
+          </Button>
+        )}
         <Button onClick={() => navigate('/account')}>Mon compte</Button>
       </div>
     </div>
@@ -474,6 +479,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [infoData, setInfoData] = useState<InfoForm | null>(null);
   const [confirmMessage, setConfirmMessage] = useState('');
+  const [confirmOrderId, setConfirmOrderId] = useState<string | undefined>();
 
   // Build default values from profile
   const profileDefaults: Partial<InfoForm> | undefined = profile
@@ -511,8 +517,9 @@ export default function CheckoutPage() {
     setStep(1);
   }
 
-  function handlePaymentNext(msg: string) {
+  function handlePaymentNext(msg: string, orderId?: string) {
     setConfirmMessage(msg);
+    setConfirmOrderId(orderId);
     clearCart();
     setStep(3);
   }
@@ -527,7 +534,7 @@ export default function CheckoutPage() {
       {step === 2 && infoData && (
         <Step3Payment info={infoData} onNext={handlePaymentNext} onBack={() => setStep(1)} />
       )}
-      {step === 3 && infoData && <Step4Confirmation info={infoData} message={confirmMessage} />}
+      {step === 3 && infoData && <Step4Confirmation info={infoData} message={confirmMessage} orderId={confirmOrderId} />}
     </div>
   );
 }

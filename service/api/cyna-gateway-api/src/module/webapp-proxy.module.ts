@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { WebappProxyService } from '../service/webapp-proxy.service';
+import { ProxyService } from '../service/proxy.service';
 import { WebappCarouselProxyController } from '../endpoint/WebappCarouselProxy.controller';
 import { WebappAdvertisementsProxyController } from '../endpoint/WebappAdvertisementsProxy.controller';
 import { WebappAccountProxyController } from '../endpoint/WebappAccountProxy.controller';
@@ -22,7 +23,7 @@ import { NotificationsProxyController } from '../endpoint/NotificationsProxy.con
     WebappCartProxyController,
     NotificationsProxyController,
   ],
-  providers: [WebappProxyService],
+  providers: [WebappProxyService, ProxyService],
   exports: [WebappProxyService],
 })
 export class WebappProxyModule { }

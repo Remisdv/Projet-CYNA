@@ -130,6 +130,10 @@ export class OrderService {
     return order;
   }
 
+  async findByRef(ref: string): Promise<OrderEntity | null> {
+    return this.orderRepository.findOne({ where: { ref } });
+  }
+
   async updateStatus(
     id: string,
     status: OrderStatus,
@@ -234,5 +238,45 @@ export class OrderService {
     ];
 
     return this.orderRepository.save(order);
+  }
+
+  async sendCredentials(
+    id: string,
+    credentials: Array<{ serviceName: string; data: Record<string, string> }>,
+    customMessage: string | undefined,
+    by: string,
+  ): Promise<OrderEntity> {
+    const order = await this.findById(id);
+
+    const timestamped = credentials.map(c => ({
+      ...c,
+      sentAt: new Date().toISOString(),
+    }));
+
+    order.credentials = [
+      ...(order.credentials || []),
+      ...timestamped,
+    ];
+
+    order.history = [
+      ...(order.history || []),
+      {
+        action: `Identifiants envoyés pour: ${credentials.map(c => c.serviceName).join(', ')}`,
+        date: new Date().toISOString(),
+        by,
+      },
+    ];
+
+    const saved = await this.orderRepository.save(order);
+
+    if (order.clientEmail) {
+      await this.emailService.sendServiceCredentials(order.clientEmail, {
+        ref: order.ref,
+        credentials: timestamped,
+        customMessage,
+      });
+    }
+
+    return saved;
   }
 }
