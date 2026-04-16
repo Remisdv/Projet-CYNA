@@ -5,6 +5,7 @@ export interface Product {
   id: string;
   nom: string;
   description: string;
+  description_longue?: string;
   prix_mensuel?: number;
   prix_annuel?: number;
   prix?: number;
@@ -28,7 +29,12 @@ function normalizeImages(raw: any[]): string[] {
 }
 
 function normalizeProduct(p: any): Product {
-  return { ...p, images: normalizeImages(p.images) };
+  return {
+    ...p,
+    description: p.description_courte ?? p.description ?? '',
+    description_longue: p.description_longue ?? undefined,
+    images: normalizeImages(p.images),
+  };
 }
 
 export function useProducts(filters?: ProductFilters) {

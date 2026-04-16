@@ -6,6 +6,7 @@ import TwoFactorPage from './features/auth/TwoFactorPage';
 import DashboardPage from './features/dashboard/DashboardPage';
 import ServicesPage from './features/catalog/ServicesPage';
 import CategoriesPage from './features/catalog/CategoriesPage';
+import ServiceFormPage from './features/catalog/ServiceFormPage';
 import FaqsPage from './features/content/FaqsPage';
 import AdvertisementsPage from './features/content/AdvertisementsPage';
 import UsersPage from './features/users/UsersPage';
@@ -77,6 +78,8 @@ function AppRoutes() {
 
         {/* Catalog */}
         <Route path="catalog/services" element={<ServicesPage />} />
+        <Route path="catalog/services/new" element={<ServiceFormPage />} />
+        <Route path="catalog/services/:id/edit" element={<ServiceFormPage />} />
         <Route path="catalog/categories" element={<CategoriesPage />} />
 
         {/* Content */}

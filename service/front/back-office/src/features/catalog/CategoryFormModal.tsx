@@ -6,6 +6,7 @@ import {
   useCreateCategory,
   useUpdateCategory,
   Category,
+  CategoryInput,
 } from './hooks/useCategories';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
@@ -79,14 +80,13 @@ export default function CategoryFormModal({
 
   const onSubmit = async (data: CategoryFormData) => {
     try {
-      const fr = data.translations.find((t: { lang: string; name: string; description?: string }) => t.lang === 'fr');
-      const en = data.translations.find((t: { lang: string; name: string; description?: string }) => t.lang === 'en');
-      const payload = {
+      const payload: CategoryInput = {
         slug: data.slug,
-        nameFr: fr?.name || '',
-        descFr: fr?.description || '',
-        nameEn: en?.name || '',
-        descEn: en?.description || '',
+        translations: data.translations.map((t) => ({
+          lang: t.lang,
+          name: t.name,
+          description: t.description || '',
+        })),
       };
       if (category) {
         await updateCategory.mutateAsync({

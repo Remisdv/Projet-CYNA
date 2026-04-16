@@ -1,5 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { WebappAuthService } from '../../service/Auth/WebappAuth.service';
+import { WebappAuthService } from '../../service/auth/WebappAuth.service';
 import {
   RegisterDto,
   LoginDto,
@@ -7,7 +7,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   AuthResponseDto,
-} from '../../service/dtos/Auth/Auth.dto';
+} from '../../service/dtos/auth/Auth.dto';
 
 @Controller('auth')
 export class WebappAuthController {

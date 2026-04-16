@@ -15,6 +15,16 @@ export interface Category {
   updatedAt: string;
 }
 
+export interface CategoryInput {
+  slug: string;
+  isActive?: boolean;
+  translations: Array<{
+    lang: string;
+    name: string;
+    description?: string;
+  }>;
+}
+
 export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
@@ -28,7 +38,7 @@ export const useCategories = () => {
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (categoryData: Partial<Category>) => {
+    mutationFn: async (categoryData: CategoryInput) => {
       const { data } = await api.post<Category>('/categories', categoryData);
       return data;
     },
@@ -41,7 +51,7 @@ export const useCreateCategory = () => {
 export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, categoryData }: { id: string; categoryData: Partial<Category> }) => {
+    mutationFn: async ({ id, categoryData }: { id: string; categoryData: CategoryInput }) => {
       const { data } = await api.put<Category>(`/categories/${id}`, categoryData);
       return data;
     },
