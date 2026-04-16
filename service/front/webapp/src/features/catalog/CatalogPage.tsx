@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useProducts } from './hooks/useProducts';
-import { usePublicCategories } from './hooks/useCategories';
+import { usePublicCategories, getCategoryName } from './hooks/useCategories';
 import ProductCard from './components/ProductCard';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -109,14 +109,14 @@ export default function CatalogPage() {
               {categories?.map(cat => (
                 <button
                   key={cat.id}
-                  onClick={() => setFilter('categorie', cat.nom)}
+                  onClick={() => setFilter('categorie', cat.slug)}
                   className={`rounded-full border px-3 py-1 text-sm transition ${
-                    categorieParam === cat.nom
+                    categorieParam === cat.slug
                       ? 'border-blue-600 bg-blue-600 text-white'
                       : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
                   }`}
                 >
-                  {cat.nom}
+                  {getCategoryName(cat)}
                 </button>
               ))}
             </div>

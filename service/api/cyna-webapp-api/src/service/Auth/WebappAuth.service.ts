@@ -14,7 +14,7 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   AuthResponseDto,
-} from '../dtos/Auth/Auth.dto';
+} from '../dtos/auth/Auth.dto';
 
 @Injectable()
 export class WebappAuthService {
