@@ -1,5 +1,5 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { WebappAuthService } from '../../service/auth/WebappAuth.service';
+import { WebappAuthService } from '../../service/Auth/WebappAuth.service';
 import {
   RegisterDto,
   LoginDto,

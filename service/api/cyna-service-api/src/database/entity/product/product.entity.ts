@@ -48,11 +48,14 @@ export class ProductEntity {
   @Column({ type: 'text', nullable: true })
   description_longue: string;
 
+  // Stocké en varchar pour pouvoir référencer soit une des valeurs
+  // historiques (SOC/EDR/XDR/Service), soit l'UUID d'une catégorie
+  // administrée via /api/bo/categories.
   @Column({
-    type: 'enum',
-    enum: ProductCategory,
+    type: 'varchar',
+    length: 128,
   })
-  categorie: ProductCategory;
+  categorie: string;
 
   @Column({
     type: 'enum',

@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsArray, IsOptional, IsNumber, IsBoolean, IsInt, MaxLength, Length } from 'class-validator';
-import { ProductCategory, ProductType, ServicePeriodicity, ProductStatus } from '../../database/entity/product';
+import { ProductType, ServicePeriodicity, ProductStatus } from '../../database/entity/product';
 
 export class CreateProductDto {
   @IsString()
@@ -14,8 +14,10 @@ export class CreateProductDto {
   @IsString()
   description_longue?: string;
 
-  @IsEnum(ProductCategory)
-  categorie: ProductCategory;
+  // Valeur libre : soit une catégorie historique (SOC/EDR/XDR/Service),
+  // soit l'UUID d'une catégorie administrée via /api/bo/categories.
+  @IsString()
+  categorie: string;
 
   @IsEnum(ProductType)
   type: ProductType;
@@ -101,8 +103,8 @@ export class UpdateProductDto {
   description_longue?: string;
 
   @IsOptional()
-  @IsEnum(ProductCategory)
-  categorie?: ProductCategory;
+  @IsString()
+  categorie?: string;
 
   @IsOptional()
   @IsEnum(ProductType)
@@ -176,7 +178,7 @@ export class ProductResponseDto {
   nom: string;
   description_courte: string;
   description_longue?: string;
-  categorie: ProductCategory;
+  categorie: string;
   type: ProductType;
   tags?: string[];
   statut: ProductStatus;

@@ -54,6 +54,14 @@ export default function ServicesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Map category id -> label (for display and sorting)
+  const categoryLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    (categories ?? []).forEach(c => { if (c.value) map.set(c.value, c.label); });
+    return map;
+  }, [categories]);
+  const getCategoryLabel = (id: string) => categoryLabelById.get(id) ?? id;
+
   // Filter and sort services
   const filteredAndSortedServices = useMemo(() => {
     let result = [...services];
@@ -80,7 +88,7 @@ export default function ServicesPage() {
           comparison = a.name.localeCompare(b.name);
           break;
         case 'category':
-          comparison = a.category.localeCompare(b.category);
+          comparison = getCategoryLabel(a.category).localeCompare(getCategoryLabel(b.category));
           break;
         case 'price':
           comparison = a.price - b.price;
@@ -102,7 +110,7 @@ export default function ServicesPage() {
     });
 
     return result;
-  }, [services, categoryFilter, statusFilter, priceMin, priceMax, sortField, sortDirection]);
+  }, [services, categoryFilter, statusFilter, priceMin, priceMax, sortField, sortDirection, categoryLabelById]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedServices.length / itemsPerPage);
@@ -344,7 +352,7 @@ export default function ServicesPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{service.category}</Badge>
+                        <Badge variant="secondary">{getCategoryLabel(service.category)}</Badge>
                       </TableCell>
                       <TableCell>
                         <div>

@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ProductEntity,
-  ProductCategory,
   ProductType,
   ProductStatus,
   ServicePeriodicity,
@@ -79,7 +78,7 @@ export class ProductService {
   async findAll(query: {
     page?: number;
     per_page?: number;
-    categorie?: ProductCategory;
+    categorie?: string;
     type?: ProductType;
     statut?: ProductStatus | 'all';
     prix_min?: number;
