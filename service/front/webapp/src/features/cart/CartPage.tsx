@@ -81,7 +81,7 @@ export default function CartPage() {
                       </Link>
                     </div>
                     <button
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.id, item.periodicity)}
                       aria-label="Supprimer"
                       className="text-gray-400 hover:text-red-500"
                     >
@@ -111,7 +111,7 @@ export default function CartPage() {
                     {/* Quantity stepper */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity - 1, item.periodicity)}
                         disabled={item.quantity <= 1}
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-blue-600 hover:text-blue-600 disabled:opacity-40"
                       >
@@ -119,7 +119,7 @@ export default function CartPage() {
                       </button>
                       <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1, item.periodicity)}
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-blue-600 hover:text-blue-600"
                       >
                         <Plus size={12} />
