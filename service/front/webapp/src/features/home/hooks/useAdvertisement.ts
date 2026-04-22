@@ -3,9 +3,9 @@ import api from '../../../services/api';
 
 export interface Advertisement {
   id: string;
-  texteFr?: string;
-  texteEn?: string;
-  actif?: boolean;
+  textFr?: string;
+  textEn?: string;
+  isActive?: boolean;
 }
 
 export function useActiveAdvertisement() {

@@ -631,7 +631,14 @@ export default function ServiceFormPage() {
                     <div className="flex items-center gap-4">
                       <button
                         type="button"
-                        onClick={() => updateField('stockQuantity', 'unlimited')}
+                        onClick={() => {
+                          if (formData.stockQuantity === 'unlimited') {
+                            const n = parseInt(rawValues.stockQuantity) || 0;
+                            updateField('stockQuantity', n);
+                          } else {
+                            updateField('stockQuantity', 'unlimited');
+                          }
+                        }}
                         className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                           formData.stockQuantity === 'unlimited' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
