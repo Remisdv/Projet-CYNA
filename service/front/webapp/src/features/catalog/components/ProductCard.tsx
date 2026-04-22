@@ -4,6 +4,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { useCart } from '../../../context/CartContext';
 import type { Product } from '../hooks/useProducts';
+import { useCategoryName } from '../hooks/useCategories';
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem, isInCart } = useCart();
   const inCart = isInCart(product.id);
+  const categoryName = useCategoryName(product.categorie);
 
   const rawPrice = product.type === 'service'
     ? product.prix_mensuel
@@ -36,7 +38,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       prix: product.prix,
       type: product.type,
       image: imageUrl,
-      periodicity: 'mensuel',
+      periodicity: product.type === 'service' ? 'mensuel' : undefined,
     });
   }
 
@@ -61,7 +63,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
         {product.categorie && (
           <Badge variant="secondary" className="absolute left-2 top-2 text-xs">
-            {product.categorie}
+            {categoryName}
           </Badge>
         )}
         {product.type === 'service' && (

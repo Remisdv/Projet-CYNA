@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ShoppingCart, Check, ArrowLeft, Monitor, Package, Repeat } from 'lucide-react';
 import { useProductDetail } from '../catalog/hooks/useProducts';
+import { useCategoryName } from '../catalog/hooks/useCategories';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { useCart } from '../../context/CartContext';
@@ -64,6 +65,7 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, isError } = useProductDetail(id);
   const { addItem, isInCart, updatePeriodicity, items } = useCart();
+  const categoryName = useCategoryName(product?.categorie);
 
   const inCart = product ? isInCart(product.id) : false;
   const cartItem = product ? items.find(i => i.id === product.id) : undefined;
@@ -115,7 +117,7 @@ export default function ProductDetailPage() {
       prix: product!.prix,
       type: product!.type,
       image: product!.images?.[0],
-      periodicity: selectedPeriodicity,
+      periodicity: isService ? selectedPeriodicity : undefined,
     });
   }
 
@@ -137,7 +139,7 @@ export default function ProductDetailPage() {
           <div className="mb-3 flex flex-wrap items-center gap-2">
             {product.categorie && (
               <Badge variant="secondary" className="w-fit">
-                {product.categorie}
+                {categoryName}
               </Badge>
             )}
             {isService ? (

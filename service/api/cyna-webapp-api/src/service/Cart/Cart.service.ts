@@ -108,10 +108,52 @@ export class CartService {
         where: { userId, productId: localItem.productId, periodicity: localItem.periodicity ?? '' },
       });
 
-      if (!existing) {
-        await this.addItem(userId, localItem);
+      if (existing) {
+        // If already in server cart, keep existing (don't duplicate)
+        continue;
       }
-      // If already in server cart, keep existing (don't duplicate)
+
+      const quantity = localItem.quantity ?? 1;
+
+      // Best-effort stock reservation: if it fails (stock insuffisant, produit supprimé,
+      // service-api injoignable), on garde quand même la ligne dans le panier pour
+      // ne pas perdre le contenu client au login.
+      let reserved = false;
+      try {
+        await this.reserveStock(localItem.productId, quantity);
+        reserved = true;
+      } catch (err) {
+        this.logger.warn(
+          `Merge: skipping stock reservation for ${localItem.productId}: ${err?.message ?? err}`,
+        );
+      }
+
+      const item = this.cartRepo.create({
+        userId,
+        productId: localItem.productId,
+        productName: localItem.productName,
+        productType: localItem.productType,
+        quantity,
+        prix: localItem.prix,
+        prixMensuel: localItem.prixMensuel,
+        prixAnnuel: localItem.prixAnnuel,
+        periodicity: localItem.periodicity ?? '',
+        image: localItem.image,
+        stockReserved: reserved,
+        reservationExpiresAt: reserved ? new Date(Date.now() + RESERVATION_DURATION_MS) : null,
+      });
+
+      try {
+        await this.cartRepo.save(item);
+      } catch (err) {
+        this.logger.warn(
+          `Merge: failed to save cart item ${localItem.productId}: ${err?.message ?? err}`,
+        );
+        if (reserved) {
+          // Undo the reservation we just made
+          await this.releaseStock(localItem.productId, quantity);
+        }
+      }
     }
     return this.getCart(userId);
   }
