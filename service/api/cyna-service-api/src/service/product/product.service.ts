@@ -8,6 +8,7 @@ import {
   ProductStatus,
   ServicePeriodicity,
 } from '../../database/entity/product';
+import { CategoryEntity } from '../../database/entity/category/category.entity';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -15,12 +16,29 @@ import {
   UpdateImageOrderDto,
 } from '../../dto/product';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 @Injectable()
 export class ProductService {
   constructor(
     @InjectRepository(ProductEntity)
     private productRepository: Repository<ProductEntity>,
+    @InjectRepository(CategoryEntity)
+    private categoryRepository: Repository<CategoryEntity>,
   ) {}
+
+  /**
+   * Resolve a "categorie" filter value which can be either a UUID (matching
+   * `product.categorie`) or a slug (requires a join on categories to resolve
+   * the corresponding UUID). Returns the UUID string, or null if nothing
+   * matches (caller should treat as "no result").
+   */
+  private async resolveCategoryId(value: string): Promise<string | null> {
+    if (!value) return null;
+    if (UUID_RE.test(value)) return value;
+    const cat = await this.categoryRepository.findOne({ where: { slug: value } });
+    return cat?.id ?? null;
+  }
 
   /**
    * Generate a slug from the product name
@@ -110,8 +128,13 @@ export class ProductService {
     }
 
     if (query.categorie) {
+      const resolvedCatId = await this.resolveCategoryId(query.categorie);
+      if (!resolvedCatId) {
+        // Unknown slug/UUID => return empty result rather than ignoring the filter
+        return { data: [], total: 0, page, per_page };
+      }
       queryBuilder = queryBuilder.andWhere('product.categorie = :categorie', {
-        categorie: query.categorie,
+        categorie: resolvedCatId,
       });
     }
 
@@ -195,8 +218,12 @@ export class ProductService {
 
     // Apply same filters as findAll if provided
     if (query?.categorie) {
+      const resolvedCatId = await this.resolveCategoryId(query.categorie);
+      if (!resolvedCatId) {
+        return { data: [], total: 0 };
+      }
       queryBuilder.andWhere('product.categorie = :categorie', {
-        categorie: query.categorie,
+        categorie: resolvedCatId,
       });
     }
 
