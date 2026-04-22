@@ -1,4 +1,4 @@
-import { IsString, IsEmail, MinLength } from 'class-validator';
+import { IsString, IsEmail, MinLength, Length } from 'class-validator';
 
 export class BoLoginDto {
   @IsEmail()
@@ -12,6 +12,20 @@ export class BoLoginDto {
 export class BoRefreshDto {
   @IsString()
   refresh_token: string;
+}
+
+export class TwoFactorVerifyDto {
+  @IsString()
+  userId: string;
+
+  @IsString()
+  @Length(6, 6)
+  code: string;
+}
+
+export class TwoFactorResendDto {
+  @IsString()
+  userId: string;
 }
 
 export class BoAuthResponseDto {

@@ -47,4 +47,6 @@ export class ProfileResponseDto {
     billingAddress: any;
     shippingAddress: any;
     createdAt: Date;
+    twoFactorEnabled: boolean;
+    totpEnabled: boolean;
 }
