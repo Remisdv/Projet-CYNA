@@ -50,7 +50,9 @@ function normalizeService(raw: any): Service {
     annualDiscountPct: raw.annualDiscountPct,
     stock: raw.unlimitedStock ? 'unlimited' : (raw.stock ?? 0),
     lowStockThreshold: raw.lowStockThreshold ?? 10,
-    status: raw.status === 'publié' ? 'published' : 'draft',
+    // Le gateway convertit déjà statut "publié"/"brouillon" en status "published"/"draft".
+    // On accepte aussi "publié" au cas où la réponse brute du service-api passerait.
+    status: (raw.status === 'published' || raw.status === 'publié') ? 'published' : 'draft',
     type: isService ? 'service' : 'product',
     shortDescription: raw.shortDescription ?? '',
     longDescription: raw.longDescription,
