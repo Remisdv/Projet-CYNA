@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { Shield } from 'lucide-react';
 import api from '../../services/api';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 
 const schema = z
   .object({
@@ -86,16 +86,14 @@ export default function ResetPasswordPage() {
               <div className="p-3 text-sm text-red-600 bg-red-50 rounded-lg">{error}</div>
             )}
 
-            <Input
+            <PasswordInput
               label="Nouveau mot de passe"
-              type="password"
               {...register('newPassword')}
               error={errors.newPassword?.message}
             />
 
-            <Input
+            <PasswordInput
               label="Confirmer le mot de passe"
-              type="password"
               {...register('confirmPassword')}
               error={errors.confirmPassword?.message}
             />

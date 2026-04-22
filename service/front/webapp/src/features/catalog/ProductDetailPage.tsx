@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, ShoppingCart, Check, ArrowLeft, Monitor, Package, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart, Check, ArrowLeft, Monitor, Package, Repeat, ShieldCheck, HeadphonesIcon, RefreshCw } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { useProductDetail } from '../catalog/hooks/useProducts';
 import { useCategoryName } from '../catalog/hooks/useCategories';
 import { Badge } from '../../components/ui/Badge';
@@ -167,8 +168,8 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => setSelectedPeriodicity('mensuel')}
                   className={`relative rounded-xl border-2 p-3 text-left transition ${selectedPeriodicity === 'mensuel'
-                      ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
-                      : 'border-gray-200 bg-white hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                    : 'border-gray-200 bg-white hover:border-blue-300'
                     }`}
                 >
                   <div className="text-sm font-semibold text-gray-900">Mensuel</div>
@@ -179,8 +180,8 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => setSelectedPeriodicity('annuel')}
                   className={`relative rounded-xl border-2 p-3 text-left transition ${selectedPeriodicity === 'annuel'
-                      ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
-                      : 'border-gray-200 bg-white hover:border-blue-300'
+                    ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+                    : 'border-gray-200 bg-white hover:border-blue-300'
                     }`}
                 >
                   {savingsPercent > 0 && (
@@ -197,53 +198,44 @@ export default function ProductDetailPage() {
             );
           })()}
 
-          <div className="mb-6">
-            <div className="text-4xl font-extrabold text-blue-600">
-              {price != null ? (
-                <>
-                  {Number(price).toFixed(2)} €
-                  {isService && (
-                    <span className="ml-1 text-lg font-normal text-gray-500">
-                      /{selectedPeriodicity === 'mensuel' ? 'mois' : 'an'}
-                    </span>
-                  )}
-                </>
-              ) : (
-                <span className="text-gray-400">Prix sur devis</span>
+          <div className="mb-6 rounded-xl bg-blue-50 border border-blue-100 px-5 py-4">
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold text-blue-600">
+                {price != null ? Number(price).toFixed(2) : null}
+              </span>
+              {price != null && (
+                <span className="text-lg font-medium text-blue-400">
+                  €{isService ? `/${selectedPeriodicity === 'mensuel' ? 'mois' : 'an'}` : ''}
+                </span>
               )}
+              {price == null && <span className="text-xl font-semibold text-gray-400">Prix sur devis</span>}
+              {isService && selectedPeriodicity === 'annuel' && (() => {
+                const mensuel = product.prix_mensuel != null ? Number(product.prix_mensuel) : null;
+                const annuel = product.prix_annuel != null ? Number(product.prix_annuel) : null;
+                const pct = mensuel && annuel && mensuel > 0
+                  ? Math.round((1 - annuel / (mensuel * 12)) * 100)
+                  : 0;
+                return pct > 0 ? (
+                  <span className="ml-1 rounded-full bg-green-500 px-2.5 py-0.5 text-xs font-bold text-white">
+                    -{pct}%
+                  </span>
+                ) : null;
+              })()}
             </div>
             {isService && (
-              <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
-                <Repeat size={14} /> Abonnement récurrent
+              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-blue-500">
+                <Repeat size={13} /> Abonnement récurrent · résiliable à tout moment
               </p>
             )}
           </div>
 
-          <p className="mb-3 leading-relaxed text-gray-600">{product.description}</p>
-          {product.description_longue && (
-            <p className="mb-6 leading-relaxed text-gray-600 whitespace-pre-line">{product.description_longue}</p>
-          )}
-
-          {/* Characteristics */}
-          {product.caracteristiques && Object.keys(product.caracteristiques).length > 0 && (
-            <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
-              <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">
-                Caractéristiques
-              </h2>
-              <dl className="grid grid-cols-1 gap-y-2 sm:grid-cols-2">
-                {Object.entries(product.caracteristiques).map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-xs text-gray-400">{k}</dt>
-                    <dd className="text-sm font-medium text-gray-800">{v}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
+          {product.description && (
+            <p className="mb-6 leading-relaxed text-gray-600">{product.description}</p>
           )}
 
           <Button
             size="lg"
-            className="mt-auto w-full"
+            className="w-full"
             variant={inCart ? 'outline' : 'default'}
             onClick={handleAddToCart}
           >
@@ -259,8 +251,65 @@ export default function ProductDetailPage() {
               </>
             )}
           </Button>
+
+          {/* Trust signals */}
+          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-100 pt-4">
+            <div className="flex flex-col items-center gap-1 text-center">
+              <ShieldCheck size={16} className="text-green-500" />
+              <span className="text-xs text-gray-500">Paiement sécurisé</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <HeadphonesIcon size={16} className="text-blue-500" />
+              <span className="text-xs text-gray-500">Support 24/7</span>
+            </div>
+            <div className="flex flex-col items-center gap-1 text-center">
+              <RefreshCw size={16} className="text-purple-500" />
+              <span className="text-xs text-gray-500">{isService ? 'Résiliable' : 'Satisfait ou remboursé'}</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Description longue (Markdown) — pleine largeur */}
+      {product.description_longue && (
+        <section className="mt-12 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
+          <h2 className="mb-4 text-xl font-bold text-gray-900">Description détaillée</h2>
+          <div className="prose prose-gray max-w-none leading-relaxed text-gray-700
+            [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:text-gray-900 [&>h1]:mt-6 [&>h1]:mb-3
+            [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-gray-900 [&>h2]:mt-6 [&>h2]:mb-3
+            [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-gray-800 [&>h3]:mt-4 [&>h3]:mb-2
+            [&>h4]:text-base [&>h4]:font-semibold [&>h4]:text-gray-800 [&>h4]:mt-3 [&>h4]:mb-2
+            [&>p]:mb-4 [&>p]:leading-relaxed
+            [&>ul]:mb-4 [&>ul]:pl-5 [&>ul>li]:list-disc [&>ul>li]:mb-1.5
+            [&>ol]:mb-4 [&>ol]:pl-5 [&>ol>li]:list-decimal [&>ol>li]:mb-1.5
+            [&_strong]:font-semibold [&_strong]:text-gray-900
+            [&_em]:italic
+            [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-700
+            [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-sm [&_code]:font-mono [&_code]:text-pink-600
+            [&>blockquote]:border-l-4 [&>blockquote]:border-blue-200 [&>blockquote]:bg-blue-50 [&>blockquote]:px-4 [&>blockquote]:py-2 [&>blockquote]:my-4 [&>blockquote]:italic [&>blockquote]:text-gray-700
+            [&>table]:w-full [&>table]:my-4 [&>table]:border-collapse
+            [&_th]:border [&_th]:border-gray-200 [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
+            [&_td]:border [&_td]:border-gray-200 [&_td]:px-3 [&_td]:py-2
+            [&>hr]:my-6 [&>hr]:border-gray-200">
+            <ReactMarkdown>{product.description_longue}</ReactMarkdown>
+          </div>
+        </section>
+      )}
+
+      {/* Caractéristiques — pleine largeur */}
+      {product.caracteristiques && Object.keys(product.caracteristiques).length > 0 && (
+        <section className="mt-6 rounded-2xl border border-gray-100 bg-gray-50 p-6 sm:p-8">
+          <h2 className="mb-4 text-xl font-bold text-gray-900">Caractéristiques</h2>
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(product.caracteristiques).map(([k, v]) => (
+              <div key={k} className="border-b border-gray-200 pb-2">
+                <dt className="text-xs uppercase tracking-wide text-gray-500">{k}</dt>
+                <dd className="mt-0.5 text-sm font-medium text-gray-900">{v}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 
 const registerSchema = z
   .object({
@@ -93,16 +94,14 @@ export default function RegisterPage() {
             error={errors.email?.message}
           />
 
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             {...register('password')}
             error={errors.password?.message}
           />
 
-          <Input
+          <PasswordInput
             label="Confirmer le mot de passe"
-            type="password"
             {...register('confirmPassword')}
             error={errors.confirmPassword?.message}
           />
