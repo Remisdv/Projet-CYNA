@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ProductEntity,
@@ -15,6 +15,7 @@ import {
   ProductResponseDto,
   UpdateImageOrderDto,
 } from '../../dto/product';
+import { ProductSearchService } from '../elasticsearch/product-search.service';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -25,6 +26,7 @@ export class ProductService {
     private productRepository: Repository<ProductEntity>,
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
+    private productSearchService: ProductSearchService,
   ) {}
 
   /**
@@ -87,6 +89,9 @@ export class ProductService {
     }
 
     const saved = await this.productRepository.save(product);
+    if (saved.statut === ProductStatus.PUBLISHED) {
+      void this.productSearchService.indexProduct(saved);
+    }
     return this.mapToResponseDto(saved);
   }
 
@@ -199,44 +204,56 @@ export class ProductService {
   }
 
   /**
-   * Search products by keyword (full-text, basic implementation)
+   * Search products by keyword using Elasticsearch with SQL fallback.
    */
-  async search(q: string, query?: any): Promise<{
-    data: ProductResponseDto[];
-    total: number;
-  }> {
-    const queryBuilder = this.productRepository.createQueryBuilder('product');
+  async search(
+    q: string,
+    query?: { categorie?: string; type?: string },
+  ): Promise<{ data: ProductResponseDto[]; total: number }> {
+    const esIds = await this.productSearchService.search(q, query);
 
-    queryBuilder.where('product.statut = :statut', { statut: ProductStatus.PUBLISHED });
+    if (esIds !== null) {
+      if (esIds.length === 0) return { data: [], total: 0 };
+      const entities = await this.productRepository.findBy({
+        id: In(esIds),
+        statut: ProductStatus.PUBLISHED,
+      });
+      const ordered = esIds
+        .map((id) => entities.find((p) => p.id === id))
+        .filter((p): p is ProductEntity => p !== undefined);
+      return { data: ordered.map((p) => this.mapToResponseDto(p)), total: ordered.length };
+    }
+
+    // Elasticsearch unavailable: fall back to SQL ILIKE
+    return this.searchFallback(q, query);
+  }
+
+  private async searchFallback(
+    q: string,
+    query?: { categorie?: string; type?: string },
+  ): Promise<{ data: ProductResponseDto[]; total: number }> {
+    const qb = this.productRepository.createQueryBuilder('product');
+    qb.where('product.statut = :statut', { statut: ProductStatus.PUBLISHED });
 
     if (q) {
-      queryBuilder.andWhere(
+      qb.andWhere(
         '(product.nom ILIKE :q OR product.description_courte ILIKE :q OR product.description_longue ILIKE :q OR product.tags::text ILIKE :q)',
         { q: `%${q}%` },
       );
     }
 
-    // Apply same filters as findAll if provided
     if (query?.categorie) {
       const resolvedCatId = await this.resolveCategoryId(query.categorie);
-      if (!resolvedCatId) {
-        return { data: [], total: 0 };
-      }
-      queryBuilder.andWhere('product.categorie = :categorie', {
-        categorie: resolvedCatId,
-      });
+      if (!resolvedCatId) return { data: [], total: 0 };
+      qb.andWhere('product.categorie = :categorie', { categorie: resolvedCatId });
     }
 
     if (query?.type) {
-      queryBuilder.andWhere('product.type = :type', { type: query.type });
+      qb.andWhere('product.type = :type', { type: query.type });
     }
 
-    const [data, total] = await queryBuilder.getManyAndCount();
-
-    return {
-      data: data.map((product) => this.mapToResponseDto(product)),
-      total,
-    };
+    const [data, total] = await qb.getManyAndCount();
+    return { data: data.map((p) => this.mapToResponseDto(p)), total };
   }
 
   /**
@@ -291,6 +308,11 @@ export class ProductService {
     }
 
     const updated = await this.productRepository.save(product);
+    if (updated.statut === ProductStatus.PUBLISHED) {
+      void this.productSearchService.indexProduct(updated);
+    } else {
+      void this.productSearchService.removeProduct(updated.id);
+    }
     return this.mapToResponseDto(updated);
   }
 
@@ -305,6 +327,7 @@ export class ProductService {
     }
 
     await this.productRepository.remove(product);
+    void this.productSearchService.removeProduct(id);
   }
 
   /**
@@ -319,6 +342,7 @@ export class ProductService {
 
     product.statut = ProductStatus.PUBLISHED;
     const updated = await this.productRepository.save(product);
+    void this.productSearchService.indexProduct(updated);
     return this.mapToResponseDto(updated);
   }
 
