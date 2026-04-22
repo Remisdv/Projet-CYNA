@@ -18,4 +18,4 @@ import { BoEmailService } from '../service/email/BoEmail.service';
   providers: [BoAuthService, BoEmailService],
   exports: [BoAuthService, JwtModule],
 })
-export class BoAuthModule {}
+export class BoAuthModule { }
