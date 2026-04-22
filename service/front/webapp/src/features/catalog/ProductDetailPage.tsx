@@ -229,10 +229,6 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          {product.description && (
-            <p className="mb-6 leading-relaxed text-gray-600">{product.description}</p>
-          )}
-
           <Button
             size="lg"
             className="w-full"
@@ -271,10 +267,14 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Description longue (Markdown) — pleine largeur */}
-      {product.description_longue && (
+      {(product.description_longue || product.description) && (
         <section className="mt-12 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-8">
           <h2 className="mb-4 text-xl font-bold text-gray-900">Description détaillée</h2>
-          <div className="prose prose-gray max-w-none leading-relaxed text-gray-700
+          {product.description && (
+            <p className="mb-6 text-base leading-relaxed text-gray-600 italic">{product.description}</p>
+          )}
+          {product.description_longue && (
+            <div className="prose prose-gray max-w-none leading-relaxed text-gray-700
             [&>h1]:text-2xl [&>h1]:font-bold [&>h1]:text-gray-900 [&>h1]:mt-6 [&>h1]:mb-3
             [&>h2]:text-xl [&>h2]:font-bold [&>h2]:text-gray-900 [&>h2]:mt-6 [&>h2]:mb-3
             [&>h3]:text-lg [&>h3]:font-semibold [&>h3]:text-gray-800 [&>h3]:mt-4 [&>h3]:mb-2
@@ -291,8 +291,9 @@ export default function ProductDetailPage() {
             [&_th]:border [&_th]:border-gray-200 [&_th]:bg-gray-50 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold
             [&_td]:border [&_td]:border-gray-200 [&_td]:px-3 [&_td]:py-2
             [&>hr]:my-6 [&>hr]:border-gray-200">
-            <ReactMarkdown>{product.description_longue}</ReactMarkdown>
-          </div>
+              <ReactMarkdown>{product.description_longue}</ReactMarkdown>
+            </div>
+          )}
         </section>
       )}
 

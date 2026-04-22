@@ -35,7 +35,8 @@ export default function CatalogPage() {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value);
     else next.delete(key);
-    next.delete('page');
+    // Reset to page 1 only when changing a filter, not when changing the page itself
+    if (key !== 'page') next.delete('page');
     setSearchParams(next);
   }
 
@@ -99,8 +100,8 @@ export default function CatalogPage() {
               <button
                 onClick={() => setFilter('categorie', '')}
                 className={`rounded-full border px-3 py-1 text-sm transition ${!categorieParam
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
                   }`}
               >
                 Toutes
@@ -110,8 +111,8 @@ export default function CatalogPage() {
                   key={cat.id}
                   onClick={() => setFilter('categorie', cat.slug)}
                   className={`rounded-full border px-3 py-1 text-sm transition ${categorieParam === cat.slug
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                    ? 'border-blue-600 bg-blue-600 text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
                     }`}
                 >
                   {getCategoryName(cat)}
@@ -128,8 +129,8 @@ export default function CatalogPage() {
                   key={t}
                   onClick={() => setFilter('type', t)}
                   className={`rounded-full border px-3 py-1 text-sm capitalize transition ${typeParam === t
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                    ? 'border-blue-600 bg-blue-600 text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
                     }`}
                 >
                   {t === '' ? 'Tous' : t}
