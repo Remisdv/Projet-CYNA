@@ -39,14 +39,14 @@ async function seed() {
         email: 'user2@cyna.fr',
         firstName: 'Marie',
         lastName: 'Martin',
-        role: UserRole.USER,
+        role: UserRole.COMMERCIAL,
         status: UserStatus.ACTIVE,
       },
       {
         email: 'user3@cyna.fr',
         firstName: 'Pierre',
         lastName: 'Bernard',
-        role: UserRole.USER,
+        role: UserRole.COMMERCIAL,
         status: UserStatus.INACTIVE,
       },
       {

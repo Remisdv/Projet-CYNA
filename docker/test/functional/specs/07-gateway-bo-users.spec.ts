@@ -14,7 +14,7 @@ describe('Gateway — BO Users endpoints', () => {
         email: `test-user-${uid()}@cyna.fr`,
         firstName: 'Test',
         lastName: 'User',
-        role: 'USER',
+        role: 'COMMERCIAL',
         status: 'ACTIVE',
       },
       adminToken,
@@ -73,7 +73,7 @@ describe('Gateway — BO Users endpoints', () => {
           email: `new-user-${uid()}@cyna.fr`,
           firstName: 'New',
           lastName: 'User',
-          role: 'USER',
+          role: 'COMMERCIAL',
           status: 'ACTIVE',
         },
         adminToken,
@@ -87,7 +87,7 @@ describe('Gateway — BO Users endpoints', () => {
     it('should return 400 when email is missing', async () => {
       const res = await post(
         `${GATEWAY}/api/bo/users`,
-        { firstName: 'No', lastName: 'Email', role: 'USER', status: 'ACTIVE' },
+        { firstName: 'No', lastName: 'Email', role: 'COMMERCIAL', status: 'ACTIVE' },
         adminToken,
       );
       expect(res.status).toBe(400);
@@ -98,7 +98,7 @@ describe('Gateway — BO Users endpoints', () => {
         email: `test-${uid()}@cyna.fr`,
         firstName: 'Test',
         lastName: 'User',
-        role: 'USER',
+        role: 'COMMERCIAL',
         status: 'ACTIVE',
       });
       expect(res.status).toBe(401);
@@ -149,7 +149,7 @@ describe('Gateway — BO Users endpoints', () => {
           email: `to-delete-${uid()}@cyna.fr`,
           firstName: 'Delete',
           lastName: 'Me',
-          role: 'USER',
+          role: 'COMMERCIAL',
           status: 'ACTIVE',
         },
         adminToken,

@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard,
@@ -19,12 +19,13 @@ import clsx from 'clsx';
 import { useState } from 'react';
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin'] },
   { name: 'Dashboard Commercial', href: '/commercial', icon: TrendingUp, roles: ['commercial', 'admin'] },
-  { name: 'Commandes', href: '/orders', icon: ShoppingCart },
+  { name: 'Commandes', href: '/orders', icon: ShoppingCart, roles: ['admin'] },
   {
     name: 'Catalogue',
     icon: ShoppingBag,
+    roles: ['admin'],
     children: [
       { name: 'Services', href: '/catalog/services', icon: Package },
       { name: 'Catégories', href: '/catalog/categories', icon: FolderOpen },
@@ -33,12 +34,13 @@ const navigation = [
   {
     name: 'Contenu',
     icon: FileText,
+    roles: ['admin'],
     children: [
       { name: 'FAQ', href: '/content/faq', icon: HelpCircle },
       { name: 'Publicités', href: '/content/advertisements', icon: Megaphone },
     ],
   },
-  { name: 'Utilisateurs', href: '/users', icon: Users },
+  { name: 'Utilisateurs', href: '/users', icon: Users, roles: ['admin'] },
 ];
 
 export default function MainLayout() {
@@ -48,6 +50,14 @@ export default function MainLayout() {
     Catalogue: true,
     Contenu: true,
   });
+
+  // Les utilisateurs commerciaux n'ont accès qu'à /commercial.
+  // Toute autre route est redirigée ici (évite d'avoir à wrapper chaque route).
+  const isAdmin = user?.roles?.some((r) => r.toLowerCase() === 'admin');
+  const isCommercial = user?.roles?.some((r) => r.toLowerCase() === 'commercial');
+  if (!isAdmin && isCommercial && !location.pathname.startsWith('/commercial')) {
+    return <Navigate to="/commercial" replace />;
+  }
 
   const toggleMenu = (name: string) => {
     setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }));

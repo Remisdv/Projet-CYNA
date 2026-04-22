@@ -35,14 +35,21 @@ export default function LoginPage() {
       }
 
       const { access_token, refresh_token, user } = response.data;
+      if (!user?.role) {
+        setError('root', { message: 'Rôle manquant dans la réponse du serveur' });
+        return;
+      }
+      const role = String(user.role).toUpperCase();
       login(access_token, refresh_token, {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        roles: [user.role ?? 'admin'],
+        roles: [role],
       });
-      navigate('/dashboard');
+      // Les commerciaux arrivent sur leur dashboard dédié;
+      // les admins gardent le dashboard global.
+      navigate(role === 'COMMERCIAL' ? '/commercial' : '/dashboard');
     } catch {
       setError('root', { message: 'Email ou mot de passe incorrect' });
     }

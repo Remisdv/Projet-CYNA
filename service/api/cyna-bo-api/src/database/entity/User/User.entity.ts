@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 export enum UserRole {
   ADMIN = 'ADMIN',
-  USER = 'USER',
+  COMMERCIAL = 'COMMERCIAL',
 }
 
 export enum UserStatus {
@@ -24,7 +24,7 @@ export class User {
   @Column({ type: 'varchar', length: 128 })
   lastName: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.COMMERCIAL })
   role: UserRole;
 
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.ACTIVE })
