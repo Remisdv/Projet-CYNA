@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { useProducts } from './hooks/useProducts';
@@ -8,15 +8,58 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 
 const PAGE_SIZE = 12;
+const FILTERS_STORAGE_KEY = 'cyna.catalog.filters';
+const PERSISTED_KEYS = ['categorie', 'type', 'q'] as const;
 
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [showFilters, setShowFilters] = useState(false);
 
+  // Rehydrate filters from localStorage when landing on /catalog without any query param.
+  useEffect(() => {
+    const hasAnyFilterInUrl = PERSISTED_KEYS.some((k) => searchParams.has(k));
+    if (hasAnyFilterInUrl) return;
+    try {
+      const raw = localStorage.getItem(FILTERS_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<Record<(typeof PERSISTED_KEYS)[number], string>>;
+      const next = new URLSearchParams(searchParams);
+      let changed = false;
+      for (const k of PERSISTED_KEYS) {
+        const v = saved?.[k];
+        if (v) {
+          next.set(k, v);
+          changed = true;
+        }
+      }
+      if (changed) setSearchParams(next, { replace: true });
+    } catch {
+      // ignore corrupted storage
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const categorieParam = searchParams.get('categorie') ?? '';
   const typeParam = searchParams.get('type') ?? '';
   const qParam = searchParams.get('q') ?? '';
   const pageParam = parseInt(searchParams.get('page') ?? '1', 10);
+
+  // Persist filters whenever they change.
+  useEffect(() => {
+    try {
+      const payload: Record<string, string> = {};
+      if (categorieParam) payload.categorie = categorieParam;
+      if (typeParam) payload.type = typeParam;
+      if (qParam) payload.q = qParam;
+      if (Object.keys(payload).length === 0) {
+        localStorage.removeItem(FILTERS_STORAGE_KEY);
+      } else {
+        localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(payload));
+      }
+    } catch {
+      // ignore storage failures (quota, privacy mode, etc.)
+    }
+  }, [categorieParam, typeParam, qParam]);
 
   const [searchInput, setSearchInput] = useState(qParam);
 
@@ -109,11 +152,12 @@ export default function CatalogPage() {
               {categories?.map(cat => (
                 <button
                   key={cat.id}
-                  onClick={() => setFilter('categorie', cat.slug)}
-                  className={`rounded-full border px-3 py-1 text-sm transition ${categorieParam === cat.slug
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
-                    }`}
+                  onClick={() => setFilter('categorie', cat.id)}
+                  className={`rounded-full border px-3 py-1 text-sm transition ${
+                    categorieParam === cat.id
+                      ? 'border-blue-600 bg-blue-600 text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
                 >
                   {getCategoryName(cat)}
                 </button>

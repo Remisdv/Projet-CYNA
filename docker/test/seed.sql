@@ -6,8 +6,8 @@ INSERT INTO "user" (id, email, "firstName", "lastName", role, status, "passwordH
 VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'admin@cyna.fr', 'Admin', 'CYNA', 'ADMIN', 'ACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
   ('550e8400-e29b-41d4-a716-446655440002', 'user1@cyna.fr', 'Jean', 'Dupont', 'ADMIN', 'ACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
-  ('550e8400-e29b-41d4-a716-446655440003', 'user2@cyna.fr', 'Marie', 'Martin', 'USER', 'ACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
-  ('550e8400-e29b-41d4-a716-446655440004', 'user3@cyna.fr', 'Pierre', 'Bernard', 'USER', 'INACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
+  ('550e8400-e29b-41d4-a716-446655440003', 'user2@cyna.fr', 'Marie', 'Martin', 'COMMERCIAL', 'ACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
+  ('550e8400-e29b-41d4-a716-446655440004', 'user3@cyna.fr', 'Pierre', 'Bernard', 'COMMERCIAL', 'INACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW()),
   ('550e8400-e29b-41d4-a716-446655440005', 'user4@cyna.fr', 'Sophie', 'Durand', 'ADMIN', 'ACTIVE', '2f3ffebc-2ab6-4beb-b4e1-7c4e4d9e1e4e', NOW(), NOW())
 ON CONFLICT (email) DO NOTHING;
 

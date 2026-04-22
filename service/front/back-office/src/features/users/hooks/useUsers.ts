@@ -8,7 +8,7 @@ export interface UserDto {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'ADMIN' | 'USER';
+  role: 'ADMIN' | 'COMMERCIAL';
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;

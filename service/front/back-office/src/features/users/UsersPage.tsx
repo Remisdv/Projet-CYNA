@@ -39,7 +39,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
   // Filters
-  const [roleFilter, setRoleFilter] = useState<'all' | 'ADMIN' | 'USER'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'ADMIN' | 'COMMERCIAL'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'ACTIVE' | 'INACTIVE'>('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -164,7 +164,7 @@ export default function UsersPage() {
   const getRoleLabel = (role: string) => {
     switch (role?.toUpperCase()) {
       case 'ADMIN': return 'Admin';
-      case 'USER': return 'Utilisateur';
+      case 'COMMERCIAL': return 'Commercial';
       default: return role;
     }
   };
@@ -172,7 +172,7 @@ export default function UsersPage() {
   const getRoleBadgeVariant = (role: string) => {
     switch (role?.toUpperCase()) {
       case 'ADMIN': return 'destructive';
-      case 'USER': return 'default';
+      case 'COMMERCIAL': return 'default';
       default: return 'secondary';
     }
   };
@@ -239,7 +239,7 @@ export default function UsersPage() {
                 options={[
                   { value: 'all', label: 'Tous les rôles' },
                   { value: 'ADMIN', label: 'Admin' },
-                  { value: 'USER', label: 'Utilisateur' },
+                  { value: 'COMMERCIAL', label: 'Commercial' },
                 ]}
               />
 
