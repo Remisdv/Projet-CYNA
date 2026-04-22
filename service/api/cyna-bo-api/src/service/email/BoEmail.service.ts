@@ -3,22 +3,22 @@ import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class BoEmailService {
-    private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter;
 
-    constructor() {
-        this.transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || 'localhost',
-            port: parseInt(process.env.SMTP_PORT || '1025', 10),
-            secure: false,
-        });
-    }
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'localhost',
+      port: parseInt(process.env.SMTP_PORT || '1025', 10),
+      secure: false,
+    });
+  }
 
-    async sendTwoFactorCode(to: string, code: string): Promise<void> {
-        await this.transporter.sendMail({
-            from: '"CYNA Admin" <noreply@cyna.com>',
-            to,
-            subject: 'CYNA - Code de connexion administrateur',
-            html: `
+  async sendTwoFactorCode(to: string, code: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: '"CYNA Admin" <noreply@cyna.com>',
+      to,
+      subject: 'CYNA - Code de connexion administrateur',
+      html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #1e293b;">Code de connexion</h2>
           <p>Votre code de vérification à deux facteurs est :</p>
@@ -33,6 +33,6 @@ export class BoEmailService {
           </p>
         </div>
       `,
-        });
-    }
+    });
+  }
 }
