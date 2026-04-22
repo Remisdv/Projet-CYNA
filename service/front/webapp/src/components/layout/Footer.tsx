@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Shield } from 'lucide-react';
+import { usePublicCategories, getCategoryName } from '../../features/catalog/hooks/useCategories';
 
 export default function Footer() {
+  const { data: categories = [] } = usePublicCategories();
+
   return (
     <footer className="bg-gray-900 text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -22,21 +25,16 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Produits</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/catalog?categorie=SOC" className="hover:text-white transition-colors">
-                  Solutions SOC
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog?categorie=EDR" className="hover:text-white transition-colors">
-                  Solutions EDR
-                </Link>
-              </li>
-              <li>
-                <Link to="/catalog?categorie=XDR" className="hover:text-white transition-colors">
-                  Solutions XDR
-                </Link>
-              </li>
+              {categories.map((cat) => (
+                <li key={cat.id}>
+                  <Link
+                    to={`/catalog?categorie=${encodeURIComponent(cat.slug)}`}
+                    className="hover:text-white transition-colors"
+                  >
+                    {getCategoryName(cat)}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <Link to="/catalog" className="hover:text-white transition-colors">
                   Tous les Produits

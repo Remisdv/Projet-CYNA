@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { WebappUser } from '../database/entity/WebappUser/WebappUser.entity';
 import { PasswordResetToken } from '../database/entity/WebappUser/PasswordResetToken.entity';
-import { WebappAuthController } from '../endpoint/Auth/WebappAuth.controller';
-import { WebappAuthService } from '../service/Auth/WebappAuth.service';
+import { WebappAuthController } from '../endpoint/auth/WebappAuth.controller';
+import { WebappAuthService } from '../service/auth/WebappAuth.service';
 
 @Module({
   imports: [

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -26,20 +27,17 @@ import {
   Filter,
   X,
 } from 'lucide-react';
-import ServiceFormModal from './ServiceFormModal';
 import { useServices, useServiceCategories, useDeleteService, useDuplicateService, Service } from './hooks/useServices';
 
 type SortField = 'name' | 'category' | 'price' | 'stock' | 'status' | 'lastModified';
 type SortDirection = 'asc' | 'desc';
 
 export default function ServicesPage() {
+  const navigate = useNavigate();
   const { data: services = [], isLoading: servicesLoading } = useServices();
   const { data: categories } = useServiceCategories();
   const deleteService = useDeleteService();
   const duplicateService = useDuplicateService();
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
   // Filters
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -134,8 +132,7 @@ export default function ServicesPage() {
   };
 
   const handleEdit = (service: Service) => {
-    setSelectedService(service);
-    setIsModalOpen(true);
+    navigate(`/catalog/services/${service.id}/edit`);
   };
 
   const handleDuplicate = (service: Service) => {
@@ -146,11 +143,6 @@ export default function ServicesPage() {
     if (confirm(`Êtes-vous sûr de vouloir archiver "${service.name}" ?`)) {
       deleteService.mutate(service.id);
     }
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setSelectedService(null);
   };
 
   const clearFilters = () => {
@@ -173,7 +165,7 @@ export default function ServicesPage() {
             {servicesLoading ? 'Chargement...' : `Gérez vos ${filteredAndSortedServices.length} services et produits`}
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={() => navigate('/catalog/services/new')}>
           <Plus className="h-4 w-4 mr-2" />
           Nouveau Service
         </Button>
@@ -479,13 +471,6 @@ export default function ServicesPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Service Form Modal */}
-      <ServiceFormModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        service={selectedService}
-      />
     </div>
   );
 }

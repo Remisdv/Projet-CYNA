@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../services/api';
+import type { Category } from './useCategories';
 
 // ========== TYPES ==========
 
@@ -87,31 +88,25 @@ export const useServices = () => {
   });
 };
 
-const FALLBACK_CATEGORIES: ServiceCategory[] = [
-  { value: '', label: 'Toutes les catégories' },
-  { value: 'SOC', label: 'SOC' },
-  { value: 'EDR', label: 'EDR' },
-  { value: 'XDR', label: 'XDR' },
-  { value: 'Service', label: 'Service' },
-];
-
 export const useServiceCategories = () => {
   const query = useQuery({
-    queryKey: ['service-categories'],
+    queryKey: ['categories'],
     queryFn: async () => {
-      const { data } = await api.get<{ id: string; nom: string; slug: string }[]>(
-        '/categories',
-        { baseURL: '/api' },
-      );
-      if (!data || data.length === 0) return FALLBACK_CATEGORIES;
-      return [
-        { value: '', label: 'Toutes les catégories' },
-        ...data.map((c) => ({ value: c.nom, label: c.nom })),
-      ] as ServiceCategory[];
+      const { data } = await api.get<Category[]>('/categories');
+      return data;
     },
   });
+
+  const categories: ServiceCategory[] = [
+    { value: '', label: 'Toutes les catégories' },
+    ...(query.data ?? []).map((c) => {
+      const translation = c.translations.find((t) => t.lang === 'fr') ?? c.translations[0];
+      return { value: c.id, label: translation?.name ?? c.slug };
+    }),
+  ];
+
   return {
-    data: query.data ?? FALLBACK_CATEGORIES,
+    data: categories,
     isLoading: query.isLoading,
   };
 };

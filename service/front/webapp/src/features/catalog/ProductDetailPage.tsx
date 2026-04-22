@@ -217,7 +217,10 @@ export default function ProductDetailPage() {
             )}
           </div>
 
-          <p className="mb-6 leading-relaxed text-gray-600">{product.description}</p>
+          <p className="mb-3 leading-relaxed text-gray-600">{product.description}</p>
+          {product.description_longue && (
+            <p className="mb-6 leading-relaxed text-gray-600 whitespace-pre-line">{product.description_longue}</p>
+          )}
 
           {/* Characteristics */}
           {product.caracteristiques && Object.keys(product.caracteristiques).length > 0 && (
