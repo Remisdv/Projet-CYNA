@@ -6,7 +6,7 @@ import { BoLoginDto, BoRefreshDto } from '../../dto/bo-auth/bo-auth.dto';
 
 @Controller('api/bo/auth')
 export class BoAuthController {
-  constructor(private readonly authService: BoAuthService) {}
+  constructor(private readonly authService: BoAuthService) { }
 
   @Public()
   @Post('login')

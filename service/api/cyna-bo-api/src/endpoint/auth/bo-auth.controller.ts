@@ -5,7 +5,7 @@ import { BoLoginDto, BoAuthResponseDto, BoRefreshDto, TwoFactorVerifyDto, TwoFac
 
 @Controller('auth')
 export class BoAuthController {
-  constructor(private readonly authService: BoAuthService) {}
+  constructor(private readonly authService: BoAuthService) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

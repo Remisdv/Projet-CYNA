@@ -12,7 +12,7 @@ import {
 
 @Controller('api/webapp/auth')
 export class WebappAuthController {
-  constructor(private readonly authService: WebappAuthService) {}
+  constructor(private readonly authService: WebappAuthService) { }
 
   @Public()
   @Post('register')

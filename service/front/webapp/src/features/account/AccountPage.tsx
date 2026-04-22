@@ -67,8 +67,8 @@ export default function AccountPage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${activeTab === tab.id
-                      ? 'bg-blue-50 font-semibold text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-50 font-semibold text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   <Icon size={16} />
