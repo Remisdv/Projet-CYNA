@@ -23,6 +23,14 @@ export class BoAuthService {
     return this.callBoAuthEndpoint('/api/bo/auth/refresh', { refresh_token: refreshToken });
   }
 
+  async verifyTwoFactor(userId: string, code: string): Promise<any> {
+    return this.callBoAuthEndpoint('/api/bo/auth/2fa/verify', { userId, code });
+  }
+
+  async resendTwoFactor(userId: string): Promise<any> {
+    return this.callBoAuthEndpoint('/api/bo/auth/2fa/resend', { userId });
+  }
+
   /**
    * Make HTTP request to BO service
    */

@@ -7,13 +7,23 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
+  twoFactorEnabled?: boolean;
+  totpEnabled?: boolean;
+}
+
+interface TwoFactorPending {
+  requiresTwoFactor: true;
+  userId: string;
+  email: string;
+  method: 'email' | 'totp';
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void | TwoFactorPending>;
+  loginWithTokens: (user: User) => void;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => void;
@@ -47,6 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
+        twoFactorEnabled: data.twoFactorEnabled,
+        totpEnabled: data.totpEnabled,
       });
     } catch {
       setUser(null);
@@ -59,8 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadUser();
   }, [loadUser]);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<void | TwoFactorPending> => {
     const { data } = await api.post('/webapp/auth/login', { email, password });
+
+    // 2FA pending — return pending state for caller to redirect
+    if (data.requiresTwoFactor) {
+      return data as TwoFactorPending;
+    }
+
     if (data.access_token) {
       localStorage.setItem('access_token', data.access_token);
     }
@@ -69,6 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(data.user);
     trackEvent('LOGIN', data.user?.id);
+  }, []);
+
+  const loginWithTokens = useCallback((userData: User) => {
+    setUser(userData);
+    trackEvent('LOGIN', userData?.id);
   }, []);
 
   const register = useCallback(async (registerData: RegisterData) => {
@@ -104,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithTokens,
         register,
         logout,
         refreshUser,

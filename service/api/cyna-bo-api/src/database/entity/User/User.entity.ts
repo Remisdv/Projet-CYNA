@@ -33,6 +33,12 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   passwordHash: string;
 
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  twoFactorCode: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  twoFactorCodeExpiry: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

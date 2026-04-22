@@ -23,6 +23,28 @@ export class EmailService {
     });
   }
 
+  async send2FACode(to: string, firstName: string, code: string): Promise<void> {
+    await this.sendMail(
+      to,
+      'CYNA - Votre code de vérification',
+      `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #1e293b;">Bonjour ${firstName},</h2>
+          <p>Voici votre code de vérification à deux facteurs :</p>
+          <div style="font-size: 36px; font-weight: bold; letter-spacing: 12px; font-family: monospace;
+                      background: #f1f5f9; border-radius: 8px; padding: 16px; text-align: center;
+                      color: #1e40af; margin: 24px 0;">
+            ${code}
+          </div>
+          <p style="color: #64748b;">Ce code est valide <strong>5 minutes</strong>.</p>
+          <p style="color: #64748b; font-size: 12px;">
+            Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.
+          </p>
+        </div>
+      `,
+    );
+  }
+
   async sendPasswordReset(to: string, token: string): Promise<void> {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
     await this.sendMail(

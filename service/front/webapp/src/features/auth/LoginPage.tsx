@@ -31,7 +31,11 @@ export default function LoginPage() {
   const onSubmit = async (formData: LoginForm) => {
     try {
       setError('');
-      await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password);
+      if (result && (result as any).requiresTwoFactor) {
+        navigate('/2fa', { state: result });
+        return;
+      }
       navigate('/account');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Identifiants incorrects');

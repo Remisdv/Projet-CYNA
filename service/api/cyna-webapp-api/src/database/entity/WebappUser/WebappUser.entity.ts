@@ -55,6 +55,21 @@ export class WebappUser {
   @Column({ type: 'enum', enum: WebappUserStatus, default: WebappUserStatus.ACTIVE })
   status: WebappUserStatus;
 
+  @Column({ type: 'boolean', default: false })
+  twoFactorEnabled: boolean;
+
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  twoFactorCode: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  twoFactorCodeExpiry: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  totpSecret: string | null;
+
+  @Column({ type: 'boolean', default: false })
+  totpEnabled: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

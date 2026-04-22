@@ -14,6 +14,8 @@ export class AccountMapper {
             billingAddress: entity.billingAddress || null,
             shippingAddress: entity.shippingAddress || null,
             createdAt: entity.createdAt,
+            twoFactorEnabled: entity.twoFactorEnabled ?? false,
+            totpEnabled: entity.totpEnabled ?? false,
         };
     }
 }

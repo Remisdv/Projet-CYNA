@@ -40,6 +40,81 @@ export class WebappAuthService {
     return this.callWebappAuthEndpoint('/api/webapp/auth/reset-password', { token, newPassword });
   }
 
+  async verifyTwoFactor(userId: string, code: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/verify', { userId, code });
+  }
+
+  async resendTwoFactor(userId: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/resend', { userId });
+  }
+
+  async enableEmailTwoFactor(userId: string, password: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/email/enable', { userId, password });
+  }
+
+  async confirmEmailTwoFactor(userId: string, password: string, code: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/email/enable/confirm', { userId, password, code });
+  }
+
+  async setupTotp(userId: string, password: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/totp/setup', { userId, password });
+  }
+
+  async confirmTotp(userId: string, password: string, code: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/totp/confirm', { userId, password, code });
+  }
+
+  async sendDisableCode(userId: string, password: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/disable/send-code', { userId, password });
+  }
+
+  async disableTwoFactor(userId: string, password: string, code: string): Promise<any> {
+    return this.callWebappAuthEndpoint('/api/webapp/auth/2fa/disable', { userId, password, code });
+  }
+
+  async getTwoFactorStatus(userId: string): Promise<any> {
+    return this.callWebappAuthGetEndpoint(`/api/webapp/auth/2fa/status?userId=${encodeURIComponent(userId)}`);
+  }
+
+  private callWebappAuthGetEndpoint(path: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const options = {
+        hostname: this.webappApiHost,
+        port: this.webappApiPort,
+        path,
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      };
+
+      const protocol = this.webappApiUrl.startsWith('https') ? https : http;
+
+      const req = protocol.request(options, (res) => {
+        let responseData = '';
+        res.on('data', (chunk) => { responseData += chunk; });
+        res.on('end', () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            try { resolve(JSON.parse(responseData)); } catch {
+              reject(new HttpException('Invalid response from webapp service', HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+          } else {
+            try {
+              const error = JSON.parse(responseData);
+              reject(new HttpException(error.message || 'Service error', res.statusCode || HttpStatus.INTERNAL_SERVER_ERROR));
+            } catch {
+              reject(new HttpException('Service error', res.statusCode || HttpStatus.INTERNAL_SERVER_ERROR));
+            }
+          }
+        });
+      });
+
+      req.on('error', () => {
+        reject(new HttpException('Failed to connect to webapp service', HttpStatus.INTERNAL_SERVER_ERROR));
+      });
+
+      req.end();
+    });
+  }
+
   private callWebappAuthEndpoint(path: string, data: any): Promise<any> {
     return new Promise((resolve, reject) => {
       const requestData = JSON.stringify(data);
