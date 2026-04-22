@@ -76,31 +76,54 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [localItems, isAuthenticated]);
 
-  // Merge localStorage → server on login
+  // Merge localStorage → server on login.
+  // On relit localStorage directement pour éviter toute stale closure sur `localItems`
+  // (le state React pourrait être vidé par un autre effet / re-render avant le merge).
   useEffect(() => {
     if (!isAuthenticated || authLoading || mergedRef.current) return;
-    if (localItems.length === 0) {
+
+    const stored = loadFromStorage();
+    if (stored.length === 0) {
       mergedRef.current = true;
       return;
     }
 
-    const serverPayload = localItems.map((i) => ({
-      productId: i.id,
-      productName: i.nom,
-      productType: i.type,
-      quantity: i.quantity,
-      prix: i.prix,
-      prixMensuel: i.prix_mensuel,
-      prixAnnuel: i.prix_annuel,
-      periodicity: i.periodicity ?? '',
-      image: i.image,
-    }));
+    // Guard immédiat: on ne retente pas tant que la mutation n'a pas abouti/échoué.
+    mergedRef.current = true;
+
+    const serverPayload = stored.map((i) => {
+      const payload: Record<string, unknown> = {
+        productId: String(i.id),
+        productName: String(i.nom ?? ''),
+        productType: String(i.type ?? 'produit'),
+        quantity: Number(i.quantity) || 1,
+        periodicity: i.periodicity ?? '',
+      };
+      if (i.prix != null && !Number.isNaN(Number(i.prix))) payload.prix = Number(i.prix);
+      if (i.prix_mensuel != null && !Number.isNaN(Number(i.prix_mensuel)))
+        payload.prixMensuel = Number(i.prix_mensuel);
+      if (i.prix_annuel != null && !Number.isNaN(Number(i.prix_annuel)))
+        payload.prixAnnuel = Number(i.prix_annuel);
+      if (i.image) payload.image = String(i.image);
+      return payload;
+    });
+
+    // eslint-disable-next-line no-console
+    console.debug('[Cart] merging', stored.length, 'local items to server');
 
     mergeServer.mutate(serverPayload, {
       onSuccess: () => {
+        // Succès: le serveur a persisté les lignes (même si stock insuffisant,
+        // le back save maintenant en best-effort). On peut vider le local.
         setLocalItems([]);
         localStorage.removeItem(CART_KEY);
-        mergedRef.current = true;
+      },
+      onError: (err) => {
+        // Échec réseau/5xx: on garde le localStorage intact pour ne pas perdre
+        // le panier client, et on autorise une nouvelle tentative plus tard.
+        // eslint-disable-next-line no-console
+        console.error('[Cart] merge failed, keeping local cart', err);
+        mergedRef.current = false;
       },
     });
   }, [isAuthenticated, authLoading]);
@@ -112,20 +135,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated]);
 
-  // Build the displayed items: server items when auth, local when not
+  // Build the displayed items: server items when auth, local when not.
+  // Pendant le merge / 1er fetch après login, `serverItems` peut être undefined:
+  // on retombe sur localItems pour éviter un flash de "panier vide".
   const items: CartItem[] = isAuthenticated
-    ? (serverItems ?? []).map((si) => ({
-      id: si.productId,
-      nom: si.productName,
-      type: si.productType as 'produit' | 'service',
-      prix: si.prix ? Number(si.prix) : undefined,
-      prix_mensuel: si.prixMensuel ? Number(si.prixMensuel) : undefined,
-      prix_annuel: si.prixAnnuel ? Number(si.prixAnnuel) : undefined,
-      periodicity: (si.periodicity as CartPeriodicity) || undefined,
-      quantity: si.quantity,
-      image: si.image,
-      serverItemId: si.id,
-    }))
+    ? serverItems
+      ? serverItems.map((si) => ({
+        id: si.productId,
+        nom: si.productName,
+        type: si.productType as 'produit' | 'service',
+        prix: si.prix ? Number(si.prix) : undefined,
+        prix_mensuel: si.prixMensuel ? Number(si.prixMensuel) : undefined,
+        prix_annuel: si.prixAnnuel ? Number(si.prixAnnuel) : undefined,
+        periodicity: (si.periodicity as CartPeriodicity) || undefined,
+        quantity: si.quantity,
+        image: si.image,
+        serverItemId: si.id,
+      }))
+      : localItems
     : localItems;
 
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);

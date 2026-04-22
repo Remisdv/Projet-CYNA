@@ -34,3 +34,14 @@ export function usePublicCategories() {
     staleTime: 1000 * 60 * 10,
   });
 }
+
+/**
+ * Resolve a category id (UUID) or slug to its localized name.
+ * Returns the raw value if categories aren't loaded yet or no match is found.
+ */
+export function useCategoryName(idOrSlug: string | undefined, lang = 'fr'): string {
+  const { data: categories } = usePublicCategories();
+  if (!idOrSlug) return '';
+  const match = categories?.find((c) => c.id === idOrSlug || c.slug === idOrSlug);
+  return match ? getCategoryName(match, lang) : idOrSlug;
+}
