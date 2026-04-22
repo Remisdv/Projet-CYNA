@@ -20,7 +20,7 @@ export class BoAuthService {
     private userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly emailService: BoEmailService,
-  ) {}
+  ) { }
 
   async login(loginDto: BoLoginDto): Promise<TwoFactorPendingResponse> {
     const user = await this.userRepository.findOneBy({ email: loginDto.email });
