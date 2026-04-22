@@ -9,6 +9,9 @@ import {
   LogOut,
   Download,
   Eye,
+  Shield,
+  Smartphone,
+  Mail,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +23,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useProfile, useUpdateProfile, useChangePassword } from './hooks/useAccount';
 import { useOrders, downloadInvoice } from './hooks/useOrders';
 import { useSubscriptions } from './hooks/useSubscriptions';
+import api from '../../services/api';
 
 /* ─── Tabs ───────────────────────────────────────────────────────── */
 const TABS = [
@@ -63,8 +67,8 @@ export default function AccountPage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${activeTab === tab.id
-                      ? 'bg-blue-50 font-semibold text-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-blue-50 font-semibold text-blue-600'
+                    : 'text-gray-600 hover:bg-gray-50'
                     }`}
                 >
                   <Icon size={16} />
@@ -336,41 +340,388 @@ function SecurityTab() {
   };
 
   return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">Sécurité du compte</h2>
+        {success && (
+          <div className="mb-4 p-3 text-sm text-green-600 bg-green-50 rounded-lg">
+            Mot de passe modifié avec succès.
+          </div>
+        )}
+        {changePassword.isError && (
+          <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
+            {(changePassword.error as any)?.response?.data?.message || 'Erreur lors du changement de mot de passe'}
+          </div>
+        )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input
+            label="Mot de passe actuel"
+            type="password"
+            {...register('currentPassword')}
+            error={errors.currentPassword?.message as string}
+          />
+          <Input
+            label="Nouveau mot de passe"
+            type="password"
+            {...register('newPassword')}
+            error={errors.newPassword?.message as string}
+          />
+          <Input
+            label="Confirmer le nouveau mot de passe"
+            type="password"
+            {...register('confirmPassword')}
+            error={errors.confirmPassword?.message as string}
+          />
+          <Button type="submit" size="sm" disabled={isSubmitting}>
+            {isSubmitting ? 'Modification...' : 'Changer le mot de passe'}
+          </Button>
+        </form>
+      </div>
+
+      <TwoFactorSection />
+    </div>
+  );
+}
+
+/* ─── 2FA section ─────────────────────────────────────────────────── */
+function TwoFactorSection() {
+  const { user, refreshUser } = useAuth();
+  const [view, setView] = useState<'main' | 'enable-email' | 'setup-totp' | 'confirm-totp' | 'disable'>('main');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [totpData, setTotpData] = useState<{ secret: string; qrCodeDataUrl: string } | null>(null);
+  const [emailEnableCodeSent, setEmailEnableCodeSent] = useState(false);
+  const [disableCodeSent, setDisableCodeSent] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const userId = String(user?.id ?? '');
+  const twoFactorEnabled = user?.twoFactorEnabled ?? false;
+  const totpEnabled = user?.totpEnabled ?? false;
+
+  const reset = () => {
+    setPassword('');
+    setCode('');
+    setError('');
+    setSuccess('');
+    setTotpData(null);
+    setEmailEnableCodeSent(false);
+    setDisableCodeSent(false);
+    setView('main');
+  };
+
+  // Email enable — step 1: verify password and send code
+  const handleRequestEnableEmail = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/webapp/auth/2fa/email/enable', { userId, password });
+      setEmailEnableCodeSent(true);
+      setCode('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Email enable — step 2: confirm with code
+  const handleConfirmEnableEmail = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/webapp/auth/2fa/email/enable/confirm', { userId, password, code });
+      setSuccess('Authentification par email activée.');
+      refreshUser();
+      reset();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // TOTP setup — step 1: verify password and generate QR
+  const handleSetupTotp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const { data } = await api.post('/webapp/auth/2fa/totp/setup', { userId, password });
+      setTotpData({ secret: data.secret, qrCodeDataUrl: data.qrCodeDataUrl });
+      setView('confirm-totp');
+      // Keep password in state — needed for confirm step
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // TOTP setup — step 2: confirm with password + TOTP code
+  const handleConfirmTotp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/webapp/auth/2fa/totp/confirm', { userId, password, code });
+      setSuccess('Application d\'authentification configurée avec succès.');
+      refreshUser();
+      reset();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Code invalide');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Disable — email 2FA: request code first
+  const handleRequestDisableCode = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/webapp/auth/2fa/disable/send-code', { userId, password });
+      setDisableCodeSent(true);
+      setCode('');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Disable — confirm with password + code (email or TOTP)
+  const handleDisable = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      await api.post('/webapp/auth/2fa/disable', { userId, password, code });
+      setSuccess('Authentification à deux facteurs désactivée.');
+      refreshUser();
+      reset();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 text-lg font-semibold text-gray-900">Sécurité du compte</h2>
+      <div className="mb-4 flex items-center gap-2">
+        <Shield size={18} className="text-blue-600" />
+        <h2 className="text-lg font-semibold text-gray-900">Authentification à deux facteurs</h2>
+        {twoFactorEnabled && (
+          <span className="ml-auto rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+            {totpEnabled ? 'Activée (Application)' : 'Activée (Email)'}
+          </span>
+        )}
+        {!twoFactorEnabled && (
+          <span className="ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+            Désactivée
+          </span>
+        )}
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
+      )}
       {success && (
-        <div className="mb-4 p-3 text-sm text-green-600 bg-green-50 rounded-lg">
-          Mot de passe modifié avec succès.
+        <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-600">{success}</div>
+      )}
+
+      {/* ─── Main view ─── */}
+      {view === 'main' && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">
+            La 2FA renforce la sécurité de votre compte en demandant un code supplémentaire lors de la connexion.
+          </p>
+          {!twoFactorEnabled && (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="outline" size="sm" onClick={() => { setError(''); setSuccess(''); setView('enable-email'); }}>
+                <Mail size={14} className="mr-1.5" />
+                Activer par email
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { setError(''); setSuccess(''); setView('setup-totp'); }}>
+                <Smartphone size={14} className="mr-1.5" />
+                Activer par application (TOTP)
+              </Button>
+            </div>
+          )}
+          {twoFactorEnabled && (
+            <Button variant="outline" size="sm" className="text-red-600 border-red-200 hover:bg-red-50"
+              onClick={() => { setError(''); setSuccess(''); setView('disable'); }}>
+              Désactiver la 2FA
+            </Button>
+          )}
         </div>
       )}
-      {changePassword.isError && (
-        <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 rounded-lg">
-          {(changePassword.error as any)?.response?.data?.message || 'Erreur lors du changement de mot de passe'}
+
+      {/* ─── Enable email — password then code appears on same screen ─── */}
+      {view === 'enable-email' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Entrez votre mot de passe pour recevoir un code de confirmation par email.
+          </p>
+          <Input
+            label="Mot de passe"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+          />
+          {!emailEnableCodeSent ? (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleRequestEnableEmail} disabled={loading || !password}>
+                {loading ? 'Envoi...' : 'Envoyer le code'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-green-600">Un code a été envoyé à votre adresse email.</p>
+              <Input
+                label="Code reçu par email (6 chiffres)"
+                value={code}
+                onChange={(e) => setCode((e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleConfirmEnableEmail} disabled={loading || code.length !== 6}>
+                  {loading ? 'Activation...' : 'Activer la 2FA'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+              </div>
+            </>
+          )}
         </div>
       )}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input
-          label="Mot de passe actuel"
-          type="password"
-          {...register('currentPassword')}
-          error={errors.currentPassword?.message as string}
-        />
-        <Input
-          label="Nouveau mot de passe"
-          type="password"
-          {...register('newPassword')}
-          error={errors.newPassword?.message as string}
-        />
-        <Input
-          label="Confirmer le nouveau mot de passe"
-          type="password"
-          {...register('confirmPassword')}
-          error={errors.confirmPassword?.message as string}
-        />
-        <Button type="submit" size="sm" disabled={isSubmitting}>
-          {isSubmitting ? 'Modification...' : 'Changer le mot de passe'}
-        </Button>
-      </form>
+
+      {/* ─── Setup TOTP — step 1: password ─── */}
+      {view === 'setup-totp' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Entrez votre mot de passe pour générer le QR code.
+          </p>
+          <Input
+            label="Mot de passe"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleSetupTotp} disabled={loading || !password}>
+              {loading ? 'Génération...' : 'Continuer'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Confirm TOTP — step 2: scan QR + password + code ─── */}
+      {view === 'confirm-totp' && totpData && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Scannez ce QR code avec votre application (Google Authenticator, Authy…), puis entrez votre mot de passe et le code généré.
+          </p>
+          <div className="flex justify-center">
+            <img src={totpData.qrCodeDataUrl} alt="QR Code TOTP" className="h-40 w-40 rounded border border-gray-200" />
+          </div>
+          <p className="text-center text-xs text-gray-400">
+            Ou entrez manuellement : <span className="font-mono text-gray-600">{totpData.secret}</span>
+          </p>
+          <Input
+            label="Mot de passe"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+          />
+          <Input
+            label="Code de l'application (6 chiffres)"
+            value={code}
+            onChange={(e) => setCode((e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))}
+            inputMode="numeric"
+          />
+          <div className="flex gap-2">
+            <Button size="sm" onClick={handleConfirmTotp} disabled={loading || code.length !== 6 || !password}>
+              {loading ? 'Vérification...' : 'Confirmer'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Disable 2FA ─── */}
+      {view === 'disable' && (
+        <div className="space-y-4">
+          {totpEnabled ? (
+            /* TOTP: password + TOTP code together */
+            <>
+              <p className="text-sm text-gray-600">
+                Entrez votre mot de passe et le code de votre application pour désactiver la 2FA.
+              </p>
+              <Input
+                label="Mot de passe"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+              />
+              <Input
+                label="Code de l'application (6 chiffres)"
+                value={code}
+                onChange={(e) => setCode((e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleDisable}
+                  disabled={loading || !password || code.length !== 6}>
+                  {loading ? 'Désactivation...' : 'Désactiver'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+              </div>
+            </>
+          ) : !disableCodeSent ? (
+            /* Email 2FA — step 1: verify password, send code */
+            <>
+              <p className="text-sm text-gray-600">
+                Entrez votre mot de passe pour recevoir un code de confirmation par email.
+              </p>
+              <Input
+                label="Mot de passe"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
+              />
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleRequestDisableCode}
+                  disabled={loading || !password}>
+                  {loading ? 'Envoi...' : 'Envoyer le code'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+              </div>
+            </>
+          ) : (
+            /* Email 2FA — step 2: enter received code */
+            <>
+              <p className="text-sm text-gray-600">
+                Un code de confirmation a été envoyé à votre adresse email. Entrez-le pour désactiver la 2FA.
+              </p>
+              <Input
+                label="Code reçu par email (6 chiffres)"
+                value={code}
+                onChange={(e) => setCode((e.target as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+              />
+              <div className="flex gap-2">
+                <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white" onClick={handleDisable}
+                  disabled={loading || code.length !== 6}>
+                  {loading ? 'Désactivation...' : 'Désactiver'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => { setDisableCodeSent(false); setCode(''); setError(''); }}>Retour</Button>
+                <Button variant="outline" size="sm" onClick={reset}>Annuler</Button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -25,6 +25,15 @@ export default function LoginPage() {
         email: data.email,
         password: data.password,
       });
+
+      // 2FA required — redirect to verification page
+      if (response.data.requiresTwoFactor) {
+        navigate('/2fa', {
+          state: { userId: response.data.userId, email: response.data.email },
+        });
+        return;
+      }
+
       const { access_token, refresh_token, user } = response.data;
       if (!user?.role) {
         setError('root', { message: 'Rôle manquant dans la réponse du serveur' });

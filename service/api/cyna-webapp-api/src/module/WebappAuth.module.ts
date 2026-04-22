@@ -18,4 +18,4 @@ import { WebappAuthService } from '../service/Auth/WebappAuth.service';
   providers: [WebappAuthService],
   exports: [WebappAuthService, JwtModule],
 })
-export class WebappAuthModule {}
+export class WebappAuthModule { }

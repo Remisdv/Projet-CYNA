@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { User } from '../database/entity/User/User.entity';
 import { BoAuthService } from '../service/auth/bo-auth.service';
 import { BoAuthController } from '../endpoint/auth/bo-auth.controller';
+import { BoEmailService } from '../service/email/BoEmail.service';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { BoAuthController } from '../endpoint/auth/bo-auth.controller';
     }),
   ],
   controllers: [BoAuthController],
-  providers: [BoAuthService],
+  providers: [BoAuthService, BoEmailService],
   exports: [BoAuthService, JwtModule],
 })
-export class BoAuthModule {}
+export class BoAuthModule { }
