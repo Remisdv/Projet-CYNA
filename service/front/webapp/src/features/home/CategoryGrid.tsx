@@ -32,7 +32,7 @@ export default function CategoryGrid() {
             return (
               <Link
                 key={cat.id}
-                to={`/catalog?categorie=${encodeURIComponent(cat.slug)}`}
+                to={`/catalog?categorie=${encodeURIComponent(cat.id)}`}
                 className="group flex flex-col items-center rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
                 <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-full ${color} text-white`}>
