@@ -10,7 +10,7 @@ interface UserFormData {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'ADMIN' | 'USER';
+  role: 'ADMIN' | 'COMMERCIAL';
   status: 'active' | 'inactive';
 }
 
@@ -36,7 +36,7 @@ export default function UserFormModal({
     email: '',
     firstName: '',
     lastName: '',
-    role: 'USER',
+    role: 'COMMERCIAL',
     status: 'active',
   });
 
@@ -51,7 +51,7 @@ export default function UserFormModal({
           email: user.email || '',
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          role: (user.role === 'ADMIN' ? 'ADMIN' : 'USER') as 'ADMIN' | 'USER',
+          role: (user.role === 'ADMIN' ? 'ADMIN' : 'COMMERCIAL') as 'ADMIN' | 'COMMERCIAL',
           status: (user.status?.toLowerCase() === 'inactive' ? 'inactive' : 'active') as 'active' | 'inactive',
         });
       } else {
@@ -59,7 +59,7 @@ export default function UserFormModal({
           email: '',
           firstName: '',
           lastName: '',
-          role: 'USER',
+          role: 'COMMERCIAL',
           status: 'active',
         });
       }
@@ -118,7 +118,7 @@ export default function UserFormModal({
         email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        role: formData.role as 'ADMIN' | 'USER',
+        role: formData.role as 'ADMIN' | 'COMMERCIAL',
         status: formData.status === 'active' ? 'ACTIVE' : 'INACTIVE' as 'ACTIVE' | 'INACTIVE',
       };
 
@@ -204,7 +204,7 @@ export default function UserFormModal({
             error={errors.role}
             options={[
               { value: 'ADMIN', label: 'Admin' },
-              { value: 'USER', label: 'Utilisateur' },
+              { value: 'COMMERCIAL', label: 'Commercial' },
             ]}
           />
 
