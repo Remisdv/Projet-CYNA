@@ -38,7 +38,11 @@ export class ProductController {
     @Query('prix_max') prix_max?: string,
     @Query('disponible') disponible?: string,
     @Query('sort') sort?: string,
+    @Query('q') q?: string,
   ) {
+    if (q && q.trim()) {
+      return this.productService.search(q.trim(), { categorie, type });
+    }
     return this.productService.findAll({
       page: page ? Number(page) : undefined,
       per_page: per_page ? Number(per_page) : undefined,
