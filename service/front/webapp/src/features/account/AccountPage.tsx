@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
 import { useProfile, useUpdateProfile, useChangePassword } from './hooks/useAccount';
 import { useOrders, downloadInvoice } from './hooks/useOrders';
@@ -354,21 +355,18 @@ function SecurityTab() {
           </div>
         )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
+          <PasswordInput
             label="Mot de passe actuel"
-            type="password"
             {...register('currentPassword')}
             error={errors.currentPassword?.message as string}
           />
-          <Input
+          <PasswordInput
             label="Nouveau mot de passe"
-            type="password"
             {...register('newPassword')}
             error={errors.newPassword?.message as string}
           />
-          <Input
+          <PasswordInput
             label="Confirmer le nouveau mot de passe"
-            type="password"
             {...register('confirmPassword')}
             error={errors.confirmPassword?.message as string}
           />
@@ -562,9 +560,8 @@ function TwoFactorSection() {
           <p className="text-sm text-gray-600">
             Entrez votre mot de passe pour recevoir un code de confirmation par email.
           </p>
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             value={password}
             onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
           />
@@ -601,9 +598,8 @@ function TwoFactorSection() {
           <p className="text-sm text-gray-600">
             Entrez votre mot de passe pour générer le QR code.
           </p>
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             value={password}
             onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
           />
@@ -628,9 +624,8 @@ function TwoFactorSection() {
           <p className="text-center text-xs text-gray-400">
             Ou entrez manuellement : <span className="font-mono text-gray-600">{totpData.secret}</span>
           </p>
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             value={password}
             onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
           />
@@ -658,9 +653,8 @@ function TwoFactorSection() {
               <p className="text-sm text-gray-600">
                 Entrez votre mot de passe et le code de votre application pour désactiver la 2FA.
               </p>
-              <Input
+              <PasswordInput
                 label="Mot de passe"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
               />
@@ -684,9 +678,8 @@ function TwoFactorSection() {
               <p className="text-sm text-gray-600">
                 Entrez votre mot de passe pour recevoir un code de confirmation par email.
               </p>
-              <Input
+              <PasswordInput
                 label="Mot de passe"
-                type="password"
                 value={password}
                 onChange={(e) => setPassword((e.target as HTMLInputElement).value)}
               />

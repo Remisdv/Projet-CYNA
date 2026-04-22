@@ -7,6 +7,7 @@ import { Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { PasswordInput } from '../../components/ui/PasswordInput';
 
 const loginSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -71,9 +72,8 @@ export default function LoginPage() {
             error={errors.email?.message}
           />
 
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             {...register('password')}
             error={errors.password?.message}
           />

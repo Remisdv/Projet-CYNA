@@ -78,7 +78,8 @@ export default function CatalogPage() {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value);
     else next.delete(key);
-    next.delete('page');
+    // Reset to page 1 only when changing a filter, not when changing the page itself
+    if (key !== 'page') next.delete('page');
     setSearchParams(next);
   }
 
@@ -96,11 +97,11 @@ export default function CatalogPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Catalogue</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Catalogue</h1>
           {products && (
-            <p className="text-sm text-gray-500">{products.length} solution(s) disponible(s)</p>
+            <p className="mt-1 text-sm text-gray-500">{products.length} solution(s) disponible(s)</p>
           )}
         </div>
 
@@ -118,7 +119,7 @@ export default function CatalogPage() {
           </form>
           <Button
             size="sm"
-            variant="outline"
+            variant={showFilters ? 'default' : 'outline'}
             onClick={() => setShowFilters(v => !v)}
           >
             <SlidersHorizontal size={16} className="mr-1" />
@@ -141,11 +142,10 @@ export default function CatalogPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setFilter('categorie', '')}
-                className={`rounded-full border px-3 py-1 text-sm transition ${
-                  !categorieParam
-                    ? 'border-blue-600 bg-blue-600 text-white'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
-                }`}
+                className={`rounded-full border px-3 py-1 text-sm transition ${!categorieParam
+                  ? 'border-blue-600 bg-blue-600 text-white'
+                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                  }`}
               >
                 Toutes
               </button>
@@ -172,11 +172,10 @@ export default function CatalogPage() {
                 <button
                   key={t}
                   onClick={() => setFilter('type', t)}
-                  className={`rounded-full border px-3 py-1 text-sm capitalize transition ${
-                    typeParam === t
-                      ? 'border-blue-600 bg-blue-600 text-white'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
-                  }`}
+                  className={`rounded-full border px-3 py-1 text-sm capitalize transition ${typeParam === t
+                    ? 'border-blue-600 bg-blue-600 text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                    }`}
                 >
                   {t === '' ? 'Tous' : t}
                 </button>

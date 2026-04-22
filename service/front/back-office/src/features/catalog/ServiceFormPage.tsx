@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
@@ -468,11 +469,10 @@ export default function ServiceFormPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-800'
-                }`}
+                  }`}
               >
                 {tab.icon}
                 {tab.label}
@@ -527,9 +527,8 @@ export default function ServiceFormPage() {
                             key={t}
                             type="button"
                             onClick={() => updateField('type', t)}
-                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                              formData.type === t ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${formData.type === t ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
                           >
                             {t === 'product' ? 'Produit' : 'Service'}
                           </button>
@@ -546,11 +545,10 @@ export default function ServiceFormPage() {
                           key={tag}
                           type="button"
                           onClick={() => toggleTag(tag)}
-                          className={`px-3 py-1.5 rounded-full text-sm transition-colors border ${
-                            formData.tags.includes(tag)
+                          className={`px-3 py-1.5 rounded-full text-sm transition-colors border ${formData.tags.includes(tag)
                               ? 'bg-blue-100 text-blue-800 border-blue-300'
                               : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                          }`}
+                            }`}
                         >
                           {tag}
                         </button>
@@ -639,9 +637,8 @@ export default function ServiceFormPage() {
                             updateField('stockQuantity', 'unlimited');
                           }
                         }}
-                        className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                          formData.stockQuantity === 'unlimited' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
+                        className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${formData.stockQuantity === 'unlimited' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
                       >
                         Illimité
                       </button>
@@ -678,9 +675,8 @@ export default function ServiceFormPage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Upload d'images</label>
                     <label
-                      className={`flex items-center justify-center w-full h-36 px-4 transition bg-white border-2 border-dashed rounded-xl cursor-pointer ${
-                        isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-                      }`}
+                      className={`flex items-center justify-center w-full h-36 px-4 transition bg-white border-2 border-dashed rounded-xl cursor-pointer ${isUploading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                        }`}
                       onDragOver={e => { e.preventDefault(); e.stopPropagation(); }}
                       onDrop={e => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files.length) handleFileUpload(e.dataTransfer.files); }}
                     >
@@ -892,9 +888,8 @@ export default function ServiceFormPage() {
                       <button
                         key={p}
                         onClick={() => setPreviewPeriod(p)}
-                        className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition ${
-                          p === previewPeriod ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
-                        }`}
+                        className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition ${p === previewPeriod ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white text-gray-600 hover:border-gray-400'
+                          }`}
                       >
                         {p === 'mensuel' ? 'Mensuel' : 'Annuel'}
                       </button>
@@ -918,11 +913,24 @@ export default function ServiceFormPage() {
                   )}
                 </div>
 
-                <p className="mb-4 text-sm leading-relaxed text-gray-600">
-                  {formData.shortDescription || formData.longDescription || (
-                    <span className="text-gray-300 italic">Description du service...</span>
-                  )}
-                </p>
+                {formData.shortDescription && (
+                  <p className="mb-3 text-sm leading-relaxed text-gray-700">{formData.shortDescription}</p>
+                )}
+                {formData.longDescription ? (
+                  <div className="mb-4 text-sm leading-relaxed text-gray-600
+                    [&>h1]:text-base [&>h1]:font-bold [&>h1]:text-gray-900 [&>h1]:mt-3 [&>h1]:mb-1.5
+                    [&>h2]:text-sm [&>h2]:font-semibold [&>h2]:text-gray-800 [&>h2]:mt-2.5 [&>h2]:mb-1
+                    [&>h3]:text-sm [&>h3]:font-semibold [&>h3]:text-gray-800 [&>h3]:mt-2 [&>h3]:mb-1
+                    [&>p]:mb-2 [&>p]:leading-relaxed
+                    [&>ul]:mb-2 [&>ul]:pl-4 [&>ul>li]:list-disc [&>ul>li]:mb-0.5
+                    [&>ol]:mb-2 [&>ol]:pl-4 [&>ol>li]:list-decimal [&>ol>li]:mb-0.5
+                    [&>strong]:font-semibold [&>strong]:text-gray-800
+                    [&>em]:italic">
+                    <ReactMarkdown>{formData.longDescription}</ReactMarkdown>
+                  </div>
+                ) : !formData.shortDescription && (
+                  <p className="mb-4 text-sm italic text-gray-300">Description du service...</p>
+                )}
 
                 {formData.tags.length > 0 && (
                   <div className="mb-4 flex flex-wrap gap-1.5">
