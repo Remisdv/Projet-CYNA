@@ -82,7 +82,7 @@ const IMAGES = {
 const SERVICES = [
     {
         nom: 'SOC 24/7 Managed Detection & Response',
-        categorie: ProductCategory.SOC,
+        categorie: 'soc',
         description_courte:
             'Surveillance continue par notre Security Operations Center, 24h/24 et 7j/7.',
         description_longue: `## Une équipe d'experts à vos côtés en permanence
@@ -116,7 +116,7 @@ Disponibilité **99,95%**, MTTR < 30 minutes pour les incidents critiques.`,
     },
     {
         nom: 'EDR Endpoint Protection Enterprise',
-        categorie: ProductCategory.EDR,
+        categorie: 'edr',
         description_courte:
             'Protection avancée des endpoints avec détection comportementale et réponse automatisée.',
         description_longue: `## Une protection nouvelle génération pour vos postes
@@ -152,7 +152,7 @@ Windows 10/11, macOS, Linux (Ubuntu, RHEL, Debian), Android, iOS.
     },
     {
         nom: 'XDR Extended Threat Defense Platform',
-        categorie: ProductCategory.XDR,
+        categorie: 'xdr',
         description_courte:
             'Plateforme XDR unifiée : endpoints, réseau, cloud, identité et email en une console.',
         description_longue: `## La défense étendue, unifiée et intelligente
@@ -186,7 +186,7 @@ Multi-tenant, déploiement cloud-native, API-first avec SDK Python/Go.`,
     },
     {
         nom: 'Threat Intelligence Premium Feed',
-        categorie: ProductCategory.SERVICE,
+        categorie: 'soc',
         description_courte:
             'Renseignement sur les menaces : IOCs, TTPs et rapports stratégiques en temps réel.',
         description_longue: `## Anticipez les menaces qui ciblent votre secteur
@@ -221,1137 +221,913 @@ SIEM (Splunk, QRadar, Sentinel), SOAR, EDR, firewalls.`,
 ];
 
 /* ------------------------------------------------------------------ */
-/*                        PRODUCTS (40 items)                          */
+/*                   PRODUCTS (35 SaaS + 5 physiques)                 */
 /* ------------------------------------------------------------------ */
 
-interface ProductSeed {
+interface SaasSeed {
     nom: string;
-    categorie: ProductCategory;
+    categorie: string;
+    description_courte: string;
+    description_longue: string;
+    prix_mensuel: number;
+    prix_annuel: number;
+    remise_annuelle_pct: number;
+    images: string[];
+    tags: string[];
+    saas: true;
+}
+
+interface PhysicalSeed {
+    nom: string;
+    categorie: string;
     description_courte: string;
     description_longue: string;
     prix: number;
     stock: number;
-    stock_illimite: 'oui' | 'non';
     images: string[];
     tags: string[];
 }
 
+type ProductSeed = SaasSeed | PhysicalSeed;
+
 const PRODUCTS: ProductSeed[] = [
-    /* ============= HARDWARE SECURITY (10) ============= */
+    // ── EDR (13) ──────────────────────────────────────────────────────────────
+    {
+        nom: 'CrowdStrike Falcon Pro',
+        categorie: 'edr',
+        description_courte: 'EDR cloud-native CrowdStrike Falcon Pro — protection IA et isolation automatique.',
+        description_longue: `## CrowdStrike Falcon Pro — EDR nouvelle génération
+
+Falcon Pro est la solution EDR cloud-native de référence mondiale.
+
+### Fonctionnalités
+
+- **IA comportementale** : détection en temps réel sans signature
+- **Threat graph** : graphe d'attaque cloud mis à jour en continu
+- **Isolation réseau** automatique des hôtes compromis
+- **Anti-ransomware** avec rollback instantané
+- **Console Falcon** unifiée — zéro infrastructure à gérer
+
+### Licence
+
+Abonnement mensuel ou annuel (−17 %) par endpoint. Minimum 10 postes.`,
+        prix_mensuel: 89,
+        prix_annuel: 890,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber1, IMAGES.laptop, IMAGES.saas],
+        tags: ['crowdstrike', 'falcon', 'edr', 'endpoint', 'cloud-native'],
+        saas: true as const,
+    },
+    {
+        nom: 'CrowdStrike Falcon Enterprise',
+        categorie: 'edr',
+        description_courte: 'Falcon Enterprise : EDR + Threat Intelligence + Overwatch 24/7 pour grandes organisations.',
+        description_longue: `## CrowdStrike Falcon Enterprise — Protection totale
+
+La suite Enterprise ajoute au Falcon Pro la Threat Intelligence CrowdStrike et l'équipe Overwatch (chasse aux menaces humaine 24/7).
+
+### Inclus en Enterprise
+
+- Tout Falcon Pro +
+- **Falcon Intelligence** : rapports IOC/TTP par secteur
+- **Falcon OverWatch** : analystes qui chassent les menaces dans votre environnement
+- **Threat hunting proactif** 24/7 avec alertes priorisées
+- **API Falcon** pour intégration SIEM/SOAR`,
+        prix_mensuel: 179,
+        prix_annuel: 1790,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber2, IMAGES.soc, IMAGES.saas],
+        tags: ['crowdstrike', 'falcon-enterprise', 'overwatch', 'edr', 'threat-hunting'],
+        saas: true as const,
+    },
+    {
+        nom: 'SentinelOne Singularity Core',
+        categorie: 'edr',
+        description_courte: 'SentinelOne Core — EDR autonome avec rollback automatique, sans cloud requis.',
+        description_longue: `## SentinelOne Singularity Core — EDR autonome
+
+Agent autonome capable de prendre des décisions de protection sans dépendance réseau.
+
+### Points forts
+
+- **Agent autonome** : fonctionne même hors ligne
+- **Storyline** : corrélation automatique des événements en une histoire d'attaque
+- **Rollback 1-clic** : restauration des fichiers chiffrés par ransomware
+- **Détection comportementale** par IA sur l'endpoint`,
+        prix_mensuel: 69,
+        prix_annuel: 690,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber3, IMAGES.laptop, IMAGES.saas],
+        tags: ['sentinelone', 'singularity', 'edr', 'rollback', 'autonome'],
+        saas: true as const,
+    },
+    {
+        nom: 'SentinelOne Singularity Control',
+        categorie: 'edr',
+        description_courte: 'Singularity Control : EDR + contrôle des périphériques USB et règles de firewall.',
+        description_longue: `## SentinelOne Singularity Control
+
+Control ajoute à Core la gestion des périphériques externes et le contrôle du pare-feu local.
+
+### Fonctionnalités supplémentaires
+
+- **Device Control** : liste blanche/noire USB, périphériques Bluetooth
+- **Firewall Control** : règles réseau par endpoint gérées centralement
+- **Vulnerability Management** intégré (scan des CVE sur les hôtes)`,
+        prix_mensuel: 129,
+        prix_annuel: 1290,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber4, IMAGES.laptop, IMAGES.saas],
+        tags: ['sentinelone', 'control', 'edr', 'device-control', 'firewall'],
+        saas: true as const,
+    },
+    {
+        nom: 'Microsoft Defender for Endpoint P1',
+        categorie: 'edr',
+        description_courte: "Defender P1 : protection antivirus next-gen, réduction de surface d'attaque.",
+        description_longue: `## Microsoft Defender for Endpoint Plan 1
+
+Plan 1 offre la protection de base intégrée à l'écosystème Microsoft 365.
+
+### Fonctionnalités P1
+
+- **Antivirus next-gen** : ML cloud, détection comportementale
+- **Réduction de surface d'attaque** (ASR rules, exploit guard)
+- **Accès conditionnel** basé sur la conformité (intégration Intune)
+- **API Microsoft Security Graph** pour automatisation`,
+        prix_mensuel: 49,
+        prix_annuel: 490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.saas, IMAGES.laptop, IMAGES.cyber5],
+        tags: ['microsoft', 'defender', 'mde', 'p1', 'edr'],
+        saas: true as const,
+    },
+    {
+        nom: 'Microsoft Defender for Endpoint P2',
+        categorie: 'edr',
+        description_courte: 'Defender P2 : EDR complet avec threat hunting, investigation automatisée et AIR.',
+        description_longue: `## Microsoft Defender for Endpoint Plan 2
+
+Plan 2 est la version complète de MDE avec EDR et investigation & remédiation automatisées (AIR).
+
+### Fonctionnalités P2 (inclut tout P1 +)
+
+- **EDR** : alertes de détection, timeline d'incidents
+- **Investigation automatisée** (AIR) : remédiation sans intervention manuelle
+- **Threat & Vulnerability Management** : inventaire CVE, score d'exposition
+- **Advanced Hunting** (KQL)`,
+        prix_mensuel: 99,
+        prix_annuel: 990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.saas, IMAGES.cyber6, IMAGES.laptop],
+        tags: ['microsoft', 'defender', 'mde', 'p2', 'edr', 'air'],
+        saas: true as const,
+    },
+    {
+        nom: 'Trend Micro Apex One SaaS',
+        categorie: 'edr',
+        description_courte: 'Apex One SaaS : protection endpoint Trend Micro avec détection IA et réponse automatisée.',
+        description_longue: `## Trend Micro Apex One SaaS
+
+Plateforme EPP/EDR de Trend Micro déployée entièrement en cloud.
+
+### Fonctionnalités
+
+- **Protection multi-couches** : antivirus, anti-exploit, behavioral monitoring
+- **Virtual Patching** : protection des CVE sans patcher les systèmes
+- **Sandbox Analysis** : analyse dynamique des fichiers suspects
+- **Connexion Vision One** : upgrade XDR optionnel`,
+        prix_mensuel: 79,
+        prix_annuel: 790,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber7, IMAGES.laptop, IMAGES.saas],
+        tags: ['trend-micro', 'apex-one', 'edr', 'virtual-patching', 'cloud'],
+        saas: true as const,
+    },
+    {
+        nom: 'ESET PROTECT Advanced Cloud',
+        categorie: 'edr',
+        description_courte: 'ESET PROTECT Advanced : EDR cloud européen avec chiffrement, sandbox et gestion centralisée.',
+        description_longue: `## ESET PROTECT Advanced Cloud
+
+Solution européenne (siège en Slovaquie) offrant EDR, sandboxing cloud et chiffrement Full Disk.
+
+### Inclus
+
+- **ESET Endpoint Security** : antivirus, firewall, contrôle des médias
+- **ESET Inspect** (EDR) : détection comportementale, timeline des incidents
+- **Cloud Sandbox** : analyse des fichiers suspects en environnement isolé
+- **ESET Full Disk Encryption** : chiffrement BitLocker/FileVault centralisé
+
+### Atout RGPD
+
+Données hébergées en UE, certifié ISO 27001.`,
+        prix_mensuel: 59,
+        prix_annuel: 590,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber8, IMAGES.laptop, IMAGES.saas],
+        tags: ['eset', 'protect', 'edr', 'sandbox', 'rgpd', 'europeen'],
+        saas: true as const,
+    },
+    {
+        nom: 'Bitdefender GravityZone Business Security Enterprise',
+        categorie: 'edr',
+        description_courte: 'GravityZone Enterprise : EDR + analytics humain + Risk Management.',
+        description_longue: `## Bitdefender GravityZone Business Security Enterprise
+
+Intègre EDR, analyse des risques humains et protection des identités dans une console unifiée.
+
+### Fonctionnalités clés
+
+- **HyperDetect** : IA avancée pré-exécution
+- **eXtended EDR** : timeline d'attaque, réponse guidée
+- **Human Risk Analytics** : score de risque par utilisateur
+- **Sandbox Analyzer** : détonation dynamique`,
+        prix_mensuel: 49,
+        prix_annuel: 490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber9, IMAGES.laptop, IMAGES.saas],
+        tags: ['bitdefender', 'gravityzone', 'edr', 'human-risk', 'hyperdetect'],
+        saas: true as const,
+    },
+    {
+        nom: 'Sophos Intercept X Advanced',
+        categorie: 'edr',
+        description_courte: 'Sophos Intercept X : deep learning + anti-ransomware CryptoGuard + XDR optionnel.',
+        description_longue: `## Sophos Intercept X Advanced
+
+Reconnu pour son moteur deep learning et sa protection anti-ransomware CryptoGuard.
+
+### Fonctionnalités
+
+- **Deep Learning** : détection des menaces zero-day sans signature
+- **CryptoGuard** : anti-ransomware avec rollback automatique
+- **Exploit Prevention** : blocage des techniques d'exploitation courantes
+- **Root Cause Analysis** : rapport visuel de la chaîne d'attaque
+- **XDR natif** : upgrade vers Sophos XDR disponible`,
+        prix_mensuel: 89,
+        prix_annuel: 890,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber10, IMAGES.laptop, IMAGES.saas],
+        tags: ['sophos', 'intercept-x', 'edr', 'deep-learning', 'cryptoguard'],
+        saas: true as const,
+    },
+    {
+        nom: 'Malwarebytes for Teams',
+        categorie: 'edr',
+        description_courte: 'Malwarebytes Teams : protection endpoint légère et abordable pour équipes de 5 à 100.',
+        description_longue: `## Malwarebytes for Teams
+
+Solution idéale pour les TPE/PME qui veulent une protection solide sans complexité opérationnelle.
+
+### Fonctionnalités
+
+- **Détection multi-vecteur** : malwares, ransomwares, PUP, exploits
+- **Remédiation en 1 clic** depuis la console cloud
+- **Brute Force Protection** : blocage des attaques RDP
+- **Application Hardening** : durcissement automatique du navigateur`,
+        prix_mensuel: 39,
+        prix_annuel: 390,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.saas, IMAGES.laptop, IMAGES.cyber1],
+        tags: ['malwarebytes', 'teams', 'edr', 'pme', 'leger'],
+        saas: true as const,
+    },
+    {
+        nom: 'Cybereason Defense Platform',
+        categorie: 'edr',
+        description_courte: 'Cybereason : détection operation-centric et MalOp Engine pour stopper les attaques complexes.',
+        description_longue: `## Cybereason Defense Platform
+
+Approche unique centrée sur les « Malicious Operations » (MalOps) plutôt que sur les alertes individuelles.
+
+### Fonctionnalités différenciantes
+
+- **MalOp Engine** : corrèle les événements en une opération malveillante unifiée
+- **Anti-ransomware** : détection des premières étapes de chiffrement
+- **Réponse automatisée** : isolation, kill process, suppression
+- **Mobile protection** (iOS, Android) inclus`,
+        prix_mensuel: 119,
+        prix_annuel: 1190,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber2, IMAGES.soc, IMAGES.saas],
+        tags: ['cybereason', 'malop', 'edr', 'soc', 'operation-centric'],
+        saas: true as const,
+    },
+    {
+        nom: 'Elastic Security for Endpoint',
+        categorie: 'edr',
+        description_courte: "Elastic Security : EDR open intégré à l'Elastic Stack — logs, alertes et hunting unifiés.",
+        description_longue: `## Elastic Security for Endpoint
+
+EDR natif à l'Elastic Stack (ELK), idéal pour les équipes qui souhaitent unifier SIEM et EDR.
+
+### Fonctionnalités
+
+- **Agent Elastic** : collecte EDR + logs système + réseau en un seul déploiement
+- **900+ règles MITRE ATT&CK** préinstallées
+- **Machine Learning** : anomaly detection sur les séquences de processus
+- **Session View** : visualisation interactive des sessions Linux
+- **SIEM natif** : logs EDR directement dans Elasticsearch`,
+        prix_mensuel: 95,
+        prix_annuel: 950,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.cyber3, IMAGES.saas],
+        tags: ['elastic', 'elasticsearch', 'edr', 'siem', 'open-source'],
+        saas: true as const,
+    },
+
+    // ── XDR (12) ──────────────────────────────────────────────────────────────
+    {
+        nom: 'CrowdStrike Falcon XDR',
+        categorie: 'xdr',
+        description_courte: 'Falcon XDR : visibilité multi-domaine (endpoint, cloud, identité, email) unifiée.',
+        description_longue: `## CrowdStrike Falcon XDR
+
+Étend la télémétrie EDR à tous les vecteurs d'attaque — email, identités, cloud, réseau.
+
+### Données corrélées
+
+- **Endpoint** : Falcon Agent
+- **Cloud** : AWS, Azure, GCP (Falcon Cloud Security)
+- **Identité** : Active Directory, Okta, Azure AD
+- **Email** : Microsoft 365, Google Workspace
+- **Réseau** : flux NetFlow, DNS`,
+        prix_mensuel: 249,
+        prix_annuel: 2490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber4, IMAGES.soc, IMAGES.cloud],
+        tags: ['crowdstrike', 'falcon-xdr', 'xdr', 'multi-domaine', 'cloud'],
+        saas: true as const,
+    },
+    {
+        nom: 'SentinelOne Singularity XDR',
+        categorie: 'xdr',
+        description_courte: 'Singularity XDR : plateforme ouverte avec 350+ intégrations pour une réponse unifiée.',
+        description_longue: `## SentinelOne Singularity XDR
+
+Plateforme de sécurité ouverte, conçue pour ingérer des données de 350+ fournisseurs.
+
+### Fonctionnalités XDR
+
+- **Storyline Active Response** : corrélation automatique de toutes les données
+- **Marketplace** : intégrations natives CrowdStrike, Palo Alto, Okta
+- **Skylight Data Lake** : rétention de 365 jours
+- **Purple AI** : assistant IA pour le hunting et la réponse guidée
+- **SOAR intégré** : playbooks automatisés`,
+        prix_mensuel: 219,
+        prix_annuel: 2190,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber5, IMAGES.soc, IMAGES.cloud],
+        tags: ['sentinelone', 'singularity-xdr', 'xdr', 'purple-ai', 'soar'],
+        saas: true as const,
+    },
+    {
+        nom: 'Palo Alto Cortex XDR Pro',
+        categorie: 'xdr',
+        description_courte: 'Cortex XDR Pro : analyse comportementale machine learning sur endpoint, réseau et cloud.',
+        description_longue: `## Palo Alto Networks Cortex XDR Pro
+
+Solution phare de Palo Alto Networks pour la détection et réponse étendue.
+
+### Fonctionnalités Pro
+
+- **Behavioral Analytics** : profils de comportement par entité
+- **Identity Analytics** : détection d'abus de privilèges et de mouvements latéraux
+- **Network Analytics** : analyse des flux réseau via NGFWs intégrés
+- **Causality Chain** : chaîne de causalité visuelle de chaque incident
+- **Automated Investigation** : root cause analysis sans intervention`,
+        prix_mensuel: 299,
+        prix_annuel: 2990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber6, IMAGES.soc, IMAGES.cloud],
+        tags: ['palo-alto', 'cortex-xdr', 'xdr', 'behavioral-analytics', 'gartner-leader'],
+        saas: true as const,
+    },
+    {
+        nom: 'Microsoft Defender XDR',
+        categorie: 'xdr',
+        description_courte: 'Microsoft Defender XDR : protection unifiée endpoint, email, identités et apps cloud M365.',
+        description_longue: `## Microsoft Defender XDR
+
+Unifie la protection de l'ensemble de l'écosystème Microsoft en corrélant automatiquement les signaux de tous les services Defender.
+
+### Services corrélés
+
+- **Defender for Endpoint** (P2) : EDR endpoints
+- **Defender for Office 365** (P2) : email, SharePoint, Teams
+- **Defender for Identity** : Active Directory, Azure AD
+- **Defender for Cloud Apps** : CASB, Shadow IT`,
+        prix_mensuel: 149,
+        prix_annuel: 1490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.saas, IMAGES.cyber7, IMAGES.cloud],
+        tags: ['microsoft', 'defender-xdr', 'xdr', 'm365', 'office365'],
+        saas: true as const,
+    },
+    {
+        nom: 'Trend Micro Vision One',
+        categorie: 'xdr',
+        description_courte: 'Vision One : XDR Trend Micro avec Risk Index et Attack Surface Risk Management.',
+        description_longue: `## Trend Micro Vision One
+
+Plateforme XDR avec approche unique de gestion de la surface d'attaque et d'index de risque en temps réel.
+
+### Fonctionnalités
+
+- **XDR natif** : corrélation endpoint, email, réseau, serveur, cloud
+- **Attack Surface Risk Management** : inventaire et score de risque continu
+- **Zero Trust Risk Insights** : intégration avec IAM pour accès conditionnel
+- **Workbench** : investigation visuelle des chaînes d'attaque`,
+        prix_mensuel: 199,
+        prix_annuel: 1990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber8, IMAGES.soc, IMAGES.cloud],
+        tags: ['trend-micro', 'vision-one', 'xdr', 'attack-surface', 'risk'],
+        saas: true as const,
+    },
+    {
+        nom: 'Cisco XDR',
+        categorie: 'xdr',
+        description_courte: 'Cisco XDR : détection unifiée avec intégrations natives Cisco (Endpoint, Umbrella, Duo).',
+        description_longue: `## Cisco XDR
+
+Nativement intégré à l'ensemble du portfolio Cisco Security.
+
+### Intégrations natives Cisco
+
+- **Cisco Secure Endpoint** (EDR)
+- **Cisco Umbrella** (DNS Security / SASE)
+- **Cisco Secure Email** (filtrage email)
+- **Cisco Duo** (MFA / accès conditionnel)
+- **Cisco Secure Firewall** (NGFW)`,
+        prix_mensuel: 179,
+        prix_annuel: 1790,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber9, IMAGES.soc, IMAGES.cloud],
+        tags: ['cisco', 'xdr', 'umbrella', 'duo', 'talos', 'sase'],
+        saas: true as const,
+    },
+    {
+        nom: 'IBM QRadar SIEM Cloud',
+        categorie: 'xdr',
+        description_courte: 'QRadar SIEM Cloud : corrélation de logs à grande échelle avec 700+ connecteurs et UEBA.',
+        description_longue: `## IBM QRadar SIEM Cloud
+
+SIEM de référence dans les grandes entreprises et secteurs régulés.
+
+### Fonctionnalités
+
+- **700+ connecteurs** DSM prêts à l'emploi
+- **UEBA** natif
+- **1500+ règles de corrélation** préconfigurées + personnalisables
+- **Offenses** : priorisation intelligente des incidents
+- **QRadar Suite** : intégration native SOAR et EDR`,
+        prix_mensuel: 349,
+        prix_annuel: 3490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.soc, IMAGES.cloud],
+        tags: ['ibm', 'qradar', 'siem', 'ueba', 'cloud', 'xdr'],
+        saas: true as const,
+    },
+    {
+        nom: 'Splunk Enterprise Security Cloud',
+        categorie: 'xdr',
+        description_courte: 'Splunk ES Cloud : SIEM/XDR leader de marché avec SPL, mission control et SOAR intégré.',
+        description_longue: `## Splunk Enterprise Security Cloud
+
+Le SIEM/XDR le plus déployé dans les SOC mondiaux, leader Gartner MQ SIEM depuis 10 ans.
+
+### Fonctionnalités
+
+- **Mission Control** : centre d'opérations unifié pour triage et réponse
+- **SPL** (Search Processing Language) : requêtes sur des pétaoctets de données
+- **2000+ détections ESCU** (Enterprise Security Content)
+- **SOAR natif** (Splunk SOAR) : playbooks Python no-code/low-code`,
+        prix_mensuel: 599,
+        prix_annuel: 5990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.cyber10, IMAGES.cloud],
+        tags: ['splunk', 'enterprise-security', 'siem', 'xdr', 'spl', 'gartner-leader'],
+        saas: true as const,
+    },
+    {
+        nom: 'Microsoft Sentinel',
+        categorie: 'xdr',
+        description_courte: 'Microsoft Sentinel : SIEM/SOAR cloud-native Azure avec 300+ connecteurs et détection ML.',
+        description_longue: `## Microsoft Sentinel
+
+SIEM/SOAR cloud-native de Microsoft, entièrement hébergé sur Azure.
+
+### Fonctionnalités
+
+- **300+ connecteurs** : Microsoft, AWS, Google, Cisco, Palo Alto
+- **KQL** : langage de requête puissant pour hunting et règles de détection
+- **UEBA** : profils d'entité et détection des anomalies comportementales
+- **Automation rules + Playbooks** : orchestration via Azure Logic Apps`,
+        prix_mensuel: 189,
+        prix_annuel: 1890,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cloud, IMAGES.saas, IMAGES.soc],
+        tags: ['microsoft', 'sentinel', 'siem', 'azure', 'soar', 'kql'],
+        saas: true as const,
+    },
+    {
+        nom: 'Elastic SIEM Cloud',
+        categorie: 'xdr',
+        description_courte: 'Elastic SIEM Cloud : SIEM open-source avec détection MITRE et ML intégré.',
+        description_longue: `## Elastic SIEM Cloud
+
+S'appuie sur Elasticsearch pour indexer et rechercher des volumes massifs de données de sécurité.
+
+### Points forts
+
+- **Ingest illimité** : ECS normalise tous les logs
+- **900+ règles MITRE ATT&CK** open-source
+- **ML Jobs** : modèles d'anomaly detection
+- **Elastic Agent** : collecte unifiée logs + métriques + EDR
+- **Timeline** : outil d'investigation drag-and-drop`,
+        prix_mensuel: 159,
+        prix_annuel: 1590,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.saas, IMAGES.cloud],
+        tags: ['elastic', 'elasticsearch', 'siem', 'open-source', 'cloud', 'mitre'],
+        saas: true as const,
+    },
+    {
+        nom: 'Exabeam Fusion SIEM',
+        categorie: 'xdr',
+        description_courte: 'Exabeam Fusion : SIEM nouvelle génération centré sur le comportement utilisateur (UEBA).',
+        description_longue: `## Exabeam Fusion SIEM
+
+Pionnier du SIEM comportemental (UEBA-first), analysant les séquences d'activité des utilisateurs.
+
+### Différenciateurs
+
+- **Smart Timelines** : reconstruction automatique des sessions utilisateur
+- **TDIR workflow** guidé (Threat Detection, Investigation and Response)
+- **1500+ règles comportementales**
+- **Case Management** : gestion des incidents avec SLA
+- **Cloud Archive** : rétention froide à bas coût`,
+        prix_mensuel: 399,
+        prix_annuel: 3990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber1, IMAGES.soc, IMAGES.cloud],
+        tags: ['exabeam', 'fusion', 'siem', 'ueba', 'tdir', 'comportemental'],
+        saas: true as const,
+    },
+    {
+        nom: 'Securonix Unified Defense SIEM',
+        categorie: 'xdr',
+        description_courte: 'Securonix : SIEM cloud-native avec UEBA, SOAR et threat content en abonnement tout compris.',
+        description_longue: `## Securonix Unified Defense SIEM
+
+SIEM cloud-native avec UEBA et SOAR intégrés, sur un modèle tarifaire tout compris (pas de coût à l'ingestion).
+
+### Modèle tout compris
+
+- **Ingestion illimitée** : pas de surprises sur la facture
+- **UEBA natif** : analytics comportementaux
+- **SOAR intégré** : 300+ playbooks préconfigurés
+- **Threat Content** : règles gérées par Securonix Threat Labs
+- **Long Data Retention** : Snowflake backend 1 à 3 ans`,
+        prix_mensuel: 449,
+        prix_annuel: 4490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber2, IMAGES.soc, IMAGES.cloud],
+        tags: ['securonix', 'siem', 'ueba', 'soar', 'cloud-native', 'fedramp'],
+        saas: true as const,
+    },
+
+    // ── SOC / Threat Intelligence (10) ────────────────────────────────────────
+    {
+        nom: 'Recorded Future Intelligence Cloud',
+        categorie: 'soc',
+        description_courte: 'Recorded Future : threat intelligence temps réel sur 3M+ sources web, dark web et technique.',
+        description_longue: `## Recorded Future Intelligence Cloud
+
+Plateforme de threat intelligence leader mondial, agrégant plus de 3 millions de sources en temps réel.
+
+### Sources analysées
+
+- Web clair, profond et dark web
+- Forums cybercriminels, marchés illicites
+- Réseaux sociaux et canaux Telegram
+- Vulnérabilités (CVE, NVD, vendor advisories)
+- Infrastructure malveillante (C2, domaines, IPs)`,
+        prix_mensuel: 499,
+        prix_annuel: 4990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber3, IMAGES.soc, IMAGES.cloud],
+        tags: ['recorded-future', 'threat-intelligence', 'dark-web', 'ioc', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Flashpoint Intelligence Platform',
+        categorie: 'soc',
+        description_courte: 'Flashpoint : renseignement sur les menaces depuis des sources clandestines et dark web.',
+        description_longue: `## Flashpoint Intelligence Platform
+
+Spécialisé dans le renseignement issu des espaces clandestins (dark web, forums privés, applications chiffrées).
+
+### Couverture unique
+
+- **Forums cybercriminels privés** : accès à des forums non indexés
+- **Marchés du dark web** : surveillance des ventes de données et outils
+- **Canaux Telegram/Discord** : groupes hackivistes et ransomware
+- **IOCs téléchargeables** : intégration SIEM directe`,
+        prix_mensuel: 349,
+        prix_annuel: 3490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber4, IMAGES.soc, IMAGES.incident],
+        tags: ['flashpoint', 'threat-intelligence', 'dark-web', 'brand-protection', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Proofpoint Email Security TAP',
+        categorie: 'soc',
+        description_courte: 'Proofpoint TAP : protection email avancée contre phishing, BEC, malwares et imposteurs.',
+        description_longue: `## Proofpoint Targeted Attack Protection (TAP)
+
+Solution de protection email la plus avancée du marché, bloquant les attaques ciblées.
+
+### Technologies incluses
+
+- **Sandbox dynamique** : analyse des pièces jointes et URLs en temps réel
+- **NexGen Threat Protection** : IA détectant le BEC sans malware
+- **URL Defense** : réécriture et détonation des liens à la volée
+- **TRAP** : retrait automatique des emails livrés`,
+        prix_mensuel: 199,
+        prix_annuel: 1990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber5, IMAGES.saas, IMAGES.incident],
+        tags: ['proofpoint', 'tap', 'email', 'phishing', 'bec', 'sandbox'],
+        saas: true as const,
+    },
+    {
+        nom: 'Darktrace Enterprise',
+        categorie: 'soc',
+        description_courte: 'Darktrace : IA autonome qui apprend votre réseau et neutralise les menaces en temps réel.',
+        description_longue: `## Darktrace Enterprise
+
+Utilise l'intelligence artificielle non supervisée pour apprendre le comportement normal de chaque entité.
+
+### Fonctionnalités
+
+- **Self-Learning AI** : modèle probabiliste Bayesien par entité
+- **Antigena** : réponse autonome en millisecondes
+- **Cyber AI Analyst** : investigation automatisée
+- **Couverture** : réseau, cloud, email, SaaS, OT/ICS, endpoints`,
+        prix_mensuel: 599,
+        prix_annuel: 5990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber6, IMAGES.soc, IMAGES.cloud],
+        tags: ['darktrace', 'ia', 'autonome', 'reseau', 'anomaly-detection', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Tenable.io Vulnerability Management',
+        categorie: 'soc',
+        description_courte: 'Tenable.io : scan continu des vulnérabilités cloud avec priorisation VPR et CVSS.',
+        description_longue: `## Tenable.io Vulnerability Management
+
+Plateforme de gestion des vulnérabilités cloud la plus utilisée au monde.
+
+### Fonctionnalités
+
+- **Scan continu** : découverte et évaluation de tous les actifs (agents, sans agent, cloud)
+- **VPR** (Vulnerability Priority Rating) : score de risque réel vs CVSS théorique
+- **Lumin Exposure View** : score d'exposition par domaine métier
+- **Intégrations** : ServiceNow, Jira, Splunk, AWS Security Hub
+
+### Couverture
+
+65 000+ plugins. AWS, Azure, GCP, containers Docker/K8s.`,
+        prix_mensuel: 149,
+        prix_annuel: 1490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.cloud, IMAGES.soc],
+        tags: ['tenable', 'vulnerability-management', 'scan', 'vpr', 'cloud', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Qualys VMDR',
+        categorie: 'soc',
+        description_courte: 'Qualys VMDR : vulnerability management + détection + réponse sur une plateforme cloud unifiée.',
+        description_longue: `## Qualys VMDR
+
+Combine la découverte d'actifs, la gestion des vulnérabilités et la réponse en un workflow continu.
+
+### Workflow intégré
+
+1. **Asset Discovery** : inventaire automatique IT/OT/cloud
+2. **Vulnerability Assessment** : scan agent ou sans agent
+3. **TruRisk Scoring** : priorisation basée sur l'exploitabilité réelle
+4. **Patch Orchestration** : déploiement de correctifs automatisé`,
+        prix_mensuel: 249,
+        prix_annuel: 2490,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.server, IMAGES.cloud, IMAGES.cyber7],
+        tags: ['qualys', 'vmdr', 'vulnerability-management', 'patch', 'trurisk', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Rapid7 InsightVM',
+        categorie: 'soc',
+        description_courte: 'InsightVM : gestion des vulnérabilités en temps réel avec Risk Score et Remediation Workflow.',
+        description_longue: `## Rapid7 InsightVM
+
+Solution de vulnerability management avec gestion des risques en temps réel.
+
+### Fonctionnalités clés
+
+- **Live Dashboard** : vue temps réel du risque avec Risk Score dynamique
+- **Remediation Projects** : attribution des correctifs aux équipes IT avec suivi SLA
+- **Attacker Knowledge Base** : contexte d'exploitation de Rapid7 AttackerKB
+- **Scan Engine distribué** : déploiement multi-sites sans VPN`,
+        prix_mensuel: 199,
+        prix_annuel: 1990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.cyber8, IMAGES.cloud, IMAGES.soc],
+        tags: ['rapid7', 'insightvm', 'vulnerability-management', 'risk-score', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Palo Alto Cortex XSOAR',
+        categorie: 'soc',
+        description_courte: 'Cortex XSOAR : orchestration et automatisation SOAR de référence avec 900+ intégrations.',
+        description_longue: `## Palo Alto Networks Cortex XSOAR
+
+Plateforme SOAR leader du marché, permettant d'automatiser et d'orchestrer la réponse aux incidents.
+
+### Fonctionnalités
+
+- **Playbooks visuels** : conception drag-and-drop de workflows de réponse
+- **900+ intégrations** : SIEM, EDR, Firewall, Ticketing, TI, Cloud
+- **War Room** : collaboration en temps réel entre analystes SOC
+- **ML Classification** : priorisation automatique des alertes
+- **Case Management** : cycle de vie complet des incidents`,
+        prix_mensuel: 799,
+        prix_annuel: 7990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.soc, IMAGES.cyber9, IMAGES.cloud],
+        tags: ['palo-alto', 'xsoar', 'soar', 'orchestration', 'automation', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'Swimlane SOAR Platform',
+        categorie: 'soc',
+        description_courte: 'Swimlane : SOAR low-code avec Turbine AI pour des playbooks intelligents et métriques ROI.',
+        description_longue: `## Swimlane SOAR Platform
+
+Moteur Turbine : IA qui apprend des actions des analystes pour suggérer et automatiser les réponses.
+
+### Fonctionnalités
+
+- **Turbine AI Engine** : suggestions intelligentes basées sur les cas historiques
+- **Low-code Playbooks** : conception via glisser-déposer
+- **Case Management** : tableaux de bord MTTR, MTTD, alertes par analyste
+- **ROI Dashboard** : calcul du temps économisé par automatisation`,
+        prix_mensuel: 699,
+        prix_annuel: 6990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.soc, IMAGES.cyber10, IMAGES.cloud],
+        tags: ['swimlane', 'soar', 'turbine-ai', 'low-code', 'roi', 'soc'],
+        saas: true as const,
+    },
+    {
+        nom: 'ServiceNow Security Operations (SecOps)',
+        categorie: 'soc',
+        description_courte: "ServiceNow SecOps : gestion des incidents et vulnérabilités intégrée à votre ITSM d'entreprise.",
+        description_longue: `## ServiceNow Security Operations
+
+Connecte la cybersécurité aux processus IT de l'entreprise via la plateforme ServiceNow.
+
+### Modules
+
+- **Security Incident Response (SIR)** : gestion des incidents sécurité
+- **Vulnerability Response** : priorisation et suivi des correctifs via Change Management
+- **Configuration Compliance** : contrôle de la conformité des configurations
+- **AI-Assisted Triage** : classification automatique des alertes`,
+        prix_mensuel: 899,
+        prix_annuel: 8990,
+        remise_annuelle_pct: 16.7,
+        images: [IMAGES.saas, IMAGES.soc, IMAGES.cloud],
+        tags: ['servicenow', 'secops', 'itsm', 'soar', 'vulnerability-response', 'soc'],
+        saas: true as const,
+    },
+
+    // ── Produits Physiques (5) ─────────────────────────────────────────────────
     {
         nom: 'YubiKey 5C NFC',
-        categorie: ProductCategory.SERVICE,
-        description_courte: "Clé d'authentification matérielle FIDO2/U2F avec USB-C et NFC.",
-        description_longue: `## L'authentification multifacteur la plus robuste
+        categorie: 'produit-physique',
+        description_courte: 'Clé de sécurité matérielle FIDO2/U2F YubiKey 5C NFC — USB-C + NFC, anti-phishing certifié.',
+        description_longue: `## YubiKey 5C NFC — Authentification forte sans compromis
 
-La **YubiKey 5C NFC** est une clé de sécurité matérielle qui élimine les attaques par phishing grâce à la cryptographie à clé publique.
+La YubiKey 5C NFC est la clé de sécurité matérielle la plus utilisée au monde.
 
-### Caractéristiques
+### Protocoles supportés
 
-- **Connectique** : USB-C + NFC (Android & iPhone)
-- **Protocoles** : FIDO2/WebAuthn, U2F, Smart Card (PIV), OpenPGP, OTP, OATH-TOTP/HOTP
-- **Étanchéité** : IP68, écrasement jusqu'à 30 kg
-- **Pas de batterie** : aucune dépendance d'alimentation
+- **FIDO2 / WebAuthn** : MFA sans mot de passe
+- **U2F** : second facteur universel
+- **Smart Card (PIV)** : certificats X.509
+- **OpenPGP** : chiffrement et signature email
 
 ### Compatibilité
 
-Compatible avec Google, Microsoft, Apple, AWS, GitHub, Dropbox, 1Password, et **800+ services**.`,
+USB-C + NFC. Windows, macOS, Linux, iOS, Android.`,
         prix: 65,
         stock: 250,
-        stock_illimite: 'non',
         images: [IMAGES.yubikey, IMAGES.usb],
-        tags: ['yubikey', 'mfa', 'fido2', 'authentification'],
+        tags: ['yubikey', 'fido2', 'mfa', 'hardware-key', 'anti-phishing'],
     },
     {
-        nom: 'YubiKey 5 NFC',
-        categorie: ProductCategory.SERVICE,
-        description_courte: "Clé matérielle FIDO2/U2F avec USB-A et NFC.",
-        description_longue: `## La référence en authentification matérielle
+        nom: 'YubiKey 5 NFC USB-A',
+        categorie: 'produit-physique',
+        description_courte: 'YubiKey 5 NFC USB-A — authentification FIDO2 matérielle pour postes de travail classiques.',
+        description_longue: `## YubiKey 5 NFC USB-A
 
-Version USB-A de la célèbre YubiKey 5, avec NFC pour usage mobile. Idéale pour les ordinateurs équipés de ports USB classiques.
+La version USB-A de la YubiKey 5 NFC, compatible avec l'immense majorité des ordinateurs.
 
-### Inclus
+### Protocoles identiques à la 5C NFC
 
-- 1 YubiKey 5 NFC
-- Documentation de mise en route
-- Garantie constructeur 2 ans
-
-### Recommandée pour
-
-- Comptes administrateurs (sysadmin, DevOps)
-- Accès cloud critiques (AWS root, Azure global admin)
-- Protection des accès email professionnels`,
+- FIDO2/WebAuthn, U2F, Smart Card PIV, OpenPGP, TOTP
+- NFC intégrée : tap sur smartphone Android ou iPhone
+- Robuste : certifiée IP68, résiste aux chocs et à l'eau
+- Aucune batterie, aucun driver à installer`,
         prix: 55,
         stock: 320,
-        stock_illimite: 'non',
         images: [IMAGES.usb, IMAGES.yubikey],
-        tags: ['yubikey', 'mfa', 'usb-a', 'fido2'],
+        tags: ['yubikey', 'fido2', 'usb-a', 'nfc', 'mfa', 'hardware-key'],
     },
     {
-        nom: 'Pack 5 YubiKeys 5C NFC',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Lot de 5 YubiKeys pour équiper une équipe.',
-        description_longue: `## Équipez votre équipe en une commande
+        nom: 'Pack 10 YubiKeys 5C NFC',
+        categorie: 'produit-physique',
+        description_courte: 'Pack entreprise 10 YubiKeys 5C NFC avec licence YubiEnterprise et support prioritaire.',
+        description_longue: `## Pack 10 YubiKeys 5C NFC — Déploiement entreprise
 
-Pack de **5 YubiKeys 5C NFC** prêtes à l'emploi pour une petite équipe ou pour assurer la redondance (clé principale + clé de secours).
+Pack dédié aux déploiements PME/ETI avec remise volume et accès au programme YubiEnterprise Delivery.
 
-### Bonnes pratiques
+### Contenu du pack
 
-> **Toujours commander au minimum 2 clés par utilisateur** : une principale et une de secours stockée en lieu sûr. La perte d'une clé sans secours peut bloquer définitivement les accès.
+- 10 × YubiKey 5C NFC (USB-C + NFC)
+- Accès YubiEnterprise Delivery (portail de gestion, remplacement garanti)
+- Support prioritaire par email (réponse < 24h)
+- Guide de déploiement CYNA (intégration AD, Azure AD, Okta)
 
-### Économie
+### Économies
 
-Tarif unitaire dégressif : économie de **40 €** par rapport à l'achat à l'unité.`,
-        prix: 285,
-        stock: 60,
-        stock_illimite: 'non',
-        images: [IMAGES.yubikey],
-        tags: ['yubikey', 'pack', 'équipe', 'mfa'],
+Remise de 15 % par rapport à l'achat à l'unité.`,
+        prix: 550,
+        stock: 40,
+        images: [IMAGES.yubikey, IMAGES.usb],
+        tags: ['yubikey', 'pack', 'entreprise', 'fido2', 'mfa'],
     },
     {
-        nom: 'Firewall NextGen Cyna FW-200',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Pare-feu nouvelle génération pour PME, débit 2 Gbps.',
-        description_longue: `## Protégez votre périmètre réseau
+        nom: 'Google Titan Security Key USB-C',
+        categorie: 'produit-physique',
+        description_courte: 'Google Titan USB-C : clé FIDO2 certifiée FIPS 140-2, idéale pour les écosystèmes Google Workspace.',
+        description_longue: `## Google Titan Security Key USB-C
 
-Le **Cyna FW-200** est un pare-feu nouvelle génération conçu pour les PME de 20 à 200 collaborateurs.
+Clé de sécurité matérielle conçue et certifiée par Google, adaptée aux organisations Google Workspace.
 
-### Caractéristiques techniques
+### Certifications
 
-| Spécification | Valeur |
-|---------------|--------|
-| Débit firewall | 2 Gbps |
-| Débit IPS | 1 Gbps |
-| Sessions simultanées | 500 000 |
-| Interfaces | 8× GbE, 2× SFP |
-| Format | Rack 1U |
+- **FIDO2 Level 1** certifié
+- **FIPS 140-2** certifié (exigence fédérale US)
+- Puce sécurisée Google avec firmware immuable
 
-### Fonctionnalités sécurité
+### Protocoles
 
-- Inspection deep packet (DPI)
-- IPS avec signatures mises à jour quotidiennement
-- Filtrage URL et applicatif
-- VPN IPsec & SSL (250 tunnels simultanés)
-- Sandboxing intégré
-
-### Inclus
-
-- Boîtier matériel + alimentation redondante
-- Licence de mise à jour 1 an
-- Support technique 8h/18h en français`,
-        prix: 2490,
-        stock: 25,
-        stock_illimite: 'non',
-        images: [IMAGES.firewall, IMAGES.rack, IMAGES.cables],
-        tags: ['firewall', 'pare-feu', 'réseau', 'ngfw', 'pme'],
+FIDO2/WebAuthn, U2F. Port USB-C avec adaptateur USB-A inclus.`,
+        prix: 35,
+        stock: 150,
+        images: [IMAGES.usb, IMAGES.saas],
+        tags: ['google', 'titan', 'fido2', 'fips', 'usb-c', 'workspace'],
     },
     {
-        nom: 'Firewall NextGen Cyna FW-500',
-        categorie: ProductCategory.SERVICE,
-        description_courte: "Pare-feu d'entreprise haute performance, débit 10 Gbps.",
-        description_longue: `## Performance et sécurité pour grandes organisations
+        nom: 'Nitrokey HSM 2',
+        categorie: 'produit-physique',
+        description_courte: 'Nitrokey HSM 2 : module de sécurité matériel open-source pour clés cryptographiques critiques.',
+        description_longue: `## Nitrokey HSM 2 — HSM open-source
 
-Le **Cyna FW-500** offre une performance de **10 Gbps** en inspection complète, adapté aux entreprises de plus de 500 collaborateurs et aux datacenters.
+Hardware Security Module de poche, basé sur du hardware et firmware open-source.
+
+### Cas d'usage
+
+- **PKI interne** : autorité de certification racine stockée hors ligne
+- **Signature de code** : clés de signature immuables pour CI/CD
+- **Chiffrement secrets** : clés maîtres pour HashiCorp Vault
+- **SSH certificates** : clés SSH physiquement protégées
 
 ### Spécifications
 
-- 10 Gbps en inspection IPS active
-- 2 millions de sessions simultanées
-- 16 interfaces 10 GbE SFP+
-- HA (High Availability) actif/passif natif
-- Format rack 2U avec alimentation redondante
-
-### Fonctionnalités avancées
-
-- **Cyber AI Engine** : détection comportementale par IA
-- **Microsegmentation** Est-Ouest
-- **SD-WAN** intégré (jusqu'à 50 sites)
-- **Zero Trust Network Access** (ZTNA)`,
-        prix: 8990,
-        stock: 12,
-        stock_illimite: 'non',
-        images: [IMAGES.firewall, IMAGES.rack, IMAGES.server],
-        tags: ['firewall', 'enterprise', '10gbps', 'ztna', 'sd-wan'],
-    },
-    {
-        nom: 'Switch Manageable 24 ports PoE+',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Switch L2+ 24 ports gigabit avec PoE+ 370W.',
-        description_longue: `## Connectivité sécurisée pour bureaux et caméras
-
-Switch managé **24 ports gigabit PoE+** avec budget total de 370W, idéal pour alimenter téléphones IP, points d'accès Wi-Fi et caméras de surveillance.
-
-### Sécurité
-
-- 802.1X (authentification par port)
-- DHCP snooping et ARP inspection
-- Storm control et port security
-- VLAN privés et tagged
-
-### Gestion
-
-Interface web, CLI, SNMP v2/v3, syslog, RADIUS/TACACS+.`,
-        prix: 690,
-        stock: 45,
-        stock_illimite: 'non',
-        images: [IMAGES.ethernet, IMAGES.network],
-        tags: ['switch', 'poe', 'réseau', 'managé'],
-    },
-    {
-        nom: 'Point d\'accès Wi-Fi 6 Enterprise',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Borne Wi-Fi 6 (802.11ax) tri-bande 5400 Mbps.',
-        description_longue: `## Wi-Fi haute densité pour environnements professionnels
-
-Point d'accès **Wi-Fi 6** tri-bande compatible jusqu'à **300 utilisateurs simultanés**.
-
-### Performance
-
-- Tri-bande 2,4 GHz + 5 GHz + 5 GHz
-- Débit cumulé jusqu'à 5400 Mbps
-- MU-MIMO 4×4, OFDMA, BSS Coloring
-- WPA3-Enterprise
-
-### Sécurité
-
-- Détection d'intrusions sans fil (WIDS)
-- Captive portal avec authentification AD/LDAP
-- Isolation des clients invités`,
-        prix: 420,
-        stock: 80,
-        stock_illimite: 'non',
-        images: [IMAGES.network, IMAGES.router],
-        tags: ['wifi', 'wifi6', 'access-point', 'wpa3'],
-    },
-    {
-        nom: 'Boîtier HSM USB pour signature électronique',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Module de sécurité matériel certifié FIPS 140-2 niveau 3.',
-        description_longue: `## La sécurité de vos clés privées
-
-**Hardware Security Module** USB certifié **FIPS 140-2 niveau 3** pour le stockage et l'utilisation de clés cryptographiques sensibles.
-
-### Cas d'usage
-
-- Signature électronique qualifiée (eIDAS)
-- Stockage de certificats CA
-- Génération sécurisée de clés
-- Opérations cryptographiques (RSA 4096, ECC P-521)
-
-### Inclus
-
-- HSM USB
-- Logiciel d'administration Windows/Linux
-- 2 cartes administrateur
-- Documentation de déploiement`,
-        prix: 1490,
-        stock: 15,
-        stock_illimite: 'non',
-        images: [IMAGES.usb, IMAGES.encryption],
-        tags: ['hsm', 'fips', 'signature', 'eidas', 'crypto'],
-    },
-    {
-        nom: 'Coffre-fort numérique offline (Air-Gap)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Stockage isolé pour secrets critiques (clés racine, mots de passe maître).',
-        description_longue: `## Le dernier rempart pour vos secrets les plus sensibles
-
-Boîtier physique dédié au stockage **air-gap** (totalement déconnecté du réseau) de vos secrets les plus critiques.
-
-### Inclus
-
-- Boîtier sécurisé avec écran tactile
-- Saisie via clavier dédié (anti-keylogger)
-- Chiffrement AES-256 + Argon2
-- Slot pour carte microSD chiffrée
-- Batterie autonome 8h
-
-### Idéal pour
-
-- Clés de chiffrement maître
-- Seed wallets crypto
-- Mots de passe de comptes break-glass
-- Codes de récupération`,
-        prix: 890,
-        stock: 30,
-        stock_illimite: 'non',
-        images: [IMAGES.encryption, IMAGES.cyber7],
-        tags: ['air-gap', 'offline', 'coffre', 'secrets'],
-    },
-    {
-        nom: 'Caméra IP de surveillance 4K avec analyse IA',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Caméra extérieure 4K avec détection intelligente et stockage chiffré.',
-        description_longue: `## Vidéosurveillance intelligente et conforme RGPD
-
-Caméra IP **4K Ultra HD** avec analyse vidéo intelligente embarquée et chiffrement de bout en bout des flux.
-
-### Fonctionnalités
-
-- Capteur 4K Sony Starvis (vision nocturne couleur)
-- Détection humaine, véhicule, intrusion par IA
-- Anti-vandale IK10, étanche IP67
-- Chiffrement AES-256 du flux
-- Conformité RGPD (anonymisation faciale optionnelle)
-
-### Connectivité
-
-PoE+ ou Wi-Fi 5, ONVIF Profile S/T/G.`,
-        prix: 380,
-        stock: 100,
-        stock_illimite: 'non',
-        images: [IMAGES.cyber3, IMAGES.network],
-        tags: ['caméra', 'vidéosurveillance', '4k', 'rgpd', 'ia'],
-    },
-
-    /* ============= LICENCES LOGICIELLES (10) ============= */
-    {
-        nom: 'Antivirus Cyna AV - 1 poste / 1 an',
-        categorie: ProductCategory.EDR,
-        description_courte: 'Licence antivirus next-gen pour poste Windows/Mac/Linux.',
-        description_longue: `## Protection essentielle pour vos postes
-
-Licence **antivirus next-gen** valable 1 an pour 1 poste de travail.
-
-### Protection
-
-- Antivirus signatures + heuristique
-- Anti-ransomware avec sauvegarde
-- Pare-feu personnel
-- Protection web (anti-phishing)
-- Contrôle USB
-
-### Compatibilité
-
-Windows 10/11, macOS 12+, Linux Ubuntu/Debian/RHEL.`,
-        prix: 39,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber8, IMAGES.laptop],
-        tags: ['antivirus', 'licence', '1-poste', 'edr'],
-    },
-    {
-        nom: 'Antivirus Cyna AV - Pack 10 postes / 1 an',
-        categorie: ProductCategory.EDR,
-        description_courte: 'Pack de 10 licences antivirus pour PME.',
-        description_longue: `## Protégez votre PME en un achat
-
-Pack de **10 licences** antivirus avec console d'administration cloud incluse.
-
-### Avantages
-
-- Console centralisée pour gérer les 10 postes
-- Reporting hebdomadaire automatique
-- Déploiement par GPO ou MDM
-- Économie de 25% par rapport à l'achat unitaire`,
-        prix: 290,
-        stock: 500,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber8, IMAGES.workspace],
-        tags: ['antivirus', 'pack', 'pme', 'console'],
-    },
-    {
-        nom: 'Cyna Password Manager - Licence 1 an',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Gestionnaire de mots de passe chiffré E2E pour 1 utilisateur.',
-        description_longue: `## Vos mots de passe en sécurité
-
-Gestionnaire de mots de passe avec chiffrement **end-to-end AES-256** et architecture **zero-knowledge** : nous ne pouvons pas voir vos données.
-
-### Fonctionnalités
-
-- Coffre illimité (mots de passe, notes, cartes, identifiants)
-- Synchronisation multi-appareils (Win/Mac/Linux/iOS/Android)
-- Partage sécurisé entre utilisateurs
-- Générateur de mots de passe (jusqu'à 128 caractères)
-- Audit de sécurité (mots de passe faibles, dupliqués, compromis)
-- Détection de fuites (HIBP intégré)
-
-### Inclus
-
-- Extensions navigateur (Chrome, Firefox, Edge, Safari)
-- Application desktop et mobile
-- Support email`,
-        prix: 49,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.password, IMAGES.cyber7],
-        tags: ['password-manager', 'coffre', 'e2e', 'zero-knowledge'],
-    },
-    {
-        nom: 'Cyna Password Manager - Équipe (10 utilisateurs)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Gestionnaire de mots de passe pour équipes avec coffres partagés.',
-        description_longue: `## Le password manager pensé pour les équipes
-
-Édition équipe pour **10 utilisateurs** avec coffres partagés, gestion granulaire des permissions et audit complet.
-
-### Fonctionnalités équipe
-
-- Coffres partagés par équipe / projet / client
-- Permissions par dossier (lecture, écriture, partage)
-- Provisionnement SCIM (Azure AD, Okta, Google Workspace)
-- SSO SAML 2.0
-- Logs d'audit exportables (SIEM-ready)
-- Récupération d'accès en cas de départ employé
-
-### Console d'administration
-
-Vue d'ensemble en temps réel, alertes de sécurité, rapports de conformité.`,
-        prix: 390,
-        stock: 200,
-        stock_illimite: 'oui',
-        images: [IMAGES.password, IMAGES.workspace],
-        tags: ['password-manager', 'équipe', 'sso', 'scim'],
-    },
-    {
-        nom: 'VPN Cyna Private Access - 1 an',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'VPN entreprise avec ZTNA et split-tunneling.',
-        description_longue: `## Accès distant sécurisé moderne
-
-VPN d'entreprise basé sur **WireGuard** avec contrôles **Zero Trust** et orchestration cloud.
-
-### Caractéristiques
-
-- Protocole WireGuard (chiffrement ChaCha20-Poly1305)
-- Authentification MFA obligatoire
-- Split-tunneling configurable par groupe
-- Kill-switch automatique
-- Présence dans 60 pays
-
-### Cas d'usage
-
-- Télétravail sécurisé
-- Accès aux ressources internes (intranet, fichiers, ERP)
-- Contournement de censure géographique pour la veille`,
-        prix: 79,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.vpn, IMAGES.cloud],
-        tags: ['vpn', 'wireguard', 'ztna', 'télétravail'],
-    },
-    {
-        nom: 'Suite chiffrement disque BitLocker Pro',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Gestion centralisée du chiffrement BitLocker avec récupération.',
-        description_longue: `## Gérez le chiffrement de tous vos postes
-
-Console centralisée pour déployer, surveiller et récupérer les clés **BitLocker** sur l'ensemble de votre parc.
-
-### Fonctionnalités
-
-- Déploiement automatisé via GPO/Intune
-- Stockage sécurisé des clés de récupération
-- Conformité RGPD/HDS (vol/perte de portable)
-- Reporting d'état du chiffrement par poste
-- Rotation automatique des clés de récupération
-
-### Tarification
-
-Licence valable pour 1 poste pendant 1 an.`,
-        prix: 19,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.encryption, IMAGES.laptop],
-        tags: ['chiffrement', 'bitlocker', 'rgpd', 'hds'],
-    },
-    {
-        nom: 'Cyna Email Security - 1 boîte / 1 an',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Anti-phishing, anti-spam et anti-malware pour Microsoft 365.',
-        description_longue: `## Une couche de sécurité supplémentaire pour vos emails
-
-Service **anti-phishing avancé** qui s'intègre nativement à Microsoft 365 et Google Workspace pour bloquer les attaques avant qu'elles n'atteignent vos utilisateurs.
-
-### Protection
-
-- Sandbox d'analyse des pièces jointes
-- Réécriture des URLs (analyse à chaque clic)
-- Détection BEC (Business Email Compromise) par IA
-- Anti-spoofing (DMARC, DKIM, SPF)
-- Quarantaine utilisateur en self-service
-
-### Métriques
-
-Bloque **99,9%** des phishing connus et **97%** des phishing zero-day grâce à notre IA.`,
-        prix: 24,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber8, IMAGES.workspace],
-        tags: ['email', 'anti-phishing', 'microsoft365', 'bec'],
-    },
-    {
-        nom: 'Backup Cloud Chiffré - 100 Go / 1 an',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Sauvegarde cloud chiffrée E2E avec versioning illimité.',
-        description_longue: `## Sauvegardez sereinement, restaurez rapidement
-
-**100 Go de stockage cloud chiffré end-to-end** avec versioning illimité et conservation 90 jours.
-
-### Garanties
-
-- Chiffrement AES-256 côté client (zero-knowledge)
-- Réplication 3 datacenters européens (souveraineté)
-- Conformité RGPD, HDS, ISO 27001
-- Restauration granulaire (fichier, dossier, version)
-- Anti-ransomware (immuabilité 30 jours)
-
-### Compatibilité
-
-Agents Windows/Mac/Linux + connecteurs Microsoft 365, Google Workspace, Dropbox, NAS Synology/QNAP.`,
+- RSA jusqu'à 4096 bits, ECC (P-256, P-384)
+- Interface PKCS#11 standard — open-source sur GitHub`,
         prix: 89,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.backup, IMAGES.cloud],
-        tags: ['backup', 'cloud', 'rgpd', 'anti-ransomware'],
-    },
-    {
-        nom: 'SIEM Cyna - Édition Starter (5 sources)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'SIEM cloud pour PME avec 5 sources de logs.',
-        description_longue: `## La détection à la portée des PME
-
-**SIEM cloud-native** pré-configuré, idéal pour les PME qui veulent centraliser leurs logs et détecter les incidents sans expertise interne.
-
-### Inclus
-
-- Collecte de **5 sources** (firewall, AD, M365, EDR, applicatif)
-- 30 jours de rétention chaude, 1 an froide
-- 200 règles de détection prêtes à l'emploi
-- Alerting email + Slack + Teams
-- Dashboards customisables
-- API REST pour intégrations
-
-### Évolutif
-
-Ajoutez des sources et de la rétention selon vos besoins.`,
-        prix: 590,
-        stock: 100,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber10, IMAGES.saas],
-        tags: ['siem', 'logs', 'pme', 'cloud'],
-    },
-    {
-        nom: 'WAF Cyna - 1 application web',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Web Application Firewall managé pour 1 site web.',
-        description_longue: `## Protection des applications web
-
-**Web Application Firewall** managé qui s'interpose devant votre site pour bloquer les attaques **OWASP Top 10** et les bots malveillants.
-
-### Inclus
-
-- Protection contre XSS, SQLi, RCE, LFI, etc.
-- Bot management (CAPTCHA dynamique, fingerprinting)
-- Rate limiting et anti-DDoS L7
-- CDN intégré pour la performance
-- Certificat SSL/TLS managé (Let's Encrypt)
-- Logs détaillés et exportables
-
-### Idéal pour
-
-Sites WordPress, Drupal, Magento, Symfony, applications SPA, APIs REST/GraphQL.`,
-        prix: 190,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber6, IMAGES.cloud],
-        tags: ['waf', 'owasp', 'ddos', 'bot'],
-    },
-
-    /* ============= AUDITS & CONFORMITÉ (8) ============= */
-    {
-        nom: 'Audit RGPD Express',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Diagnostic RGPD en 5 jours avec plan d\'action priorisé.',
-        description_longue: `## Mettez-vous en conformité rapidement
-
-Audit **RGPD express** de votre organisation avec rapport détaillé et plan d'action priorisé en **5 jours ouvrés**.
-
-### Ce que nous auditons
-
-- Cartographie des traitements (registre)
-- Bases légales et consentements
-- Information des personnes (mentions, politique vie privée)
-- Sécurité technique et organisationnelle
-- Sous-traitants et transferts hors UE
-- Droits des personnes (accès, effacement, portabilité)
-
-### Livrables
-
-- Rapport d'audit détaillé (50+ pages)
-- Plan d'action priorisé (quick wins, court terme, long terme)
-- Modèles de documents (registre, mentions, contrats DPA)
-- Restitution orale (2h)`,
-        prix: 4900,
-        stock: 20,
-        stock_illimite: 'non',
-        images: [IMAGES.audit, IMAGES.compliance],
-        tags: ['rgpd', 'audit', 'conformité', 'gdpr'],
-    },
-    {
-        nom: 'Audit RGPD Approfondi',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Audit RGPD complet sur 4 semaines avec accompagnement.',
-        description_longue: `## Une mise en conformité durable
-
-Audit RGPD **approfondi** sur **4 semaines** incluant entretiens, analyse documentaire, tests techniques et accompagnement à la mise en conformité.
-
-### Périmètre
-
-- Audit de l'ensemble des traitements (jusqu'à 50)
-- Analyses d'impact (PIA) pour les traitements à risque
-- Audit de sécurité technique (pentests légers)
-- Revue contractuelle (sous-traitants, clients, partenaires)
-- Plan de réponse aux violations de données
-
-### Livrables additionnels
-
-- DPIA pour 3 traitements
-- Procédures internes (gestion des droits, notifications CNIL)
-- Charte informatique mise à jour
-- Formation DPO (1 jour)`,
-        prix: 14900,
-        stock: 10,
-        stock_illimite: 'non',
-        images: [IMAGES.audit, IMAGES.compliance, IMAGES.report],
-        tags: ['rgpd', 'audit-approfondi', 'pia', 'dpo'],
-    },
-    {
-        nom: 'Audit ISO 27001 Pré-certification',
-        categorie: ProductCategory.SERVICE,
-        description_courte: "Préparation à la certification ISO 27001 (gap analysis).",
-        description_longue: `## Préparez votre certification sereinement
-
-**Gap analysis** complet par rapport aux exigences ISO/IEC 27001:2022 avec plan de mise en conformité.
-
-### Méthodologie
-
-1. Workshop de cadrage (périmètre SMSI)
-2. Revue documentaire et entretiens (10 jours)
-3. Évaluation des 93 mesures de l'Annexe A
-4. Plan d'action priorisé
-5. Restitution
-
-### Livrables
-
-- Rapport de gap analysis détaillé
-- Matrice de conformité Annexe A
-- Plan de mise en conformité chiffré
-- Recommandations sur les 14 domaines de la norme`,
-        prix: 19900,
-        stock: 8,
-        stock_illimite: 'non',
-        images: [IMAGES.audit, IMAGES.report],
-        tags: ['iso27001', 'certification', 'smsi', 'gap-analysis'],
-    },
-    {
-        nom: 'Test d\'intrusion externe (Black Box)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Pentest externe de votre périmètre exposé sur Internet.',
-        description_longue: `## Identifiez vos failles avant les attaquants
-
-**Test d'intrusion en boîte noire** de votre périmètre exposé sur Internet, mené par nos pentesteurs certifiés OSCP/CEH.
-
-### Méthodologie
-
-1. **Reconnaissance** : OSINT, énumération de surface d'attaque
-2. **Scan** : ports, services, technologies
-3. **Énumération** : utilisateurs, vhosts, sous-domaines
-4. **Exploitation** : tentatives d'intrusion sur les vulnérabilités identifiées
-5. **Post-exploitation** : pivoting si autorisé
-
-### Livrables
-
-- Rapport exécutif (3 pages)
-- Rapport technique détaillé (50+ pages)
-- Preuves de concept (PoC) pour chaque vulnérabilité
-- Plan de remédiation priorisé (CVSS)
-- Restitution orale (1h)
-- **Re-test gratuit** après remédiation (sous 90 jours)
-
-### Périmètre
-
-Jusqu'à **20 IPs/domaines**.`,
-        prix: 7900,
-        stock: 30,
-        stock_illimite: 'non',
-        images: [IMAGES.cyber5, IMAGES.cyber9],
-        tags: ['pentest', 'intrusion', 'oscp', 'externe'],
-    },
-    {
-        nom: 'Test d\'intrusion interne (Grey Box)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Pentest interne en simulation d\'employé malveillant ou compromis.',
-        description_longue: `## Évaluez votre résistance aux attaques internes
-
-Test d'intrusion **interne** simulant un employé malveillant ou un poste compromis, pour évaluer la propagation latérale possible.
-
-### Scénarios couverts
-
-- Compromission Active Directory (Kerberoasting, AS-REP, GoldenTicket)
-- Élévation de privilèges
-- Mouvements latéraux (Pass-the-Hash, RDP, WinRM)
-- Exfiltration de données
-- Persistance
-
-### Inclus
-
-- 5 jours d'audit on-site ou via VPN
-- Rapport et plan de remédiation
-- Restitution avec démonstration des chemins d'attaque
-- Re-test gratuit sous 90 jours`,
-        prix: 9900,
-        stock: 25,
-        stock_illimite: 'non',
-        images: [IMAGES.cyber5, IMAGES.cyber4],
-        tags: ['pentest', 'interne', 'active-directory', 'grey-box'],
-    },
-    {
-        nom: 'Audit de code source applicatif',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Revue de code orientée sécurité (SAST manuel).',
-        description_longue: `## La qualité de votre code, vue par des experts sécurité
-
-Audit manuel de votre code source par des experts en sécurité applicative, complétant les outils SAST automatisés.
-
-### Méthodologie
-
-- Analyse OWASP ASVS niveau 2 ou 3
-- Revue ciblée des fonctions critiques (auth, crypto, paiement)
-- Détection des vulnérabilités logiques (race conditions, IDOR)
-- Vérification des dépendances (SCA)
-
-### Langages couverts
-
-JavaScript/TypeScript, Python, Go, Java, C#, PHP, Ruby, Rust.
-
-### Tarif
-
-Forfait jusqu'à **10 000 lignes de code**. Au-delà, devis sur mesure.`,
-        prix: 6900,
-        stock: 20,
-        stock_illimite: 'non',
-        images: [IMAGES.cyber2, IMAGES.cyber8],
-        tags: ['audit-code', 'sast', 'owasp', 'asvs'],
-    },
-    {
-        nom: 'Audit Cloud AWS / Azure / GCP',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Audit de configuration et sécurité de votre cloud.',
-        description_longue: `## Vérifiez la sécurité de votre cloud
-
-Audit complet de votre environnement cloud avec recommandations basées sur les **CIS Benchmarks** et les bonnes pratiques de l'éditeur (AWS Well-Architected, Azure CAF, Google CRE).
-
-### Vérifications
-
-- IAM et gestion des identités
-- Configuration réseau (VPC, NSG, firewalls)
-- Chiffrement (at-rest, in-transit, KMS)
-- Logging et monitoring
-- Backup et plan de reprise
-- Coûts et quotas
-
-### Livrables
-
-- Rapport d'audit avec score CIS
-- Plan de remédiation priorisé
-- Scripts/IaC de remédiation pour les quick wins`,
-        prix: 5900,
-        stock: 30,
-        stock_illimite: 'non',
-        images: [IMAGES.cloud, IMAGES.audit],
-        tags: ['audit', 'cloud', 'aws', 'azure', 'gcp', 'cis'],
-    },
-    {
-        nom: 'Analyse forensique post-incident',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Investigation forensique après compromission ou suspicion.',
-        description_longue: `## Comprendre ce qui s'est passé pour ne pas le revivre
-
-Investigation forensique complète après un incident de sécurité ou une suspicion de compromission.
-
-### Méthodologie
-
-1. **Acquisition** : copie disque/mémoire selon les règles de l'art
-2. **Analyse** : timeline, IOCs, persistance, exfiltration
-3. **Reconstruction** : chemin d'attaque, périmètre touché
-4. **Reporting** : rapport recevable juridiquement
-
-### Inclus
-
-- Intervention sous 24h ouvrées
-- Jusqu'à 5 machines analysées
-- Rapport forensique détaillé
-- Lettre de notification CNIL (si données personnelles)
-- Recommandations de remédiation
-
-### Mode urgence
-
-Disponible en mode **war room** 7j/7 pour les incidents critiques (devis spécifique).`,
-        prix: 8900,
-        stock: 15,
-        stock_illimite: 'non',
-        images: [IMAGES.forensics, IMAGES.incident],
-        tags: ['forensique', 'incident', 'investigation', 'dfir'],
-    },
-
-    /* ============= FORMATIONS (8) ============= */
-    {
-        nom: 'Formation Sensibilisation Cybersécurité (e-learning)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Module e-learning de 2h pour sensibiliser tous vos collaborateurs.',
-        description_longue: `## Vos employés, premiers maillons de la sécurité
-
-Module **e-learning** interactif de **2 heures** pour former l'ensemble de vos collaborateurs aux bonnes pratiques de cybersécurité.
-
-### Programme
-
-1. Les menaces cyber actuelles (10 min)
-2. Reconnaître un email de phishing (20 min)
-3. Mots de passe et authentification (20 min)
-4. Mobilité et télétravail sécurisés (20 min)
-5. Données personnelles et RGPD (20 min)
-6. Que faire en cas d'incident ? (15 min)
-7. Quiz final + attestation (15 min)
-
-### Modalités
-
-- Plateforme SCORM compatible avec votre LMS
-- Accessible 24/7 pendant 1 an
-- Multi-langue : FR, EN, ES, DE
-- Reporting de complétion
-
-### Tarification
-
-Forfait par utilisateur, valide 1 an.`,
-        prix: 25,
-        stock: 1000,
-        stock_illimite: 'oui',
-        images: [IMAGES.elearning, IMAGES.training],
-        tags: ['formation', 'sensibilisation', 'e-learning', 'phishing'],
-    },
-    {
-        nom: 'Campagne de phishing simulé',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Simulation de phishing personnalisée avec rapport et formation.',
-        description_longue: `## Mesurez la vigilance de vos équipes
-
-**Campagne de phishing simulé** réaliste pour évaluer la maturité de vos collaborateurs et les former en condition réelle.
-
-### Inclus
-
-- Workshop de cadrage (scénarios, périmètre)
-- Création de templates personnalisés
-- Envoi à jusqu'à **500 destinataires**
-- Page de "leçon" affichée aux victimes (formation flash)
-- Rapport détaillé (taux d'ouverture, clics, soumissions de credentials)
-- Restitution orale + recommandations
-
-### Bonnes pratiques
-
-> Nous recommandons de réaliser **3 à 4 campagnes par an** avec des scénarios variés pour mesurer l'évolution.`,
-        prix: 1990,
-        stock: 100,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber5, IMAGES.cyber8],
-        tags: ['phishing', 'simulation', 'sensibilisation', 'campagne'],
-    },
-    {
-        nom: 'Formation Pentest Web - 5 jours',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Formation intensive aux tests d\'intrusion web (OWASP Top 10).',
-        description_longue: `## Devenez pentester web
-
-Formation intensive de **5 jours** pour maîtriser les tests d'intrusion d'applications web, basée sur l'OWASP Top 10 et les méthodologies PTES.
-
-### Programme jour par jour
-
-- **J1** : Reconnaissance, fingerprinting, énumération
-- **J2** : Injection (SQL, NoSQL, Command, LDAP)
-- **J3** : XSS, CSRF, SSRF, désérialisation
-- **J4** : Authentification, sessions, IDOR, contrôle d'accès
-- **J5** : SSL/TLS, API REST/GraphQL, projet pratique noté
-
-### Modalités
-
-- Inter-entreprise ou intra
-- 6 à 10 stagiaires
-- Lab dédié pour chaque participant
-- Attestation + certificat de réussite
-
-### Prérequis
-
-Connaissances réseau (TCP/IP), HTTP, bases en programmation (Python recommandé).`,
-        prix: 3490,
-        stock: 50,
-        stock_illimite: 'oui',
-        images: [IMAGES.training, IMAGES.cyber9],
-        tags: ['formation', 'pentest', 'web', 'owasp', '5-jours'],
-    },
-    {
-        nom: 'Formation SOC Analyst Niveau 1 - 5 jours',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Devenez analyste SOC niveau 1 en 5 jours.',
-        description_longue: `## Lancez votre carrière en cybersécurité
-
-Formation pratique pour devenir **analyste SOC niveau 1**, basée sur les outils du marché (Splunk, Wazuh, MITRE ATT&CK).
-
-### Compétences acquises
-
-- Lecture et corrélation de logs
-- Triage et qualification d'alertes
-- Investigation initiale (timeline, IOCs)
-- Utilisation d'un SIEM
-- Communication avec le N2 et l'IT
-
-### Méthode pédagogique
-
-- 30% théorie, 70% pratique sur SOC simulé
-- Études de cas réels anonymisés
-- Évaluation finale en condition (4h)
-
-### Débouchés
-
-Junior SOC analyst, IT support sécurité, MSSP analyst.`,
-        prix: 2990,
-        stock: 50,
-        stock_illimite: 'oui',
-        images: [IMAGES.soc, IMAGES.cyber10],
-        tags: ['formation', 'soc', 'analyste', 'siem', 'mitre'],
-    },
-    {
-        nom: 'Formation Réponse à Incident - 3 jours',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Maîtrisez la gestion d\'incident de sécurité.',
-        description_longue: `## Préparez vos équipes à l'inévitable
-
-Formation de **3 jours** pour structurer et entraîner votre cellule de crise cyber.
-
-### Programme
-
-- **J1** : Méthodologies (NIST, SANS), CSIRT, organisation
-- **J2** : Outils techniques (forensique, EDR, IOC), ateliers pratiques
-- **J3** : Exercice de crise grandeur nature (simulation 4h)
-
-### Public cible
-
-- RSSI et équipes sécurité
-- Responsables IT
-- Membres de cellule de crise
-
-### Inclus
-
-- Kit de procédures de réponse à incident (template)
-- Plan de communication de crise (template)
-- Carnet de bord d'incident (Excel + Notion)`,
-        prix: 2490,
-        stock: 50,
-        stock_illimite: 'oui',
-        images: [IMAGES.incident, IMAGES.training],
-        tags: ['formation', 'csirt', 'incident', 'crise', 'nist'],
-    },
-    {
-        nom: 'Formation RSSI - 5 jours',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Maîtrisez le rôle de RSSI dans une organisation.',
-        description_longue: `## Prenez les commandes de la sécurité
-
-Formation pour **futurs RSSI** ou RSSI récemment nommés, couvrant la gouvernance, le management des risques, la conformité et les aspects techniques essentiels.
-
-### Programme
-
-- **J1** : Gouvernance, ISO 27001, NIST CSF, gestion des risques
-- **J2** : Architecture sécurité, défense en profondeur, Zero Trust
-- **J3** : Conformité (RGPD, NIS2, DORA), audits
-- **J4** : Management d'équipe, budget, indicateurs (KRI/KPI)
-- **J5** : Gestion de crise, communication exécutive, board reporting
-
-### Inclus
-
-- Tableau de bord RSSI (template Excel)
-- Modèles de politiques (PSSI, charte, procédures)
-- Accès à notre communauté de RSSI (1 an)`,
-        prix: 4490,
-        stock: 30,
-        stock_illimite: 'oui',
-        images: [IMAGES.training, IMAGES.compliance],
-        tags: ['formation', 'rssi', 'gouvernance', 'iso27001', 'nis2'],
-    },
-    {
-        nom: 'Workshop Sécurité Développeurs - 1 jour',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Atelier d\'1 jour pour former vos devs au DevSecOps.',
-        description_longue: `## Sécurité by design
-
-Workshop d'**1 journée** pour sensibiliser et former vos développeurs aux bonnes pratiques de **développement sécurisé**.
-
-### Programme
-
-**Matin (théorie + démos)**
-
-- OWASP Top 10 expliqué avec exemples concrets
-- Gestion des secrets (Vault, sealed-secrets)
-- Dépendances et SCA
-- SAST, DAST, IAST : que choisir ?
-
-**Après-midi (pratique)**
-
-- Code review d'un projet vulnérable (lab)
-- Mise en place d'un pipeline CI/CD sécurisé (GitHub Actions ou GitLab CI)
-- Intégration d'outils gratuits (Trivy, Semgrep, OWASP Dependency-Check)
-
-### Pour qui
-
-Développeurs, lead techs, DevOps. Jusqu'à **15 participants**.`,
-        prix: 1990,
-        stock: 100,
-        stock_illimite: 'oui',
-        images: [IMAGES.cyber2, IMAGES.workspace],
-        tags: ['formation', 'devsecops', 'développeurs', 'owasp'],
-    },
-    {
-        nom: 'Coaching individuel cybersécurité - 10h',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Coaching personnalisé avec un expert (10h sur 3 mois).',
-        description_longue: `## Un mentor pour accélérer votre montée en compétence
-
-**10 heures** de coaching individuel avec un expert cyber senior, réparties sur 3 mois selon votre rythme.
-
-### Sujets possibles
-
-- Préparation à une certification (CISSP, OSCP, CEH, CISM)
-- Reconversion professionnelle vers la cyber
-- Spécialisation (pentest, SOC, GRC, cloud security)
-- Préparation à un poste de RSSI
-
-### Modalités
-
-- 10 sessions de 1h en visio
-- Plan de coaching personnalisé
-- Ressources sélectionnées (livres, labs, MOOCs)
-- Disponibilité asynchrone par messagerie`,
-        prix: 1490,
-        stock: 100,
-        stock_illimite: 'oui',
-        images: [IMAGES.elearning, IMAGES.workspace],
-        tags: ['coaching', 'mentorat', 'certification', 'reconversion'],
-    },
-
-    /* ============= SERVICES PROFESSIONNELS (4) ============= */
-    {
-        nom: 'Setup et déploiement Microsoft 365 sécurisé',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Déploiement M365 avec hardening complet (Entra, Defender, Purview).',
-        description_longue: `## Microsoft 365, déployé comme il se doit
-
-Prestation de **mise en place et hardening** de votre tenant Microsoft 365 selon les bonnes pratiques **CIS Benchmark**.
-
-### Inclus
-
-- Configuration Entra ID (anciennement Azure AD)
-- MFA pour tous les utilisateurs
-- Conditional Access policies
-- Defender for Office 365 (anti-phishing)
-- Defender for Endpoint (EDR)
-- Purview (DLP, étiquettes de sensibilité)
-- Intune (MDM/MAM)
-- Backup tiers (3-2-1)
-
-### Tarif
-
-Forfait pour tenant jusqu'à **100 utilisateurs**. Au-delà : devis.`,
-        prix: 5900,
-        stock: 30,
-        stock_illimite: 'non',
-        images: [IMAGES.cloud, IMAGES.workspace],
-        tags: ['microsoft365', 'entra', 'defender', 'hardening'],
-    },
-    {
-        nom: 'Mise en place plan de continuité d\'activité (PCA)',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Élaboration de votre PCA / PRA avec tests réels.',
-        description_longue: `## Préparez la continuité de votre activité
-
-Accompagnement pour élaborer votre **Plan de Continuité d'Activité (PCA)** et **Plan de Reprise d'Activité (PRA)**, avec exercices de test.
-
-### Méthodologie
-
-1. **BIA** (Business Impact Analysis) : identification des processus critiques
-2. **Analyse de risques** : scénarios redoutés (sinistre, cyberattaque)
-3. **Stratégies** de continuité (RPO/RTO par activité)
-4. **Documentation** : PCA, PRA, fiches réflexes
-5. **Tests** : exercice grandeur nature avec votre équipe
-
-### Livrables
-
-- Plan PCA/PRA documenté
-- Fiches réflexes par cellule
-- Annuaire de crise
-- Compte-rendu de l'exercice de test`,
-        prix: 12900,
-        stock: 15,
-        stock_illimite: 'non',
-        images: [IMAGES.compliance, IMAGES.audit],
-        tags: ['pca', 'pra', 'continuité', 'business', 'crise'],
-    },
-    {
-        nom: 'Cellule DPO externalisée - 1 an',
-        categorie: ProductCategory.SERVICE,
-        description_courte: 'Délégué à la Protection des Données externalisé certifié.',
-        description_longue: `## Un DPO certifié à votre service
-
-Service de **DPO externalisé** assuré par un de nos juristes certifiés, pour répondre à votre obligation RGPD à coût maîtrisé.
-
-### Missions assurées
-
-- Tenue et mise à jour du registre des traitements
-- Conseil aux métiers sur les nouveaux traitements (DPIA)
-- Réponse aux demandes des personnes (droit d'accès, etc.)
-- Interface avec la CNIL
-- Veille juridique mensuelle
-- Audit annuel de conformité
-- Sensibilisation des équipes (2 sessions / an)
-
-### Inclus
-
-- Permanence email + téléphone (8h/18h)
-- Délai de réponse < 24h ouvrées
-- Reporting trimestriel à la direction
-- Adresse DPO dédiée (dpo@votresociete.com)`,
-        prix: 4900,
-        stock: 50,
-        stock_illimite: 'oui',
-        images: [IMAGES.compliance, IMAGES.audit],
-        tags: ['dpo', 'rgpd', 'externalisé', 'cnil'],
-    },
-    {
-        nom: 'Hotline cybersécurité - Forfait 20h',
-        categorie: ProductCategory.SERVICE,
-        description_courte: '20h de support expert à utiliser sur 1 an.',
-        description_longue: `## Une hotline d'experts à votre disposition
-
-Forfait de **20 heures** de support expert cybersécurité à consommer sur 12 mois.
-
-### Cas d'usage
-
-- Question technique pointue (configuration, alerte SIEM, IOC suspect)
-- Aide à l'investigation d'un incident mineur
-- Revue de configuration (firewall, AD, M365)
-- Conseil sur un projet (architecture, choix d'outils)
-- Préparation à un audit
-
-### Modalités
-
-- Tickets via portail ou email
-- Téléphone d'urgence (heures ouvrées)
-- Décompte au quart d'heure
-- Reporting mensuel d'utilisation`,
-        prix: 2900,
-        stock: 100,
-        stock_illimite: 'oui',
-        images: [IMAGES.workspace, IMAGES.cyber10],
-        tags: ['hotline', 'support', 'expert', 'forfait'],
+        stock: 80,
+        images: [IMAGES.usb, IMAGES.server],
+        tags: ['nitrokey', 'hsm', 'pkcs11', 'pki', 'open-source', 'cryptographie'],
     },
 ];
 
@@ -1386,15 +1162,8 @@ async function seed() {
     try {
         console.log('🌱 Starting Products & Services seed...');
 
-        const existing = await productRepository.count();
-        if (existing > 0) {
-            console.log(
-                `⚠️  ${existing} product(s) already exist in DB. Skipping seed to avoid duplicates.`,
-            );
-            console.log('   (Truncate the products table first if you want to re-seed.)');
-            await app.close();
-            return;
-        }
+        await productRepository.query('DELETE FROM products');
+        console.log('🗑️  Existing products cleared.');
 
         /* ---- 4 Services ---- */
         let createdServices = 0;
@@ -1426,38 +1195,52 @@ async function seed() {
             console.log(`✅ Service [${createdServices}/4]: ${svc.nom}`);
         }
 
-        /* ---- 40 Products ---- */
+        /* ---- 35 SaaS + 5 Physical Products ---- */
         let createdProducts = 0;
         for (const p of PRODUCTS) {
             const slug = slugify(p.nom);
+            const isSaas = 'saas' in p && p.saas;
             const product = productRepository.create({
                 id: uuidv4(),
                 nom: p.nom,
                 description_courte: p.description_courte,
                 description_longue: p.description_longue,
                 categorie: p.categorie,
-                type: ProductType.PRODUCT,
+                type: isSaas ? ProductType.SERVICE : ProductType.PRODUCT,
                 tags: p.tags,
                 statut: ProductStatus.PUBLISHED,
                 slug,
                 meta_title: p.nom.slice(0, 60),
                 meta_description: p.description_courte.slice(0, 160),
                 keywords: p.tags.join(', '),
-                prix: p.prix,
-                stock: p.stock,
-                stock_illimite: p.stock_illimite,
-                seuil_alerte_stock: p.stock_illimite === 'oui' ? null : Math.max(5, Math.floor(p.stock * 0.1)),
+                ...(isSaas
+                    ? {
+                        prix_mensuel: (p as SaasSeed).prix_mensuel,
+                        prix_annuel: (p as SaasSeed).prix_annuel,
+                        remise_annuelle_pct: (p as SaasSeed).remise_annuelle_pct,
+                        periodicite: ServicePeriodicity.MONTHLY,
+                        renouvellement_auto: true,
+                        demo_disponible: true,
+                    }
+                    : {
+                        prix: (p as PhysicalSeed).prix,
+                        stock: (p as PhysicalSeed).stock,
+                        seuil_alerte_stock: Math.max(5, Math.floor((p as PhysicalSeed).stock * 0.1)),
+                    }),
                 images: buildImages(p.images),
             });
             await productRepository.save(product);
             createdProducts++;
-            console.log(`✅ Product [${createdProducts}/40]: ${p.nom}`);
+            console.log(`✅ ${isSaas ? 'SaaS' : 'Physique'} [${createdProducts}]: ${p.nom}`);
         }
 
+        const saasCount = PRODUCTS.filter(p => 'saas' in p).length;
+        const physicalCount = PRODUCTS.filter(p => !('saas' in p)).length;
         console.log('');
         console.log('🎉 Seed completed successfully!');
-        console.log(`   - ${createdServices} services created`);
-        console.log(`   - ${createdProducts} products created`);
+        console.log(`   - ${createdServices} services vedettes created`);
+        console.log(`   - ${saasCount} abonnements SaaS created`);
+        console.log(`   - ${physicalCount} produits physiques created`);
     } catch (error) {
         console.error('❌ Error seeding products:', error);
         throw error;

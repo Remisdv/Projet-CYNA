@@ -1,9 +1,12 @@
-import { NestFactory } from '@nestjs/core';
+﻿import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../app.module';
-import { getRepository } from 'typeorm';
 import { DataSource } from 'typeorm';
 import { User, UserRole, UserStatus } from '../entity/User/User.entity';
 import * as crypto from 'crypto';
+
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password).digest('hex');
+}
 
 async function seed() {
   const app = await NestFactory.create(AppModule);
@@ -11,14 +14,10 @@ async function seed() {
   const userRepository = dataSource.getRepository(User);
 
   try {
-    console.log('Starting Users seed...');
+    console.log('Starting BO Users seed...');
 
-    const existingUsers = await userRepository.count();
-    if (existingUsers > 0) {
-      console.log('Users already exist. Skipping seed.');
-      await app.close();
-      return;
-    }
+    // Idempotent: truncate then reinsert
+    await userRepository.query('DELETE FROM "user"');
 
     const usersData = [
       {
@@ -29,8 +28,22 @@ async function seed() {
         status: UserStatus.ACTIVE,
       },
       {
-        email: 'user1@cyna.fr',
-        firstName: 'Jean',
+        email: 'lucas@cyna.fr',
+        firstName: 'Lucas',
+        lastName: 'Martin',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+      {
+        email: 'titouan@cyna.fr',
+        firstName: 'Titouan',
+        lastName: 'Bernard',
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      },
+      {
+        email: 'remi@cyna.fr',
+        firstName: 'Rémi',
         lastName: 'Dupont',
         role: UserRole.ADMIN,
         status: UserStatus.ACTIVE,
@@ -58,6 +71,8 @@ async function seed() {
       },
     ];
 
+    const passwordHash = hashPassword('Password123!');
+
     for (const userData of usersData) {
       const user = new User();
       user.email = userData.email;
@@ -65,17 +80,14 @@ async function seed() {
       user.lastName = userData.lastName;
       user.role = userData.role;
       user.status = userData.status;
-      // Hash a default password
-      const defaultPassword = 'TempPassword123!';
-      user.passwordHash = crypto.createHash('sha256').update(defaultPassword).digest('hex');
-
+      user.passwordHash = passwordHash;
       await userRepository.save(user);
-      console.log(`Created user: ${userData.email}`);
+      console.log(`Created BO user: ${userData.email}`);
     }
 
-    console.log('Users seed completed successfully!');
+    console.log('BO Users seed completed!');
   } catch (error) {
-    console.error('Error seeding users:', error);
+    console.error('Error seeding BO users:', error);
     throw error;
   } finally {
     await app.close();
