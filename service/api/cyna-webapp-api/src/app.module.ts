@@ -5,7 +5,6 @@ import { AppService } from './app.service';
 import { HealthModule } from './module/health.module';
 import { EmailModule } from './module/Email.module';
 import { StripeModule } from './module/Stripe.module';
-import { CarouselModule } from './module/Carousel.module';
 import { AdvertisementModule } from './module/Advertisement.module';
 import { WebappAuthModule } from './module/WebappAuth.module';
 import { AccountModule } from './module/Account.module';
@@ -16,7 +15,6 @@ import { SubscriptionModule } from './module/Subscription.module';
 import { ContactModule } from './module/Contact.module';
 import { CartModule } from './module/Cart.module';
 import { NotificationsModule } from './module/Notifications.module';
-import { AdminUsersModule } from './module/AdminUsers.module';
 import { CommonModule } from './common/common.module';
 
 @Module({
@@ -31,7 +29,6 @@ import { CommonModule } from './common/common.module';
     EmailModule,
     StripeModule,
     HealthModule,
-    CarouselModule,
     AdvertisementModule,
     WebappAuthModule,
     AccountModule,
@@ -42,7 +39,6 @@ import { CommonModule } from './common/common.module';
     ContactModule,
     CartModule,
     NotificationsModule,
-    AdminUsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

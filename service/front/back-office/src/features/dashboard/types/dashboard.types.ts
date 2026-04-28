@@ -39,7 +39,7 @@ export interface RecentOrder {
 }
 
 export interface RecentUser {
-  id: number;
+  id: string;
   email: string;
   name: string;
   registeredAt: string;
@@ -87,7 +87,7 @@ export interface RecentOrdersResponse {
 
 export interface RecentUsersResponse {
   items: Array<{
-    id: number;
+    id: string;
     email: string;
     firstName?: string;
     lastName?: string;

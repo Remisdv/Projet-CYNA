@@ -1,25 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { usePublicCarousel, CarouselSlide } from '../hooks/useCarousel';
 
-const FALLBACK_SLIDES: CarouselSlide[] = [
+interface CarouselSlide {
+  id: string;
+  titre?: string;
+  description?: string;
+  image?: string;
+  lien?: string;
+}
+
+const SLIDES: CarouselSlide[] = [
   {
     id: '1',
     titre: 'Protection SOC 24/7',
     description: 'Surveillez votre infrastructure en temps réel avec nos experts en cybersécurité.',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1920&q=80',
     lien: '/catalog?categorie=SOC',
   },
   {
     id: '2',
     titre: 'Solutions EDR avancées',
     description: 'Détectez et répondez aux menaces sur vos endpoints avant qu\'elles causent des dégâts.',
+    image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=1920&q=80',
     lien: '/catalog?categorie=EDR',
   },
   {
     id: '3',
     titre: 'XDR — Vision globale',
     description: 'Unifiez la détection sur tous vos vecteurs d\'attaque avec notre plateforme XDR.',
+    image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&w=1920&q=80',
     lien: '/catalog?categorie=XDR',
   },
 ];
@@ -31,8 +41,7 @@ const GRADIENT_BACKGROUNDS = [
 ];
 
 export default function HeroCarousel() {
-  const { data } = usePublicCarousel();
-  const slides = (data && data.length > 0) ? data : FALLBACK_SLIDES;
+  const slides = SLIDES;
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => setCurrent(i => (i + 1) % slides.length), [slides.length]);

@@ -13,7 +13,9 @@ export const dashboardApi = {
     return data;
   },
   recentUsers: async (limit = 5): Promise<RecentUsersResponse> => {
-    const { data } = await apiClient.get<RecentUsersResponse>('/webapp-users', { params: { limit } });
+    const { data } = await apiClient.get<RecentUsersResponse>('/users', {
+      params: { limit, page: 1, sort: 'createdAt:desc' },
+    });
     return data;
   },
 };

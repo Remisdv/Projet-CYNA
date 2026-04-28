@@ -16,7 +16,6 @@ import UsersPage from '@/features/users/pages/UsersPage';
 import OrdersPage from '@/features/orders/pages/OrdersPage';
 import OrderDetailPage from '@/features/orders/pages/OrderDetailPage';
 import CommercialDashboardPage from '@/features/commercial/pages/CommercialDashboardPage';
-import CarouselPage from '@/features/content/pages/CarouselPage';
 import MainLayout from '@/layouts/MainLayout';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
@@ -80,7 +79,6 @@ function AppRoutes() {
 
         {/* Content */}
         <Route path="content/advertisements" element={<AdvertisementsPage />} />
-        <Route path="content/carousel" element={<CarouselPage />} />
 
         {/* Users */}
         <Route path="users" element={<UsersPage />} />
