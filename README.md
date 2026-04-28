@@ -48,12 +48,14 @@ bash docker/reset.all.stack.sh
 
 ## Services & Ports
 
+Tout passe par le reverse proxy **Nginx** sur le port 80. Pas besoin d'accéder aux ports internes directement.
+
 | Service | URL |
 |---|---|
-| Gateway API (point d'entrée) | http://localhost:3000 |
-| Swagger API Docs | http://localhost:3000/docs |
-| Back-Office UI | http://localhost:5173 |
-| Webapp (portail client) | http://localhost:5174 |
+| Webapp (portail client) | http://localhost |
+| Back-Office UI | http://bo.localhost |
+| Gateway API | http://api.localhost |
+| Swagger API Docs | http://api.localhost/docs |
 | MailHog (emails de dev) | http://localhost:8025 |
 | PostgreSQL | localhost:5432 |
 | Elasticsearch | localhost:9200 |
