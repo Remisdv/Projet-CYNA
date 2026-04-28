@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query, Headers, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { OrderService } from '../../service/Order/Order.service';
-import { OrderResponseDto } from '../../dto/Order/Order.dto';
+import { OrderResponseDto } from '../../service/Order/dtos/Order.dto';
 
 @Controller('orders')
 export class OrderController {

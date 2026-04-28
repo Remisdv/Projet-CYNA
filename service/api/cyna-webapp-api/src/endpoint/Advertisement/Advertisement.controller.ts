@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AdvertisementService } from '../../service/Advertisement/Advertisement.service';
-import { AdvertisementDto } from '../../dto/Advertisement/Advertisement.dto';
+import { AdvertisementDto } from '../../service/Advertisement/dtos/Advertisement.dto';
 
 @Controller('advertisements')
 export class AdvertisementController {

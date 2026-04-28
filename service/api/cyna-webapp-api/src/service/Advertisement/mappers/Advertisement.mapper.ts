@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { TextePromotionnel } from '../database/entity/Advertisement/Advertisement.entity';
-import { AdvertisementDto } from '../dto/Advertisement/Advertisement.dto';
+import { TextePromotionnel } from '../../../database/entity/Advertisement/Advertisement.entity';
+import { AdvertisementDto } from '../dtos/Advertisement.dto';
 
 @Injectable()
 export class AdvertisementMapper {

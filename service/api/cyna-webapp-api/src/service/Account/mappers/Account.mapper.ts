@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { WebappUser } from '../database/entity/WebappUser/WebappUser.entity';
-import { ProfileResponseDto } from '../dto/Account/Account.dto';
+import { WebappUser } from '../../../database/entity/WebappUser/WebappUser.entity';
+import { ProfileResponseDto } from '../dtos/Account.dto';
 
 @Injectable()
 export class AccountMapper {

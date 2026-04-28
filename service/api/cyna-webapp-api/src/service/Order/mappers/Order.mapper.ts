@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CustomerOrder } from '../database/entity/Order/CustomerOrder.entity';
-import { OrderResponseDto } from '../dto/Order/Order.dto';
+import { CustomerOrder } from '../../../database/entity/Order/CustomerOrder.entity';
+import { OrderResponseDto } from '../dtos/Order.dto';
 
 @Injectable()
 export class OrderMapper {

@@ -1,6 +1,6 @@
 import { IsString, IsOptional, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AddressDto } from '../../common/dto/address.dto';
+import { AddressDto } from '../../../common/dto/address.dto';
 
 export { AddressDto };
 

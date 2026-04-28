@@ -1,20 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { CarouselItem } from '../../database/entity/Carousel/CarouselItem.entity';
-import { CarouselMapper } from '../../mapper/Carousel.mapper';
-import { CarouselItemDto } from '../../dto/Carousel/Carousel.dto';
+import { CarouselRepository } from '../../repository/Carousel/Carousel.repository';
+import { CarouselMapper } from './mappers/Carousel.mapper';
+import { CarouselItemDto } from './dtos/Carousel.dto';
 
 @Injectable()
 export class CarouselService {
   constructor(
-    @InjectRepository(CarouselItem)
-    private readonly repo: Repository<CarouselItem>,
+    private readonly carouselRepository: CarouselRepository,
     private readonly mapper: CarouselMapper,
   ) { }
 
   async findAll(): Promise<CarouselItemDto[]> {
-    const items = await this.repo.find({ order: { order: 'ASC' } });
+    const items = await this.carouselRepository.findAllOrdered();
     return this.mapper.toDtoArray(items);
   }
 }

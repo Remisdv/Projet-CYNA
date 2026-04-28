@@ -1,13 +1,12 @@
-﻿import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Repository, IsNull } from 'typeorm';
 import * as crypto from 'crypto';
 import * as qrcode from 'qrcode';
 import * as speakeasy from 'speakeasy';
 import { v4 as uuidv4 } from 'uuid';
 import { WebappUser } from '../../database/entity/WebappUser/WebappUser.entity';
-import { PasswordResetToken } from '../../database/entity/WebappUser/PasswordResetToken.entity';
+import { WebappUserRepository } from '../../repository/WebappUser/WebappUser.repository';
+import { PasswordResetTokenRepository } from '../../repository/PasswordResetToken/PasswordResetToken.repository';
 import { EmailService } from '../Email/Email.service';
 import {
   RegisterDto,
@@ -17,7 +16,7 @@ import {
   ResetPasswordDto,
   AuthResponseDto,
   TwoFactorVerifyDto,
-} from '../../dto/Auth/Auth.dto';
+} from './dtos/Auth.dto';
 
 export interface TwoFactorPendingResponse {
   requiresTwoFactor: true;
@@ -29,33 +28,31 @@ export interface TwoFactorPendingResponse {
 @Injectable()
 export class WebappAuthService {
   constructor(
-    @InjectRepository(WebappUser)
-    private readonly userRepo: Repository<WebappUser>,
-    @InjectRepository(PasswordResetToken)
-    private readonly resetTokenRepo: Repository<PasswordResetToken>,
+    private readonly userRepository: WebappUserRepository,
+    private readonly resetTokenRepository: PasswordResetTokenRepository,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
   ) { }
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    const existing = await this.userRepo.findOneBy({ email: dto.email });
+    const existing = await this.userRepository.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException('Un compte avec cet email existe dÃ©jÃ ');
+      throw new ConflictException('Un compte avec cet email existe dÃ©jÃ ');
     }
 
-    const user = this.userRepo.create({
+    const user = this.userRepository.create({
       email: dto.email,
       passwordHash: this.hashPassword(dto.password),
       firstName: dto.firstName,
       lastName: dto.lastName,
     });
 
-    const saved = await this.userRepo.save(user);
+    const saved = await this.userRepository.save(user);
     return this.generateTokens(saved);
   }
 
   async login(dto: LoginDto): Promise<AuthResponseDto | TwoFactorPendingResponse> {
-    const user = await this.userRepo.findOneBy({ email: dto.email });
+    const user = await this.userRepository.findByEmail(dto.email);
     if (!user) {
       throw new UnauthorizedException('Identifiants invalides');
     }
@@ -74,7 +71,7 @@ export class WebappAuthService {
         const code = Math.floor(100000 + Math.random() * 900000).toString();
         user.twoFactorCode = code;
         user.twoFactorCodeExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        await this.userRepo.save(user);
+        await this.userRepository.save(user);
         await this.emailService.send2FACode(user.email, user.firstName, code);
         return { requiresTwoFactor: true, userId: user.id, email: user.email, method: 'email' };
       }
@@ -84,7 +81,7 @@ export class WebappAuthService {
   }
 
   async verifyTwoFactor(dto: TwoFactorVerifyDto): Promise<AuthResponseDto> {
-    const user = await this.userRepo.findOneBy({ id: dto.userId });
+    const user = await this.userRepository.findById(dto.userId);
     if (!user) {
       throw new UnauthorizedException('Utilisateur introuvable');
     }
@@ -109,14 +106,14 @@ export class WebappAuthService {
       // Consume email code (one-time use)
       user.twoFactorCode = null;
       user.twoFactorCodeExpiry = null;
-      await this.userRepo.save(user);
+      await this.userRepository.save(user);
     }
 
     return this.generateTokens(user);
   }
 
   async resendTwoFactor(userId: string): Promise<void> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (!user.twoFactorEnabled || user.totpEnabled) {
       throw new BadRequestException('Renvoi de code non applicable');
@@ -125,12 +122,12 @@ export class WebappAuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.twoFactorCode = code;
     user.twoFactorCodeExpiry = new Date(Date.now() + 5 * 60 * 1000);
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     await this.emailService.send2FACode(user.email, user.firstName, code);
   }
 
   async enableEmailTwoFactor(userId: string, password: string): Promise<{ message: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (this.hashPassword(password) !== user.passwordHash) {
       throw new UnauthorizedException('Mot de passe incorrect');
@@ -142,13 +139,13 @@ export class WebappAuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.twoFactorCode = code;
     user.twoFactorCodeExpiry = new Date(Date.now() + 5 * 60 * 1000);
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     await this.emailService.send2FACode(user.email, user.firstName, code);
     return { message: 'Code de vérification envoyé par email' };
   }
 
   async confirmEmailTwoFactor(userId: string, password: string, code: string): Promise<{ message: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (this.hashPassword(password) !== user.passwordHash) {
       throw new UnauthorizedException('Mot de passe incorrect');
@@ -168,12 +165,12 @@ export class WebappAuthService {
     user.totpSecret = null;
     user.twoFactorCode = null;
     user.twoFactorCodeExpiry = null;
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     return { message: 'Authentification à deux facteurs par email activée' };
   }
 
   async setupTotp(userId: string, password: string): Promise<{ secret: string; qrCodeDataUrl: string; otpAuthUrl: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (this.hashPassword(password) !== user.passwordHash) {
       throw new UnauthorizedException('Mot de passe incorrect');
@@ -186,13 +183,13 @@ export class WebappAuthService {
 
     // Store secret temporarily (will be confirmed by verifyTotpSetup)
     user.totpSecret = secret;
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
 
     return { secret, qrCodeDataUrl, otpAuthUrl };
   }
 
   async verifyTotpSetup(userId: string, password: string, code: string): Promise<{ message: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user || !user.totpSecret) {
       throw new BadRequestException('Configuration TOTP non initialisée');
     }
@@ -209,12 +206,12 @@ export class WebappAuthService {
     user.twoFactorEnabled = true;
     user.twoFactorCode = null;
     user.twoFactorCodeExpiry = null;
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     return { message: 'Authentification TOTP activée avec succès' };
   }
 
   async sendDisableCode(userId: string, password: string): Promise<{ message: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (this.hashPassword(password) !== user.passwordHash) {
       throw new UnauthorizedException('Mot de passe incorrect');
@@ -226,13 +223,13 @@ export class WebappAuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     user.twoFactorCode = code;
     user.twoFactorCodeExpiry = new Date(Date.now() + 5 * 60 * 1000);
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     await this.emailService.send2FACode(user.email, user.firstName, code);
     return { message: 'Code de désactivation envoyé par email' };
   }
 
   async disableTwoFactor(userId: string, password: string, code: string): Promise<{ message: string }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException('Utilisateur introuvable');
     if (this.hashPassword(password) !== user.passwordHash) {
       throw new UnauthorizedException('Mot de passe incorrect');
@@ -256,12 +253,12 @@ export class WebappAuthService {
     user.totpSecret = null;
     user.twoFactorCode = null;
     user.twoFactorCodeExpiry = null;
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
     return { message: 'Authentification à deux facteurs désactivée' };
   }
 
   async getTwoFactorStatus(userId: string): Promise<{ twoFactorEnabled: boolean; totpEnabled: boolean }> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Utilisateur introuvable');
     return { twoFactorEnabled: user.twoFactorEnabled, totpEnabled: user.totpEnabled };
   }
@@ -278,7 +275,7 @@ export class WebappAuthService {
       throw new UnauthorizedException('Type de token invalide');
     }
 
-    const user = await this.userRepo.findOneBy({ id: payload.sub });
+    const user = await this.userRepository.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('Utilisateur introuvable');
     }
@@ -290,42 +287,39 @@ export class WebappAuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
-    const user = await this.userRepo.findOneBy({ email: dto.email });
+    const user = await this.userRepository.findByEmail(dto.email);
     if (!user) return; // Don't reveal if email exists
 
     const token = uuidv4();
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h
 
-    const resetToken = this.resetTokenRepo.create({
+    const resetToken = this.resetTokenRepository.create({
       userId: user.id,
       token,
       expiresAt,
     });
-    await this.resetTokenRepo.save(resetToken);
+    await this.resetTokenRepository.save(resetToken);
 
     await this.emailService.sendPasswordReset(user.email, token);
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<void> {
-    const resetToken = await this.resetTokenRepo.findOneBy({
-      token: dto.token,
-      usedAt: IsNull(),
-    });
+    const resetToken = await this.resetTokenRepository.findActiveByToken(dto.token);
 
     if (!resetToken || resetToken.expiresAt < new Date()) {
       throw new UnauthorizedException('Token invalide ou expirÃ©');
     }
 
-    const user = await this.userRepo.findOneBy({ id: resetToken.userId });
+    const user = await this.userRepository.findById(resetToken.userId);
     if (!user) {
       throw new NotFoundException('Utilisateur introuvable');
     }
 
     user.passwordHash = this.hashPassword(dto.newPassword);
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
 
     resetToken.usedAt = new Date();
-    await this.resetTokenRepo.save(resetToken);
+    await this.resetTokenRepository.save(resetToken);
   }
 
   private generateTokens(user: WebappUser): AuthResponseDto {

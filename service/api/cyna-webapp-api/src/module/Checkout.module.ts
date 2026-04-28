@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { CustomerOrder } from '../database/entity/Order/CustomerOrder.entity';
-import { WebappUser } from '../database/entity/WebappUser/WebappUser.entity';
 import { CheckoutService } from '../service/Checkout/Checkout.service';
 import { InvoiceModule } from './Invoice.module';
 import { CartModule } from './Cart.module';
 import { SyncModule } from './Sync.module';
+import { OrderModule } from './Order.module';
+import { AccountModule } from './Account.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([CustomerOrder, WebappUser]),
+        OrderModule,
+        AccountModule,
         InvoiceModule,
         CartModule,
         SyncModule,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CarouselItem } from '../database/entity/Carousel/CarouselItem.entity';
-import { CarouselItemDto } from '../dto/Carousel/Carousel.dto';
+import { CarouselItem } from '../../../database/entity/Carousel/CarouselItem.entity';
+import { CarouselItemDto } from '../dtos/Carousel.dto';
 
 @Injectable()
 export class CarouselMapper {

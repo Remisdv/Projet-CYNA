@@ -2,7 +2,7 @@ import { Controller, Post, Body, Headers, Req, RawBodyRequest } from '@nestjs/co
 import { Request } from 'express';
 import { PaymentService } from '../../service/Payment/Payment.service';
 import { StripeService } from '../../service/Stripe/Stripe.service';
-import { CreatePaymentIntentDto, ConfirmOrderDto } from '../../dto/Payment/Payment.dto';
+import { CreatePaymentIntentDto, ConfirmOrderDto } from '../../service/Payment/dtos/Payment.dto';
 
 @Controller('payment')
 export class PaymentController {

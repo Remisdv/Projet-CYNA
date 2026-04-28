@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Headers } from '@nestjs/common';
 import { SubscriptionService } from '../../service/Subscription/Subscription.service';
-import { SubscriptionResponseDto } from '../../dto/Subscription/Subscription.dto';
+import { SubscriptionResponseDto } from '../../service/Subscription/dtos/Subscription.dto';
 
 @Controller('subscriptions')
 export class SubscriptionController {

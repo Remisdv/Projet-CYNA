@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { WebappSubscription } from '../database/entity/Subscription/WebappSubscription.entity';
-import { SubscriptionResponseDto } from '../dto/Subscription/Subscription.dto';
+import { WebappSubscription } from '../../../database/entity/Subscription/WebappSubscription.entity';
+import { SubscriptionResponseDto } from '../dtos/Subscription.dto';
 
 @Injectable()
 export class SubscriptionMapper {

@@ -14,7 +14,7 @@ import {
   SetupTotpDto,
   VerifyTotpSetupDto,
   DisableTwoFactorDto,
-} from '../../dto/Auth/Auth.dto';
+} from '../../service/Auth/dtos/Auth.dto';
 
 @Controller('auth')
 export class WebappAuthController {

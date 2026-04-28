@@ -1,30 +1,27 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WebappUser } from '../../database/entity/WebappUser/WebappUser.entity';
-import { CustomerOrder, OrderStatus, PaymentStatus } from '../../database/entity/Order/CustomerOrder.entity';
-import { WebappSubscription, SubscriptionPlan, SubscriptionStatus } from '../../database/entity/Subscription/WebappSubscription.entity';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { OrderStatus, PaymentStatus } from '../../database/entity/Order/CustomerOrder.entity';
+import { SubscriptionPlan, SubscriptionStatus } from '../../database/entity/Subscription/WebappSubscription.entity';
+import { WebappUserRepository } from '../../repository/WebappUser/WebappUser.repository';
+import { CustomerOrderRepository } from '../../repository/Order/Order.repository';
+import { SubscriptionRepository } from '../../repository/Subscription/Subscription.repository';
 import { StripeService } from '../Stripe/Stripe.service';
 import { CheckoutService } from '../Checkout/Checkout.service';
 import { OrderSyncService } from '../Sync/OrderSync.service';
-import { CreatePaymentIntentDto } from '../../dto/Payment/Payment.dto';
+import { CreatePaymentIntentDto } from './dtos/Payment.dto';
 
 @Injectable()
 export class PaymentService {
   constructor(
-    @InjectRepository(WebappUser)
-    private readonly userRepo: Repository<WebappUser>,
-    @InjectRepository(CustomerOrder)
-    private readonly orderRepo: Repository<CustomerOrder>,
-    @InjectRepository(WebappSubscription)
-    private readonly subscriptionRepo: Repository<WebappSubscription>,
+    private readonly userRepository: WebappUserRepository,
+    private readonly orderRepository: CustomerOrderRepository,
+    private readonly subscriptionRepository: SubscriptionRepository,
     private readonly stripeService: StripeService,
     private readonly checkoutService: CheckoutService,
     private readonly orderSyncService: OrderSyncService,
   ) { }
 
   async createPaymentIntent(userId: string, dto: CreatePaymentIntentDto) {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     // Create or get Stripe customer
@@ -33,13 +30,13 @@ export class PaymentService {
         user.email,
         `${user.firstName} ${user.lastName}`,
       );
-      await this.userRepo.save(user);
+      await this.userRepository.save(user);
     }
 
     // Update user addresses if provided
     if (dto.billingAddress) user.billingAddress = dto.billingAddress;
     if (dto.shippingAddress) user.shippingAddress = dto.shippingAddress;
-    await this.userRepo.save(user);
+    await this.userRepository.save(user);
 
     // Separate items: products (one-time) vs services (subscriptions)
     const productItems = dto.items.filter((i) => i.productType === 'produit');
@@ -66,7 +63,7 @@ export class PaymentService {
         subtotal: i.unitPrice * i.quantity,
       }));
 
-      const order = this.orderRepo.create({
+      const order = this.orderRepository.create({
         ref: this.generateOrderRef(),
         userId,
         items: orderItems,
@@ -75,7 +72,7 @@ export class PaymentService {
         billingAddress: dto.billingAddress,
         shippingAddress: dto.shippingAddress,
       });
-      await this.orderRepo.save(order);
+      await this.orderRepository.save(order);
 
       // Sync PENDING order to service-api so BO sees it immediately
       await this.orderSyncService.syncOrder(order, user);
@@ -98,7 +95,7 @@ export class PaymentService {
         { userId, productId: item.productId },
       );
 
-      const subscription = this.subscriptionRepo.create({
+      const subscription = this.subscriptionRepository.create({
         userId,
         productId: item.productId,
         productName: item.productName,
@@ -108,7 +105,7 @@ export class PaymentService {
         startDate: new Date(),
         renewalDate: new Date(Date.now() + (interval === 'year' ? 365 : 30) * 24 * 60 * 60 * 1000),
       });
-      await this.subscriptionRepo.save(subscription);
+      await this.subscriptionRepository.save(subscription);
 
       // If no product items, also create an order for the service
       if (productItems.length === 0 && serviceItems.indexOf(item) === 0) {
@@ -123,7 +120,7 @@ export class PaymentService {
         }));
 
         const totalAmount = serviceItems.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
-        const order = this.orderRepo.create({
+        const order = this.orderRepository.create({
           ref: this.generateOrderRef(),
           userId,
           items: orderItems,
@@ -131,7 +128,7 @@ export class PaymentService {
           billingAddress: dto.billingAddress,
           shippingAddress: dto.shippingAddress,
         });
-        await this.orderRepo.save(order);
+        await this.orderRepository.save(order);
 
         // Sync PENDING order to service-api
         await this.orderSyncService.syncOrder(order, user);
@@ -159,7 +156,7 @@ export class PaymentService {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object;
-        const order = await this.orderRepo.findOneBy({ paymentIntentId: paymentIntent.id });
+        const order = await this.orderRepository.findByPaymentIntentId(paymentIntent.id);
         if (order) {
           await this.checkoutService.confirmOrder(order);
         }
@@ -168,28 +165,28 @@ export class PaymentService {
       case 'invoice.paid': {
         const invoice = event.data.object;
         const subscriptionId = invoice.subscription;
-        const subscription = await this.subscriptionRepo.findOneBy({ stripeSubscriptionId: subscriptionId });
+        const subscription = await this.subscriptionRepository.findByStripeSubscriptionId(subscriptionId);
         if (subscription) {
           subscription.status = SubscriptionStatus.ACTIVE;
-          await this.subscriptionRepo.save(subscription);
+          await this.subscriptionRepository.save(subscription);
         }
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        const subscription = await this.subscriptionRepo.findOneBy({ stripeSubscriptionId: sub.id });
+        const subscription = await this.subscriptionRepository.findByStripeSubscriptionId(sub.id);
         if (subscription) {
           subscription.status = SubscriptionStatus.EXPIRED;
-          await this.subscriptionRepo.save(subscription);
+          await this.subscriptionRepository.save(subscription);
         }
         break;
       }
       case 'payment_intent.payment_failed': {
         const paymentIntent = event.data.object;
-        const order = await this.orderRepo.findOneBy({ paymentIntentId: paymentIntent.id });
+        const order = await this.orderRepository.findByPaymentIntentId(paymentIntent.id);
         if (order) {
           order.paymentStatus = PaymentStatus.FAILED;
-          await this.orderRepo.save(order);
+          await this.orderRepository.save(order);
         }
         break;
       }

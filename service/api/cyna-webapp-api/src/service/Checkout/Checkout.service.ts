@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CustomerOrder, OrderStatus, PaymentStatus } from '../../database/entity/Order/CustomerOrder.entity';
 import { WebappUser } from '../../database/entity/WebappUser/WebappUser.entity';
+import { CustomerOrderRepository } from '../../repository/Order/Order.repository';
+import { WebappUserRepository } from '../../repository/WebappUser/WebappUser.repository';
 import { EmailService } from '../Email/Email.service';
 import { InvoiceService } from '../Invoice/Invoice.service';
 import { CartService } from '../Cart/Cart.service';
@@ -11,10 +11,8 @@ import { OrderSyncService } from '../Sync/OrderSync.service';
 @Injectable()
 export class CheckoutService {
     constructor(
-        @InjectRepository(CustomerOrder)
-        private readonly orderRepo: Repository<CustomerOrder>,
-        @InjectRepository(WebappUser)
-        private readonly userRepo: Repository<WebappUser>,
+        private readonly orderRepository: CustomerOrderRepository,
+        private readonly userRepository: WebappUserRepository,
         private readonly emailService: EmailService,
         private readonly invoiceService: InvoiceService,
         private readonly cartService: CartService,
@@ -33,9 +31,9 @@ export class CheckoutService {
 
         order.paymentStatus = PaymentStatus.PAID;
         order.status = OrderStatus.CONFIRMED;
-        await this.orderRepo.save(order);
+        await this.orderRepository.save(order);
 
-        const user = await this.userRepo.findOneBy({ id: order.userId });
+        const user = await this.userRepository.findById(order.userId);
         if (user) {
             await this.sendConfirmationEmail(order, user);
             await this.sendServiceCredentials(order, user);
@@ -46,7 +44,7 @@ export class CheckoutService {
     }
 
     async confirmOrderByUserAndId(userId: string, orderId: string): Promise<{ message: string }> {
-        const order = await this.orderRepo.findOneBy({ id: orderId, userId });
+        const order = await this.orderRepository.findByIdAndUser(orderId, userId);
         if (!order) throw new NotFoundException('Commande introuvable');
 
         if (order.status === OrderStatus.CONFIRMED && order.paymentStatus === PaymentStatus.PAID) {

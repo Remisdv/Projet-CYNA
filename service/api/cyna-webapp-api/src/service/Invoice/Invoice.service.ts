@@ -1,18 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import PDFDocument from 'pdfkit';
-import { CustomerOrder } from '../../database/entity/Order/CustomerOrder.entity';
+import { CustomerOrderRepository } from '../../repository/Order/Order.repository';
 
 @Injectable()
 export class InvoiceService {
     constructor(
-        @InjectRepository(CustomerOrder)
-        private readonly orderRepo: Repository<CustomerOrder>,
+        private readonly orderRepository: CustomerOrderRepository,
     ) { }
 
     async generateInvoicePdf(orderId: string, userId: string): Promise<Buffer> {
-        const order = await this.orderRepo.findOneBy({ id: orderId });
+        const order = await this.orderRepository.findById(orderId);
         if (!order) throw new NotFoundException('Commande introuvable');
         if (order.userId !== userId) throw new ForbiddenException('Accès refusé');
 
