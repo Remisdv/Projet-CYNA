@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Shield } from 'lucide-react';
-import { apiClient } from '@/shared/lib/apiClient';
+import { authApi } from '@/features/auth/api/auth.api';
 import { Button } from '@/shared/components/ui/Button';
 import { PasswordInput } from '@/shared/components/ui/PasswordInput';
 
@@ -39,10 +39,7 @@ export default function ResetPasswordPage() {
     if (!token) return;
     try {
       setError('');
-      await apiClient.post('/webapp/auth/reset-password', {
-        token,
-        newPassword: formData.newPassword,
-      });
+      await authApi.resetPassword(token, formData.newPassword);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
     } catch (err: any) {

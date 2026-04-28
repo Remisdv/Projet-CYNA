@@ -1,19 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { catalogApi } from '../api/catalog.api';
+import type { Category } from '../types/catalog.types';
 
-export interface CategoryTranslation {
-  id: string;
-  lang: string;
-  name: string;
-  description: string;
-}
-
-export interface Category {
-  id: string;
-  slug: string;
-  isActive: boolean;
-  translations: CategoryTranslation[];
-}
+export type { Category, CategoryTranslation } from '../types/catalog.types';
 
 export function getCategoryName(cat: Category, lang = 'fr'): string {
   return cat.translations.find((t) => t.lang === lang)?.name ?? cat.slug;
@@ -26,11 +15,7 @@ export function getCategoryDescription(cat: Category, lang = 'fr'): string {
 export function usePublicCategories() {
   return useQuery({
     queryKey: ['bo-categories'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/bo/categories');
-      const list = (data?.data ?? data ?? []) as Category[];
-      return list.filter((c) => c.isActive !== false);
-    },
+    queryFn: catalogApi.listCategories,
     staleTime: 1000 * 60 * 10,
   });
 }
@@ -45,3 +30,4 @@ export function useCategoryName(idOrSlug: string | undefined, lang = 'fr'): stri
   const match = categories?.find((c) => c.id === idOrSlug || c.slug === idOrSlug);
   return match ? getCategoryName(match, lang) : idOrSlug;
 }
+

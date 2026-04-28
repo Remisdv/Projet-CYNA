@@ -1,35 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { accountApi } from '../api/account.api';
 
-export interface Subscription {
-  id: number;
-  productId: string;
-  productName: string;
-  planType: 'mensuel' | 'annuel';
-  status: 'active' | 'cancelled' | 'expired';
-  price: number;
-  startDate: string;
-  renewalDate?: string;
-  createdAt: string;
-}
+export type { Subscription } from '../types/account.types';
 
 export function useSubscriptions() {
   return useQuery({
     queryKey: ['subscriptions'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/webapp/subscriptions');
-      return data as Subscription[];
-    },
+    queryFn: accountApi.listSubscriptions,
   });
 }
 
 export function useSubscription(id: number | string) {
   return useQuery({
     queryKey: ['subscriptions', id],
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/webapp/subscriptions/${id}`);
-      return data as Subscription;
-    },
+    queryFn: () => accountApi.getSubscription(id),
     enabled: !!id,
   });
 }
+

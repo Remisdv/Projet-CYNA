@@ -1,46 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/shared/lib/apiClient';
+import { faqsApi } from '../api/faqs.api';
+import type { Faq, CreateFaqInput } from '../types/faq.types';
 
-export interface Faq {
-  id: string;
-  parentId: string | null;
-  question: string;
-  answer: string;
-  lang: string;
-  order: number;
-  children?: Faq[];
-}
+export type { Faq };
 
-export const useFaqTree = (lang?: string) => {
-  return useQuery({
+export const useFaqTree = (lang?: string) =>
+  useQuery({
     queryKey: ['faqs', 'tree', lang],
-    queryFn: async () => {
-      const { data } = await api.get<Faq[]>('/faqs/tree', {
-        params: { lang },
-      });
-      return data;
-    },
+    queryFn: () => faqsApi.tree(lang),
   });
-};
 
-export const useFaq = (id: string | undefined) => {
-  return useQuery({
+export const useFaq = (id: string | undefined) =>
+  useQuery({
     queryKey: ['faqs', id],
-    queryFn: async () => {
-      const { data } = await api.get<Faq>(`/faqs/${id}`);
-      return data;
-    },
+    queryFn: () => faqsApi.byId(id as string),
     enabled: !!id,
   });
-};
 
 export const useCreateFaq = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (faqData: { parentId?: string | null; question: string; answer?: string; lang: string; order?: number }) => {
-      const { data } = await api.post<Faq>('/faqs', faqData);
-      return data;
-    },
+    mutationFn: (faqData: CreateFaqInput) => faqsApi.create(faqData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
@@ -50,10 +30,8 @@ export const useCreateFaq = () => {
 export const useUpdateFaq = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, faqData }: { id: string; faqData: Partial<Faq> }) => {
-      const { data } = await api.put<Faq>(`/faqs/${id}`, faqData);
-      return data;
-    },
+    mutationFn: ({ id, faqData }: { id: string; faqData: Partial<Faq> }) =>
+      faqsApi.update(id, faqData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
@@ -63,9 +41,7 @@ export const useUpdateFaq = () => {
 export const useDeleteFaq = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/faqs/${id}`);
-    },
+    mutationFn: (id: string) => faqsApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
@@ -75,12 +51,10 @@ export const useDeleteFaq = () => {
 export const useReorderFaq = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, order }: { id: string; order: number }) => {
-      const { data } = await api.put<Faq>(`/faqs/${id}/reorder`, { order });
-      return data;
-    },
+    mutationFn: ({ id, order }: { id: string; order: number }) => faqsApi.reorder(id, order),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faqs'] });
     },
   });
 };
+

@@ -1,0 +1,176 @@
+{
+    "common": {
+        "app": {
+            "title": "CYNA",
+            "loading": "Chargement..."
+        },
+        "navigation": {
+            "dashboard": "Dashboard",
+            "commercialDashboard": "Dashboard Commercial",
+            "orders": "Commandes",
+            "catalog": "Catalogue",
+            "services": "Services",
+            "categories": "Catégories",
+            "content": "Contenu",
+            "faq": "FAQ",
+            "advertisements": "Publicités",
+            "carousel": "Carousel",
+            "users": "Utilisateurs",
+            "logout": "Déconnexion"
+        },
+        "actions": {
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "create": "Créer",
+            "edit": "Modifier",
+            "delete": "Supprimer",
+            "confirm": "Confirmer",
+            "close": "Fermer",
+            "back": "Retour",
+            "next": "Suivant",
+            "previous": "Précédent",
+            "search": "Rechercher",
+            "filter": "Filtrer",
+            "refresh": "Actualiser",
+            "export": "Exporter",
+            "add": "Ajouter",
+            "remove": "Retirer",
+            "upload": "Télécharger",
+            "submit": "Valider"
+        },
+        "status": {
+            "active": "Actif",
+            "inactive": "Inactif",
+            "enabled": "Activé",
+            "disabled": "Désactivé",
+            "pending": "En attente",
+            "success": "Succès",
+            "error": "Erreur",
+            "loading": "Chargement...",
+            "saving": "Enregistrement...",
+            "deleting": "Suppression..."
+        },
+        "errors": {
+            "generic": "Une erreur est survenue",
+            "network": "Erreur réseau",
+            "unauthorized": "Non autorisé",
+            "notFound": "Introuvable",
+            "validation": "Données invalides"
+        },
+        "common": {
+            "yes": "Oui",
+            "no": "Non",
+            "all": "Tous",
+            "none": "Aucun",
+            "selectAll": "Tout sélectionner",
+            "noResults": "Aucun résultat",
+            "confirmDelete": "Êtes-vous sûr de vouloir supprimer cet élément ?"
+        }
+    },
+    "auth": {
+        "login": {
+            "title": "Admin Login",
+            "emailLabel": "Email",
+            "passwordLabel": "Password",
+            "showPasswordAriaLabel": "Afficher le mot de passe",
+            "hidePasswordAriaLabel": "Masquer le mot de passe",
+            "submitButton": "Login",
+            "submitting": "Connexion...",
+            "errors": {
+                "missingRole": "Rôle manquant dans la réponse du serveur",
+                "invalidCredentials": "Email ou mot de passe incorrect",
+                "emailInvalid": "Adresse email invalide",
+                "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères"
+            }
+        },
+        "twoFactor": {
+            "title": "Vérification en deux étapes",
+            "description": "Un code à 6 chiffres a été envoyé à",
+            "codeLabel": "Code de vérification",
+            "codePlaceholder": "123456",
+            "submitButton": "Vérifier",
+            "submitting": "Vérification...",
+            "resendButton": "Renvoyer le code",
+            "resendCountdown": "Renvoyer le code ({{seconds}}s)",
+            "resendSuccess": "Nouveau code envoyé !",
+            "errors": {
+                "codeLength": "Le code doit contenir 6 chiffres",
+                "invalidCode": "Code invalide",
+                "resendFailed": "Erreur lors du renvoi du code"
+            }
+        }
+    },
+    "catalog": {
+        "pageTitle": "Catégories",
+        "subtitle": "Organisez vos services en catégories",
+        "createButton": "Nouvelle Catégorie",
+        "listTitle": "Liste des Catégories",
+        "emptyTitle": "Aucune catégorie trouvée",
+        "createFirstButton": "Créer votre première catégorie",
+        "loading": "Chargement des catégories...",
+        "table": {
+            "nameFr": "Nom (FR)",
+            "nameEn": "Nom (EN)",
+            "slug": "Slug",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "status": {
+            "active": "Actif",
+            "inactive": "Inactif"
+        },
+        "confirmations": {
+            "delete": "Êtes-vous sûr de vouloir supprimer cette catégorie ?"
+        },
+        "errors": {
+            "deleteFailed": "Erreur lors de la suppression de la catégorie"
+        },
+        "services": {
+            "pageTitle": "Services",
+            "subtitle": "Gérez votre catalogue de services",
+            "createButton": "Nouveau service",
+            "allCategories": "Toutes les catégories"
+        },
+        "serviceForm": {
+            "titleNew": "Nouveau service",
+            "titleEdit": "Modifier le service"
+        },
+        "imageUpload": {
+            "selectImages": "Cliquez pour sélectionner des images",
+            "formatsHint": "PNG, JPG, GIF, WEBP (max {{max}} images)",
+            "maxImagesError": "Vous ne pouvez télécharger que {{max}} images maximum",
+            "selectAtLeastOne": "Veuillez sélectionner au moins une image",
+            "uploadError": "Erreur lors du téléchargement des images",
+            "selectedImages": "Images sélectionnées ({{count}})",
+            "existingImages": "Images existantes ({{count}})",
+            "uploadButton": "Télécharger",
+            "uploadingButton": "Téléchargement...",
+            "uploadSuccess": "{{count}} image(s) téléchargée(s) avec succès",
+            "fallbackAlt": "Image"
+        }
+    },
+    "commercial": {
+        "pageTitle": "Dashboard Commercial"
+    },
+    "content": {
+        "faq": {
+            "pageTitle": "FAQ"
+        },
+        "advertisements": {
+            "pageTitle": "Publicités"
+        },
+        "carousel": {
+            "pageTitle": "Carousel"
+        }
+    },
+    "dashboard": {
+        "pageTitle": "Dashboard"
+    },
+    "orders": {
+        "pageTitle": "Commandes",
+        "detailTitle": "Détail commande"
+    },
+    "users": {
+        "pageTitle": "Utilisateurs"
+    }
+}

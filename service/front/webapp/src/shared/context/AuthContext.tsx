@@ -1,22 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { apiClient } from '@/shared/lib/apiClient';
+import { authApi } from '@/features/auth/api/auth.api';
+import type { User, RegisterData, TwoFactorPending } from '@/features/auth/types/auth.types';
 import { trackEvent } from '@/shared/lib/tracking';
 
-export interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  twoFactorEnabled?: boolean;
-  totpEnabled?: boolean;
-}
-
-interface TwoFactorPending {
-  requiresTwoFactor: true;
-  userId: string;
-  email: string;
-  method: 'email' | 'totp';
-}
+export type { User } from '@/features/auth/types/auth.types';
 
 interface AuthContextType {
   user: User | null;
@@ -27,14 +14,6 @@ interface AuthContextType {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => void;
-}
-
-interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const { data } = await apiClient.get('/webapp/account/profile');
+      const data = await authApi.profile();
       setUser({
         id: data.id,
         email: data.email,
@@ -72,11 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadUser]);
 
   const login = useCallback(async (email: string, password: string): Promise<void | TwoFactorPending> => {
-    const { data } = await apiClient.post('/webapp/auth/login', { email, password });
+    const data = await authApi.login(email, password);
 
     // 2FA pending — return pending state for caller to redirect
     if (data.requiresTwoFactor) {
-      return data as TwoFactorPending;
+      return data as unknown as TwoFactorPending;
     }
 
     if (data.access_token) {
@@ -85,8 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (data.refresh_token) {
       localStorage.setItem('refresh_token', data.refresh_token);
     }
-    setUser(data.user);
-    trackEvent('LOGIN', data.user?.id);
+    if (data.user) {
+      setUser(data.user);
+      trackEvent('LOGIN', data.user.id);
+    }
   }, []);
 
   const loginWithTokens = useCallback((userData: User) => {
@@ -95,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const register = useCallback(async (registerData: RegisterData) => {
-    const { data } = await apiClient.post('/webapp/auth/register', registerData);
+    const data = await authApi.register(registerData);
     if (data.access_token) {
       localStorage.setItem('access_token', data.access_token);
     }
@@ -107,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiClient.post('/webapp/auth/logout');
+      await authApi.logout();
     } catch {
       // ignore
     }
@@ -145,3 +126,4 @@ export function useAuth() {
   }
   return context;
 }
+

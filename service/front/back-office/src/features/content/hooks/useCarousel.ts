@@ -1,37 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/shared/lib/apiClient';
+import { carouselApi } from '../api/carousel.api';
+import type { CarouselItem } from '../types/carousel.types';
 
-export interface CarouselItem {
-  id: string;
-  imageId: string;
-  title: string;
-  text: string;
-  link: string;
-  order: number;
-  image?: {
-    id: string;
-    url: string;
-    altText: string;
-  };
-}
+export type { CarouselItem };
 
-export const useCarouselItems = () => {
-  return useQuery({
+export const useCarouselItems = () =>
+  useQuery({
     queryKey: ['carousel'],
-    queryFn: async () => {
-      const { data } = await api.get<CarouselItem[]>('/carousel');
-      return data;
-    },
+    queryFn: carouselApi.list,
   });
-};
 
 export const useCreateCarouselItem = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (itemData: Partial<CarouselItem>) => {
-      const { data } = await api.post<CarouselItem>('/carousel', itemData);
-      return data;
-    },
+    mutationFn: (itemData: Partial<CarouselItem>) => carouselApi.create(itemData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carousel'] });
     },
@@ -41,10 +23,8 @@ export const useCreateCarouselItem = () => {
 export const useUpdateCarouselItem = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, itemData }: { id: string; itemData: Partial<CarouselItem> }) => {
-      const { data } = await api.put<CarouselItem>(`/carousel/${id}`, itemData);
-      return data;
-    },
+    mutationFn: ({ id, itemData }: { id: string; itemData: Partial<CarouselItem> }) =>
+      carouselApi.update(id, itemData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carousel'] });
     },
@@ -54,11 +34,10 @@ export const useUpdateCarouselItem = () => {
 export const useDeleteCarouselItem = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/carousel/${id}`);
-    },
+    mutationFn: (id: string) => carouselApi.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['carousel'] });
     },
   });
 };
+

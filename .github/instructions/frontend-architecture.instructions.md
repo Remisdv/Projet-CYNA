@@ -71,8 +71,6 @@ src/
 │   │   └── types/
 │   │       ├── category.types.ts
 │   │       └── service.types.ts
-│   │   └── locales/
-│   │       └── fr.ts            Traductions FR de la feature
 │   ├── orders/...
 │   └── auth/...
 ├── shared/                      Code RÉUTILISÉ par 2+ features
@@ -86,7 +84,7 @@ src/
 │   └── types/                   User, Pagination<T>, ApiError
 ├── layouts/                     Layouts partagés (Sidebar, Topbar)
 ├── locales/
-│   └── fr.ts                    Traductions globales (commun, navigation)
+│   └── fr.json                  TOUTES les traductions du projet (un seul JSON par langue, namespacé par feature)
 └── styles/                      index.css, tailwind.css
 ```
 
@@ -314,7 +312,7 @@ Règle stricte : **un fichier = un type d'artefact**. Pas de définitions parasi
 | `use*.ts` | Hooks React (`useQuery`, `useMutation`, état). | Types métier exportés, fonctions axios, **plus de 300 lignes** |
 | `*.api.ts` | Fonctions d'appel HTTP. | Hooks React, JSX, état React, types métier (sauf import) |
 | `*.types.ts` | `interface` / `type` uniquement. | Code exécutable, JSX, fonctions, axios |
-| `locales/fr.ts` | Objet de traductions (clés → chaînes). | JSX, hooks, axios, logique |
+| `locales/fr.json` | Objet de traductions JSON (clés → chaînes), namespacé par feature au premier niveau. | JSX, hooks, axios, logique, fichiers `.ts` de locales éparpillés |
 
 **Exemples interdits :**
 
@@ -380,8 +378,8 @@ Le projet est **monolingue FR** pour l'instant, mais la structure doit être pr�
 **Stack :** `react-i18next` + `i18next`.
 
 **Organisation des traductions :**
-- Chaque feature porte ses propres clés dans `features/<X>/locales/fr.ts`.
-- Les libellés transverses (navigation, boutons communs, erreurs génériques) vont dans `src/locales/fr.ts`.
+- **Un seul fichier `src/locales/fr.json`** par projet front, structuré en namespaces i18next au premier niveau (un namespace par feature + `common`).
+- Pas de fichiers `locales/` au sein des features. Toute la traduction est centralisée.
 - Le namespace i18next correspond au nom de la feature : `catalog`, `orders`, `common`...
 
 **Init (à mettre dans `shared/lib/i18n.ts`) :**
@@ -389,40 +387,39 @@ Le projet est **monolingue FR** pour l'instant, mais la structure doit être pr�
 ```ts
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import common from '@/locales/fr';
-import catalog from '@/features/catalog/locales/fr';
-import orders from '@/features/orders/locales/fr';
+import fr from '@/locales/fr.json';
 
 void i18n.use(initReactI18next).init({
   lng: 'fr',
   fallbackLng: 'fr',
   defaultNS: 'common',
-  resources: {
-    fr: { common, catalog, orders },
-  },
+  resources: { fr },
   interpolation: { escapeValue: false },
 });
 
 export default i18n;
 ```
 
-**Fichier de traductions feature :**
+**Fichier de traductions unique (`src/locales/fr.json`) :**
 
-```ts
-// features/catalog/locales/fr.ts
-export default {
-  pageTitle: 'Catégories',
-  createButton: 'Nouvelle catégorie',
-  form: {
-    slug: 'Slug',
-    name: 'Nom',
-    description: 'Description',
-    save: 'Enregistrer',
+```json
+{
+  "common": {
+    "app": { "title": "CYNA" },
+    "actions": { "save": "Enregistrer", "cancel": "Annuler" }
   },
-  errors: {
-    notFound: 'Catégorie introuvable',
+  "catalog": {
+    "pageTitle": "Catégories",
+    "createButton": "Nouvelle catégorie",
+    "form": {
+      "slug": "Slug",
+      "name": "Nom",
+      "description": "Description"
+    },
+    "errors": { "notFound": "Catégorie introuvable" }
   },
-} as const;
+  "orders": { "pageTitle": "Commandes" }
+}
 ```
 
 **Usage dans un composant :**

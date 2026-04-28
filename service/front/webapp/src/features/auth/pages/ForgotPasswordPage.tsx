@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Shield } from 'lucide-react';
-import { apiClient } from '@/shared/lib/apiClient';
+import { authApi } from '@/features/auth/api/auth.api';
 import { Button } from '@/shared/components/ui/Button';
 import { Input } from '@/shared/components/ui/Input';
 
@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (formData: ForgotForm) => {
     try {
       setError('');
-      await apiClient.post('/webapp/auth/forgot-password', { email: formData.email });
+      await authApi.forgotPassword(formData.email);
       setSuccess(true);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erreur lors de la demande');

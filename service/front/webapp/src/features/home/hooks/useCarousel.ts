@@ -1,22 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { homeApi } from '../api/home.api';
 
-export interface CarouselSlide {
-  id: string;
-  titre?: string;
-  description?: string;
-  image?: string;
-  lien?: string;
-  ordre?: number;
-}
+export type { CarouselSlide } from '../types/home.types';
 
 export function usePublicCarousel() {
   return useQuery({
     queryKey: ['carousel'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/webapp/carousel');
-      return (data?.data ?? data ?? []) as CarouselSlide[];
-    },
+    queryFn: homeApi.listCarousel,
     staleTime: 1000 * 60 * 10,
   });
 }
+

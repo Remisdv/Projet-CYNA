@@ -1,55 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { catalogApi } from '../api/catalog.api';
+import type { ProductFilters } from '../types/catalog.types';
 
-export interface Product {
-  id: string;
-  nom: string;
-  description: string;
-  description_longue?: string;
-  prix_mensuel?: number;
-  prix_annuel?: number;
-  prix?: number;
-  type: 'produit' | 'service';
-  statut: 'publié' | 'archivé';
-  categorie?: string;
-  images?: string[];
-  caracteristiques?: Record<string, string>;
-}
-
-interface ProductFilters {
-  categorie?: string;
-  type?: string;
-  q?: string;
-  statut?: string;
-}
-
-function normalizeImages(raw: any[]): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.map((img: any) => (typeof img === 'string' ? img : img?.url ?? ''));
-}
-
-function normalizeProduct(p: any): Product {
-  return {
-    ...p,
-    description: p.description_courte ?? p.description ?? '',
-    description_longue: p.description_longue ?? undefined,
-    images: normalizeImages(p.images),
-  };
-}
+export type { Product } from '../types/catalog.types';
 
 export function useProducts(filters?: ProductFilters) {
   return useQuery({
     queryKey: ['products', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      params.set('statut', filters?.statut ?? 'publié');
-      if (filters?.categorie) params.set('categorie', filters.categorie);
-      if (filters?.type) params.set('type', filters.type);
-      if (filters?.q) params.set('q', filters.q);
-      const { data } = await apiClient.get(`/products?${params}`);
-      const list = (data?.data ?? data ?? []) as any[];
-      return list.map(normalizeProduct);
-    },
+    queryFn: () => catalogApi.listProducts(filters),
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -57,10 +15,7 @@ export function useProducts(filters?: ProductFilters) {
 export function useProductDetail(id: string | undefined) {
   return useQuery({
     queryKey: ['products', id],
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/products/${id}`);
-      return normalizeProduct(data?.data ?? data);
-    },
+    queryFn: () => catalogApi.getProduct(id as string),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
   });
@@ -69,11 +24,9 @@ export function useProductDetail(id: string | undefined) {
 export function useProductSearch(q: string) {
   return useQuery({
     queryKey: ['products', 'search', q],
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/products/search?q=${encodeURIComponent(q)}`);
-      return (data?.data ?? data ?? []) as Product[];
-    },
+    queryFn: () => catalogApi.searchProducts(q),
     enabled: q.trim().length >= 2,
     staleTime: 1000 * 60 * 2,
   });
 }
+

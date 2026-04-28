@@ -1,18 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { supportApi } from '../api/support.api';
+import type { ContactData } from '../types/support.types';
 
-export interface ContactData {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
+export type { ContactData } from '../types/support.types';
 
 export function useContact() {
   return useMutation({
-    mutationFn: async (contactData: ContactData) => {
-      const { data } = await apiClient.post('/webapp/contact', contactData);
-      return data;
-    },
+    mutationFn: (contactData: ContactData) => supportApi.sendContact(contactData),
   });
 }
+

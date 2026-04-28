@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { apiClient } from '@/shared/lib/apiClient';
+import { authApi } from '@/features/auth/api/auth.api';
 import { useAuth } from '@/shared/context/AuthContext';
 
 const RESEND_COOLDOWN = 60;
@@ -37,10 +37,10 @@ export default function TwoFactorPage() {
         setIsSubmitting(true);
         setError('');
         try {
-            const { data } = await apiClient.post('/webapp/auth/2fa/verify', { userId, code });
+            const data = await authApi.verifyTwoFactor(userId, code);
             if (data.access_token) localStorage.setItem('access_token', data.access_token);
             if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
-            loginWithTokens(data.user);
+            if (data.user) loginWithTokens(data.user);
             navigate('/account');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Code invalide');
@@ -53,7 +53,7 @@ export default function TwoFactorPage() {
         if (resendCooldown > 0 || method === 'totp') return;
         try {
             setResendSuccess(false);
-            await apiClient.post('/webapp/auth/2fa/resend', { userId });
+            await authApi.resendTwoFactor(userId);
             setResendSuccess(true);
             setResendCooldown(RESEND_COOLDOWN);
         } catch (err: any) {

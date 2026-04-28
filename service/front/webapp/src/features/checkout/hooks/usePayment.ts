@@ -1,51 +1,23 @@
 import { useMutation } from '@tanstack/react-query';
-import { apiClient } from '@/shared/lib/apiClient';
+import { checkoutApi } from '../api/checkout.api';
+import type { CreatePaymentIntentData } from '../types/checkout.types';
 
-export interface PaymentItem {
-  productId: string;
-  productName: string;
-  productType: 'produit' | 'service';
-  quantity: number;
-  unitPrice: number;
-  periodicity?: 'mensuel' | 'annuel';
-}
-
-export interface PaymentAddress {
-  street: string;
-  city: string;
-  postalCode: string;
-  country: string;
-}
-
-export interface CreatePaymentIntentData {
-  items: PaymentItem[];
-  billingAddress: PaymentAddress;
-  shippingAddress?: PaymentAddress;
-}
-
-export interface PaymentIntentResult {
-  clientSecret?: string;
-  subscriptionClientSecret?: string;
-  orderId?: number;
-  orderRef?: string;
-  subscriptionId?: number;
-  message: string;
-}
+export type {
+  PaymentItem,
+  PaymentAddress,
+  CreatePaymentIntentData,
+  PaymentIntentResult,
+} from '../types/checkout.types';
 
 export function useCreatePaymentIntent() {
   return useMutation({
-    mutationFn: async (data: CreatePaymentIntentData) => {
-      const { data: result } = await apiClient.post('/webapp/payment/create-intent', data);
-      return result as PaymentIntentResult;
-    },
+    mutationFn: (data: CreatePaymentIntentData) => checkoutApi.createPaymentIntent(data),
   });
 }
 
 export function useConfirmPayment() {
   return useMutation({
-    mutationFn: async (orderId: string) => {
-      const { data: result } = await apiClient.post('/webapp/payment/confirm', { orderId });
-      return result as { message: string };
-    },
+    mutationFn: (orderId: string) => checkoutApi.confirmPayment(orderId),
   });
 }
+
