@@ -92,16 +92,16 @@ export default function UsersPage() {
   };
 
   const handleResetPassword = (user: UserDto) => {
-    if (confirm(`Envoyer un email de rÃ©initialisation de mot de passe Ã  ${user.email} ?`)) {
+    if (confirm(`Envoyer un email de réinitialisation de mot de passe à ${user.email} ?`)) {
       console.log('Sending password reset email to:', user.email);
-      alert(`Email de rÃ©initialisation envoyÃ© Ã  ${user.email}`);
+      alert(`Email de réinitialisation envoyé à ${user.email}`);
     }
   };
 
   const handleDelete = (user: UserDto) => {
-    if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) {
       console.log('Deleting user:', user.id);
-      alert('Utilisateur supprimÃ© (mock)');
+      alert('Utilisateur supprimé (mock)');
     }
   };
 
@@ -134,7 +134,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Utilisateurs</h1>
           <p className="text-gray-500 mt-1">
-            GÃ©rez vos {filteredAndSortedUsers.length} utilisateurs
+            Gérez vos {filteredAndSortedUsers.length} utilisateurs
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -163,7 +163,7 @@ export default function UsersPage() {
           {paginatedUsers.length === 0 ? (
             <div className="text-center py-12">
               <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Aucun utilisateur trouvÃ©</p>
+              <p className="text-gray-500">Aucun utilisateur trouvé</p>
               {hasActiveFilters && (
                 <Button className="mt-4" variant="outline" onClick={clearFilters}>
                   Effacer les filtres

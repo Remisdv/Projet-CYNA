@@ -39,7 +39,16 @@
         }
     },
     "account": {
-        "pageTitle": "Mon compte"
+        "pageTitle": "Mon compte",
+        "heading": "Mon espace",
+        "tabs": {
+            "profile": "Mon profil",
+            "orders": "Commandes",
+            "subscriptions": "Abonnements",
+            "notifications": "Notifications",
+            "security": "Sécurité"
+        },
+        "logout": "Déconnexion"
     },
     "auth": {
         "login": {

@@ -57,7 +57,7 @@ export default function OrderDetailPage() {
   };
 
   const handleGenerateInvoice = () => {
-    alert(`GÃ©nÃ©ration de la facture pour ${order.ref} (fonctionnalitÃ© Ã  venir)`);
+    alert(`Génération de la facture pour ${order.ref} (fonctionnalité à venir)`);
   };
 
   const handleMarkShipped = () => {
@@ -81,7 +81,7 @@ export default function OrderDetailPage() {
   };
 
   const handleCancel = () => {
-    if (confirm('ÃŠtes-vous sÃ»r de vouloir annuler cette commande ?')) {
+    if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
       updateStatus.mutate({ id: order.id, status: 'cancelled' });
     }
   };
@@ -146,7 +146,7 @@ export default function OrderDetailPage() {
               Commande {order.ref}
             </h1>
             <p className="text-gray-500 mt-1">
-              CrÃ©Ã©e le {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+              Créée le {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
             </p>
           </div>
         </div>

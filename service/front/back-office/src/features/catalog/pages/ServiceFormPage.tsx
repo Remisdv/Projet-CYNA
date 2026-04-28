@@ -22,7 +22,7 @@ import { ServiceFormPreview } from '../components/serviceForm/ServiceFormPreview
 import { ServiceFormHeader } from '../components/serviceForm/ServiceFormHeader';
 
 const tabs: TabDescriptor[] = [
-  { id: 'general', label: 'GÃ©nÃ©ral', icon: <FileText className="h-4 w-4" /> },
+  { id: 'general', label: 'Général', icon: <FileText className="h-4 w-4" /> },
   { id: 'pricing', label: 'Tarification', icon: <DollarSign className="h-4 w-4" /> },
   { id: 'stock', label: 'Stock', icon: <Package className="h-4 w-4" /> },
   { id: 'images', label: 'Images', icon: <ImageIcon className="h-4 w-4" /> },
@@ -39,8 +39,8 @@ export default function ServiceFormPage() {
 
   const { data: rawCategories } = useServiceCategories();
   const categories = rawCategories?.map(c =>
-    c.value === '' ? { ...c, label: 'SÃ©lectionner une catÃ©gorie' } : c
-  ) ?? [{ value: '', label: 'SÃ©lectionner une catÃ©gorie' }];
+    c.value === '' ? { ...c, label: 'Sélectionner une catégorie' } : c
+  ) ?? [{ value: '', label: 'Sélectionner une catégorie' }];
 
   const {
     initialized, hasDraft, setHasDraft,
@@ -134,7 +134,7 @@ export default function ServiceFormPage() {
         <div className="flex flex-col flex-1 min-w-0 overflow-hidden border-r">
           {hasDraft && isCreate && (
             <div className="shrink-0 flex items-center justify-between bg-amber-50 border-b border-amber-200 px-6 py-2 text-sm">
-              <span className="text-amber-800">Brouillon restaurÃ© automatiquement.</span>
+              <span className="text-amber-800">Brouillon restauré automatiquement.</span>
               <button
                 onClick={() => { clearDraft(); setFormData({ ...defaultFormData }); setActiveTab('general'); setHasDraft(false); }}
                 className="text-amber-700 underline hover:text-amber-900 text-sm"

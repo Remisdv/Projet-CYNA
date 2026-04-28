@@ -75,7 +75,7 @@ export default function CommercialDashboardPage() {
         </div>
         <Button onClick={handleExportCSV} className="gap-2">
           <Download className="h-4 w-4" />
-          TÃ©lÃ©charger rapport CSV
+          Télécharger rapport CSV
         </Button>
       </div>
 
@@ -104,8 +104,8 @@ export default function CommercialDashboardPage() {
           <div className="text-sm text-blue-800">
             <p className="font-medium">Mode Lecture Seule</p>
             <p className="text-blue-600 mt-1">
-              Ce dashboard est en accÃ¨s lecture seule. Vous pouvez consulter les statistiques et exporter les rapports,
-              mais ne pouvez pas modifier les donnÃ©es.
+              Ce dashboard est en accès lecture seule. Vous pouvez consulter les statistiques et exporter les rapports,
+              mais ne pouvez pas modifier les données.
             </p>
           </div>
         </div>

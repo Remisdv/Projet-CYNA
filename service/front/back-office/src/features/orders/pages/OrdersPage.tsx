@@ -88,13 +88,13 @@ export default function OrdersPage() {
   };
 
   const handleMarkPaid = (order: Order) => {
-    if (confirm(`Marquer la commande ${order.ref} comme payÃ©e ?`)) {
+    if (confirm(`Marquer la commande ${order.ref} comme payée ?`)) {
       updatePayment.mutate({ id: order.id, paymentStatus: 'paid' });
     }
   };
 
   const handleCancel = (order: Order) => {
-    if (confirm(`Ãªtes-vous sÃ»r de vouloir annuler la commande ${order.ref} ?`)) {
+    if (confirm(`êtes-vous sûr de vouloir annuler la commande ${order.ref} ?`)) {
       updateStatus.mutate({ id: order.id, status: 'cancelled' });
     }
   };
@@ -145,7 +145,7 @@ export default function OrdersPage() {
           ) : filteredAndSortedOrders.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Aucune commande trouvÃ©e</p>
+              <p className="text-gray-500">Aucune commande trouvée</p>
               {hasActiveFilters && (
                 <Button className="mt-4" variant="outline" onClick={clearFilters}>
                   Effacer les filtres

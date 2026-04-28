@@ -47,7 +47,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
-            DerniÃ¨re mise Ã  jour: {lastRefresh.toLocaleTimeString('fr-FR')}
+            Dernière mise à jour: {lastRefresh.toLocaleTimeString('fr-FR')}
           </p>
         </div>
 

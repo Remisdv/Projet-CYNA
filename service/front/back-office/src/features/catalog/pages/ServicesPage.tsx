@@ -107,7 +107,7 @@ export default function ServicesPage() {
   };
 
   const handleArchive = (service: Service) => {
-    if (confirm(`ÃŠtes-vous sÃ»r de vouloir archiver "${service.name}" ?`)) {
+    if (confirm(`Êtes-vous sûr de vouloir archiver "${service.name}" ?`)) {
       deleteService.mutate(service.id);
     }
   };
@@ -128,7 +128,7 @@ export default function ServicesPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Services</h1>
           <p className="text-gray-500 mt-1">
-            {servicesLoading ? 'Chargement...' : `GÃ©rez vos ${filteredAndSortedServices.length} services et produits`}
+            {servicesLoading ? 'Chargement...' : `Gérez vos ${filteredAndSortedServices.length} services et produits`}
           </p>
         </div>
         <Button onClick={() => navigate('/catalog/services/new')}>
@@ -158,7 +158,7 @@ export default function ServicesPage() {
           {paginatedServices.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Aucun service trouvÃ©</p>
+              <p className="text-gray-500">Aucun service trouvé</p>
               {hasActiveFilters && (
                 <Button className="mt-4" variant="outline" onClick={clearFilters}>
                   Effacer les filtres
