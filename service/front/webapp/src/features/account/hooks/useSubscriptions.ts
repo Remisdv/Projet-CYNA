@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface Subscription {
   id: number;
@@ -17,7 +17,7 @@ export function useSubscriptions() {
   return useQuery({
     queryKey: ['subscriptions'],
     queryFn: async () => {
-      const { data } = await api.get('/webapp/subscriptions');
+      const { data } = await apiClient.get('/webapp/subscriptions');
       return data as Subscription[];
     },
   });
@@ -27,7 +27,7 @@ export function useSubscription(id: number | string) {
   return useQuery({
     queryKey: ['subscriptions', id],
     queryFn: async () => {
-      const { data } = await api.get(`/webapp/subscriptions/${id}`);
+      const { data } = await apiClient.get(`/webapp/subscriptions/${id}`);
       return data as Subscription;
     },
     enabled: !!id,

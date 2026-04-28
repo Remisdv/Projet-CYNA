@@ -1,106 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../services/api';
-import type { Category } from './useCategories';
+import { servicesApi } from '../api/services.api';
+import { categoriesApi } from '../api/categories.api';
+import type { ServiceCategory } from '../types/service.types';
 
-// ========== TYPES ==========
-
-export interface Service {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  monthlyPrice?: number;
-  annualPrice?: number;
-  annualDiscountPct?: number;
-  stock: number | 'unlimited';
-  lowStockThreshold: number;
-  status: 'draft' | 'published';
-  type: 'product' | 'service';
-  shortDescription: string;
-  longDescription?: string;
-  tags: string[];
-  slug: string;
-  metaTitle: string;
-  metaDescription: string;
-  keywords: string;
-  images: Array<{ id?: string; url: string; altText: string; isPrimary: boolean }>;
-  updatedAt: string;
-  createdAt: string;
-  autoRenewal?: boolean;
-  demoAvailable?: boolean;
-  periodicity?: string;
-}
-
-export interface ServiceCategory {
-  value: string;
-  label: string;
-}
-
-// ========== NORMALIZE ==========
-
-function normalizeService(raw: any): Service {
-  const isService = raw.type === 'service';
-  return {
-    id: raw.id,
-    name: raw.name ?? '',
-    category: raw.category ?? '',
-    price: isService ? (raw.monthlyPrice ?? raw.price ?? 0) : (raw.price ?? 0),
-    monthlyPrice: raw.monthlyPrice,
-    annualPrice: raw.annualPrice,
-    annualDiscountPct: raw.annualDiscountPct,
-    stock: raw.unlimitedStock ? 'unlimited' : (raw.stock ?? 0),
-    lowStockThreshold: raw.lowStockThreshold ?? 10,
-    // Le gateway convertit déjà statut "publié"/"brouillon" en status "published"/"draft".
-    // On accepte aussi "publié" au cas où la réponse brute du service-api passerait.
-    status: (raw.status === 'published' || raw.status === 'publié') ? 'published' : 'draft',
-    type: isService ? 'service' : 'product',
-    shortDescription: raw.shortDescription ?? '',
-    longDescription: raw.longDescription,
-    tags: raw.tags ?? [],
-    slug: raw.slug ?? '',
-    metaTitle: raw.metaTitle ?? '',
-    metaDescription: raw.metaDescription ?? '',
-    keywords: raw.keywords ?? '',
-    images: (raw.images ?? []).map((img: any) => ({
-      id: img.id ?? '',
-      url: img.url ?? '',
-      altText: img.altText ?? img.alt_text ?? '',
-      isPrimary: img.isPrimary ?? img.est_principale ?? false,
-    })),
-    updatedAt: raw.updatedAt ?? '',
-    createdAt: raw.createdAt ?? '',
-    autoRenewal: raw.autoRenewal,
-    demoAvailable: raw.demoAvailable,
-    periodicity: raw.periodicity,
-  };
-}
-
-// ========== HOOKS ==========
+const SERVICES_KEY = ['services'] as const;
+const CATEGORIES_KEY = ['categories'] as const;
 
 export const useServices = () => {
   return useQuery({
-    queryKey: ['services'],
-    queryFn: async () => {
-      const { data } = await api.get<any>('/services', {
-        params: { per_page: 100 },
-      });
-      const items: any[] = data.data ?? data.items ?? (Array.isArray(data) ? data : []);
-      return items.map(normalizeService);
-    },
+    queryKey: SERVICES_KEY,
+    queryFn: servicesApi.list,
   });
 };
 
-export const useServiceCategories = () => {
+export const useServiceCategories = (allCategoriesLabel = 'Toutes les catégories') => {
   const query = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const { data } = await api.get<Category[]>('/categories');
-      return data;
-    },
+    queryKey: CATEGORIES_KEY,
+    queryFn: categoriesApi.list,
   });
 
   const categories: ServiceCategory[] = [
-    { value: '', label: 'Toutes les catégories' },
+    { value: '', label: allCategoriesLabel },
     ...(query.data ?? []).map((c) => {
       const translation = c.translations.find((t) => t.lang === 'fr') ?? c.translations[0];
       return { value: c.id, label: translation?.name ?? c.slug };
@@ -116,12 +36,9 @@ export const useServiceCategories = () => {
 export const useCreateService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (serviceData: Record<string, any>) => {
-      const { data } = await api.post<Service>('/services', serviceData);
-      return data;
-    },
+    mutationFn: (serviceData: Record<string, any>) => servicesApi.create(serviceData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -129,12 +46,10 @@ export const useCreateService = () => {
 export const useUpdateService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...serviceData }: Record<string, any> & { id: string }) => {
-      const { data } = await api.put<Service>(`/services/${id}`, serviceData);
-      return data;
-    },
+    mutationFn: ({ id, ...serviceData }: Record<string, any> & { id: string }) =>
+      servicesApi.update(id, serviceData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -142,11 +57,9 @@ export const useUpdateService = () => {
 export const useDeleteService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/services/${id}`);
-    },
+    mutationFn: (id: string) => servicesApi.remove(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -154,12 +67,9 @@ export const useDeleteService = () => {
 export const usePublishService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data } = await api.post<Service>(`/services/${id}/publish`);
-      return data;
-    },
+    mutationFn: (id: string) => servicesApi.publish(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -167,12 +77,9 @@ export const usePublishService = () => {
 export const useDuplicateService = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data } = await api.post<Service>(`/services/${id}/duplicate`);
-      return data;
-    },
+    mutationFn: (id: string) => servicesApi.duplicate(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -180,12 +87,15 @@ export const useDuplicateService = () => {
 export const useAddServiceImages = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, images }: { id: string; images: Array<{ url: string; est_principale?: boolean }> }) => {
-      const { data } = await api.post(`/services/${id}/images`, { images });
-      return data;
-    },
+    mutationFn: ({
+      id,
+      images,
+    }: {
+      id: string;
+      images: Array<{ url: string; est_principale?: boolean }>;
+    }) => servicesApi.addImages(id, images),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
@@ -193,25 +103,22 @@ export const useAddServiceImages = () => {
 export const useDeleteServiceImage = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ serviceId, imageId }: { serviceId: string; imageId: string }) => {
-      const { data } = await api.delete(`/services/${serviceId}/images/${imageId}`);
-      return data;
-    },
+    mutationFn: ({ serviceId, imageId }: { serviceId: string; imageId: string }) =>
+      servicesApi.deleteImage(serviceId, imageId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: SERVICES_KEY });
     },
   });
 };
 
 export const useUploadImages = () => {
   return useMutation({
-    mutationFn: async (files: File[]): Promise<string[]> => {
-      const formData = new FormData();
-      files.forEach((file) => formData.append('files', file));
-      const { data } = await api.post('/upload/images', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return data.urls as string[];
-    },
+    mutationFn: (files: File[]) => servicesApi.uploadImages(files),
+  });
+};
+
+export const useUploadServiceImagesMultipart = () => {
+  return useMutation({
+    mutationFn: (files: File[]) => servicesApi.uploadImagesMultipart(files),
   });
 };

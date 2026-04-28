@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface Product {
   id: string;
@@ -46,7 +46,7 @@ export function useProducts(filters?: ProductFilters) {
       if (filters?.categorie) params.set('categorie', filters.categorie);
       if (filters?.type) params.set('type', filters.type);
       if (filters?.q) params.set('q', filters.q);
-      const { data } = await api.get(`/products?${params}`);
+      const { data } = await apiClient.get(`/products?${params}`);
       const list = (data?.data ?? data ?? []) as any[];
       return list.map(normalizeProduct);
     },
@@ -58,7 +58,7 @@ export function useProductDetail(id: string | undefined) {
   return useQuery({
     queryKey: ['products', id],
     queryFn: async () => {
-      const { data } = await api.get(`/products/${id}`);
+      const { data } = await apiClient.get(`/products/${id}`);
       return normalizeProduct(data?.data ?? data);
     },
     enabled: !!id,
@@ -70,7 +70,7 @@ export function useProductSearch(q: string) {
   return useQuery({
     queryKey: ['products', 'search', q],
     queryFn: async () => {
-      const { data } = await api.get(`/products/search?q=${encodeURIComponent(q)}`);
+      const { data } = await apiClient.get(`/products/search?q=${encodeURIComponent(q)}`);
       return (data?.data ?? data ?? []) as Product[];
     },
     enabled: q.trim().length >= 2,

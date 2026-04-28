@@ -125,13 +125,13 @@ export default function OrdersPage() {
   };
 
   const handleMarkPaid = (order: Order) => {
-    if (confirm(`Marquer la commande ${order.ref} comme pay�e ?`)) {
+    if (confirm(`Marquer la commande ${order.ref} comme payée ?`)) {
       updatePayment.mutate({ id: order.id, paymentStatus: 'paid' });
     }
   };
 
   const handleCancel = (order: Order) => {
-    if (confirm(`�tes-vous s�r de vouloir annuler la commande ${order.ref} ?`)) {
+    if (confirm(`êtes-vous sûr de vouloir annuler la commande ${order.ref} ?`)) {
       updateStatus.mutate({ id: order.id, status: 'cancelled' });
     }
   };
@@ -150,10 +150,10 @@ export default function OrdersPage() {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending': return 'En attente';
-      case 'confirmed': return 'Confirm�e';
-      case 'shipped': return 'Exp�di�e';
-      case 'delivered': return 'Livr�e';
-      case 'cancelled': return 'Annul�e';
+      case 'confirmed': return 'Confirmée';
+      case 'shipped': return 'Expédiée';
+      case 'delivered': return 'Livrée';
+      case 'cancelled': return 'Annulée';
       default: return status;
     }
   };
@@ -219,14 +219,14 @@ export default function OrdersPage() {
                 options={[
                   { value: 'all', label: 'Tous les statuts' },
                   { value: 'pending', label: 'En attente' },
-                  { value: 'confirmed', label: 'Confirm�e' },
-                  { value: 'shipped', label: 'Exp�di�e' },
-                  { value: 'delivered', label: 'Livr�e' },
-                  { value: 'cancelled', label: 'Annul�e' },
+                  { value: 'confirmed', label: 'Confirmée' },
+                  { value: 'shipped', label: 'Expédiée' },
+                  { value: 'delivered', label: 'Livrée' },
+                  { value: 'cancelled', label: 'Annulée' },
                 ]}
               />
               <Input
-                label="Date d�but"
+                label="Date début"
                 type="date"
                 value={dateFrom}
                 onChange={(e) => {
@@ -244,7 +244,7 @@ export default function OrdersPage() {
                 }}
               />
               <Input
-                label="Montant min (�)"
+                label="Montant min (€)"
                 type="number"
                 step="0.01"
                 value={amountMin}
@@ -255,7 +255,7 @@ export default function OrdersPage() {
                 placeholder="0"
               />
               <Input
-                label="Montant max (�)"
+                label="Montant max (€)"
                 type="number"
                 step="0.01"
                 value={amountMax}
@@ -278,7 +278,7 @@ export default function OrdersPage() {
           ) : filteredAndSortedOrders.length === 0 ? (
             <div className="text-center py-12">
               <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">Aucune commande trouv�e</p>
+              <p className="text-gray-500">Aucune commande trouvée</p>
               {hasActiveFilters && (
                 <Button className="mt-4" variant="outline" onClick={clearFilters}>
                   Effacer les filtres
@@ -336,7 +336,7 @@ export default function OrdersPage() {
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
-                        {order.amount.toFixed(2)} �
+                        {order.amount.toFixed(2)} €
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{order.itemsCount} item{order.itemsCount > 1 ? 's' : ''}</Badge>
@@ -359,7 +359,7 @@ export default function OrdersPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewDetails(order.id)}
-                            title="Voir d�tails"
+                            title="Voir détails"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -411,7 +411,7 @@ export default function OrdersPage() {
                     disabled={currentPage === 1}
                   >
                     <ChevronLeft className="h-4 w-4 mr-1" />
-                    Pr�c�dent
+                    Précédent
                   </Button>
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {

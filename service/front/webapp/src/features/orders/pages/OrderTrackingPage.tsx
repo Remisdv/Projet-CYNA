@@ -244,8 +244,6 @@ export default function OrderTrackingPage() {
     const hasProducts = order.items.some(i => (i.productType || i.type) === 'produit');
     const hasServices = order.items.some(i => (i.productType || i.type) === 'service');
     const status = tracking?.status || order.status;
-    const productItems = order.items.filter(i => (i.productType || i.type) === 'produit');
-    const serviceItems = order.items.filter(i => (i.productType || i.type) === 'service');
 
     return (
         <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">

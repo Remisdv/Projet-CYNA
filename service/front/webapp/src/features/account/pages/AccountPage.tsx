@@ -102,7 +102,6 @@ export default function AccountPage() {
 /* ─── Profile tab ─────────────────────────────────────────────────── */
 function ProfileTab() {
   const { data: profile, isLoading } = useProfile();
-  const updateProfile = useUpdateProfile();
   const [editing, setEditing] = useState(false);
 
   if (isLoading) return <div className="text-center py-8 text-gray-500">Chargement...</div>;

@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface PaymentItem {
   productId: string;
@@ -35,7 +35,7 @@ export interface PaymentIntentResult {
 export function useCreatePaymentIntent() {
   return useMutation({
     mutationFn: async (data: CreatePaymentIntentData) => {
-      const { data: result } = await api.post('/webapp/payment/create-intent', data);
+      const { data: result } = await apiClient.post('/webapp/payment/create-intent', data);
       return result as PaymentIntentResult;
     },
   });
@@ -44,7 +44,7 @@ export function useCreatePaymentIntent() {
 export function useConfirmPayment() {
   return useMutation({
     mutationFn: async (orderId: string) => {
-      const { data: result } = await api.post('/webapp/payment/confirm', { orderId });
+      const { data: result } = await apiClient.post('/webapp/payment/confirm', { orderId });
       return result as { message: string };
     },
   });

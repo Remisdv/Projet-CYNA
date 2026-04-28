@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface OrderItem {
   productId: string;
@@ -35,7 +35,7 @@ export function useOrders(page = 1, limit = 10) {
   return useQuery({
     queryKey: ['orders', page, limit],
     queryFn: async () => {
-      const { data } = await api.get(`/webapp/orders?page=${page}&limit=${limit}`);
+      const { data } = await apiClient.get(`/webapp/orders?page=${page}&limit=${limit}`);
       return data as { data: Order[]; total: number; page: number; limit: number };
     },
   });
@@ -45,7 +45,7 @@ export function useOrder(id: number | string) {
   return useQuery({
     queryKey: ['orders', id],
     queryFn: async () => {
-      const { data } = await api.get(`/webapp/orders/${id}`);
+      const { data } = await apiClient.get(`/webapp/orders/${id}`);
       return data as Order;
     },
     enabled: !!id,
@@ -64,7 +64,7 @@ export function useOrderTracking(id: number | string) {
   return useQuery({
     queryKey: ['orders', id, 'tracking'],
     queryFn: async () => {
-      const { data } = await api.get(`/webapp/orders/${id}/tracking`);
+      const { data } = await apiClient.get(`/webapp/orders/${id}/tracking`);
       return data as TrackingData;
     },
     enabled: !!id,
@@ -72,7 +72,7 @@ export function useOrderTracking(id: number | string) {
 }
 
 export function downloadInvoice(orderId: number | string) {
-  return api.get(`/webapp/orders/${orderId}/invoice`, {
+  return apiClient.get(`/webapp/orders/${orderId}/invoice`, {
     responseType: 'blob',
   }).then((response) => {
     const url = window.URL.createObjectURL(new Blob([response.data]));

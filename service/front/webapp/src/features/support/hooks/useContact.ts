@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface ContactData {
   name: string;
@@ -11,7 +11,7 @@ export interface ContactData {
 export function useContact() {
   return useMutation({
     mutationFn: async (contactData: ContactData) => {
-      const { data } = await api.post('/webapp/contact', contactData);
+      const { data } = await apiClient.post('/webapp/contact', contactData);
       return data;
     },
   });

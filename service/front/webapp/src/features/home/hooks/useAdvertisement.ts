@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface Advertisement {
   id: string;
@@ -12,7 +12,7 @@ export function useActiveAdvertisement() {
   return useQuery({
     queryKey: ['advertisement', 'active'],
     queryFn: async () => {
-      const { data } = await api.get('/webapp/advertisements/active');
+      const { data } = await apiClient.get('/webapp/advertisements/active');
       return (data?.data ?? data) as Advertisement | null;
     },
     staleTime: 1000 * 60 * 10,

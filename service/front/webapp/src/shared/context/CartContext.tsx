@@ -111,7 +111,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line no-console
     console.debug('[Cart] merging', stored.length, 'local items to server');
 
-    mergeServer.mutate(serverPayload, {
+    mergeServer.mutate(serverPayload as unknown as Parameters<typeof mergeServer.mutate>[0], {
       onSuccess: () => {
         // Succès: le serveur a persisté les lignes (même si stock insuffisant,
         // le back save maintenant en best-effort). On peut vider le local.

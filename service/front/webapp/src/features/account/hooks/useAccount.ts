@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface Address {
   street: string;
@@ -37,7 +37,7 @@ export function useProfile() {
   return useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
-      const { data } = await api.get('/webapp/account/profile');
+      const { data } = await apiClient.get('/webapp/account/profile');
       return data as Profile;
     },
   });
@@ -47,7 +47,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (profileData: UpdateProfileData) => {
-      const { data } = await api.put('/webapp/account/profile', profileData);
+      const { data } = await apiClient.put('/webapp/account/profile', profileData);
       return data;
     },
     onSuccess: () => {
@@ -59,7 +59,7 @@ export function useUpdateProfile() {
 export function useChangePassword() {
   return useMutation({
     mutationFn: async (passwordData: ChangePasswordData) => {
-      const { data } = await api.put('/webapp/account/password', passwordData);
+      const { data } = await apiClient.put('/webapp/account/password', passwordData);
       return data;
     },
   });

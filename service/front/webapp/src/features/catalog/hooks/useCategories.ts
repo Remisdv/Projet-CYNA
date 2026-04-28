@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { apiClient } from '@/shared/lib/apiClient';
 
 export interface CategoryTranslation {
   id: string;
@@ -27,7 +27,7 @@ export function usePublicCategories() {
   return useQuery({
     queryKey: ['bo-categories'],
     queryFn: async () => {
-      const { data } = await api.get('/bo/categories');
+      const { data } = await apiClient.get('/bo/categories');
       const list = (data?.data ?? data ?? []) as Category[];
       return list.filter((c) => c.isActive !== false);
     },
