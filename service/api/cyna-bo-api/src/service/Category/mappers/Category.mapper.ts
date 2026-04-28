@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Category } from '../../database/entity/Category/Category.entity';
-import { CategoryDto, CategoryTranslationDto, CreateUpdateCategoryDto } from '../dtos/Category/Category.dto';
+import { Category } from '../../../database/entity/Category/Category.entity';
+import { CategoryDto, CategoryTranslationDto, CreateUpdateCategoryDto } from '../dtos/Category.dto';
 
 @Injectable()
 export class CategoryMapper {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { TextePromotionnel } from '../../database/entity/TextePromotionnel/TextePromotionnel.entity';
-import { TextePromotionnelDto, CreateUpdateTextePromotionnelDto } from '../dtos/TextPromotionnel/TextePromotionnel.dto';
+import { TextePromotionnel } from '../../../database/entity/TextePromotionnel/TextePromotionnel.entity';
+import { TextePromotionnelDto, CreateUpdateTextePromotionnelDto } from '../dtos/TextePromotionnel.dto';
 
 @Injectable()
 export class TextePromotionnelMapper {

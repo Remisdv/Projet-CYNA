@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
 import { BoAuthService } from '../../service/auth/bo-auth.service';
-import { BoLoginDto, BoAuthResponseDto, BoRefreshDto, TwoFactorVerifyDto, TwoFactorResendDto } from '../../service/dtos/auth/bo-auth.dto';
+import { BoLoginDto, BoAuthResponseDto, BoRefreshDto, TwoFactorVerifyDto, TwoFactorResendDto } from '../../service/auth/dtos/bo-auth.dto';
 
 @Controller('auth')
 export class BoAuthController {

@@ -40,3 +40,9 @@ export class BoAuthResponseDto {
     status: string;
   };
 }
+
+export class TwoFactorPendingResponseDto {
+  requiresTwoFactor: true;
+  userId: string;
+  email: string;
+}

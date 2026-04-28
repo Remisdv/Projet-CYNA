@@ -1,29 +1,27 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
 import { User } from '../../database/entity/User/User.entity';
+import { UserRepository } from '../../repository/User/User.repository';
 import { BoEmailService } from '../email/BoEmail.service';
-import { BoLoginDto, BoAuthResponseDto, BoRefreshDto, TwoFactorVerifyDto } from '../dtos/auth/bo-auth.dto';
-
-export interface TwoFactorPendingResponse {
-  requiresTwoFactor: true;
-  userId: string;
-  email: string;
-}
+import {
+  BoLoginDto,
+  BoAuthResponseDto,
+  BoRefreshDto,
+  TwoFactorVerifyDto,
+  TwoFactorPendingResponseDto,
+} from './dtos/bo-auth.dto';
 
 @Injectable()
 export class BoAuthService {
   constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
+    private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly emailService: BoEmailService,
   ) { }
 
-  async login(loginDto: BoLoginDto): Promise<TwoFactorPendingResponse> {
-    const user = await this.userRepository.findOneBy({ email: loginDto.email });
+  async login(loginDto: BoLoginDto): Promise<TwoFactorPendingResponseDto> {
+    const user = await this.userRepository.findByEmail(loginDto.email);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -46,7 +44,7 @@ export class BoAuthService {
   }
 
   async verifyTwoFactor(dto: TwoFactorVerifyDto): Promise<BoAuthResponseDto> {
-    const user = await this.userRepository.findOneBy({ id: dto.userId });
+    const user = await this.userRepository.findById(dto.userId);
 
     if (!user || !user.twoFactorCode || !user.twoFactorCodeExpiry) {
       throw new UnauthorizedException('Code invalide');
@@ -69,7 +67,7 @@ export class BoAuthService {
   }
 
   async resendTwoFactor(userId: string): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new UnauthorizedException('Utilisateur introuvable');
     }
@@ -94,7 +92,7 @@ export class BoAuthService {
       throw new UnauthorizedException('Invalid token type');
     }
 
-    const user = await this.userRepository.findOneBy({ id: payload.sub });
+    const user = await this.userRepository.findById(payload.sub);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

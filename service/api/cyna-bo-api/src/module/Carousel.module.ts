@@ -3,11 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CarouselItem } from '../database/entity/Carousel/CarouselItem.entity';
 import { CarouselController } from '../endpoint/Carousel/Carousel.controller';
 import { CarouselService } from '../service/Carousel/Carousel.service';
-import { CarouselMapper } from '../service/mappers/Carousel.mapper';
+import { CarouselMapper } from '../service/Carousel/mappers/Carousel.mapper';
+import { CarouselRepository } from '../repository/Carousel/Carousel.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([CarouselItem])],
   controllers: [CarouselController],
-  providers: [CarouselService, CarouselMapper],
+  providers: [CarouselService, CarouselMapper, CarouselRepository],
 })
-export class CarouselModule {}
+export class CarouselModule { }

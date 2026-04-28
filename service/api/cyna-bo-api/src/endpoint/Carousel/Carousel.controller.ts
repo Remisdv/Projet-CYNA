@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CarouselService } from '../../service/Carousel/Carousel.service';
-import { CarouselItemDto, CreateUpdateCarouselItemDto } from '../../service/dtos/Carousel/Carousel.dto';
+import { CarouselItemDto, CreateUpdateCarouselItemDto } from '../../service/Carousel/dtos/Carousel.dto';
 
 @Controller('carousel')
 export class CarouselController {
-  constructor(private readonly carouselService: CarouselService) {}
+  constructor(private readonly carouselService: CarouselService) { }
 
   @Get()
   async findAll(): Promise<CarouselItemDto[]> {

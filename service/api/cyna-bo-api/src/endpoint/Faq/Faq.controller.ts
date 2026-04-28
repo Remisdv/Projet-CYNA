@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { FaqService } from '../../service/Faq/Faq.service';
-import { FaqDto, CreateUpdateFaqDto, ReorderFaqDto } from '../../service/dtos/Faq/Faq.dto';
+import { FaqDto, CreateUpdateFaqDto, ReorderFaqDto } from '../../service/Faq/dtos/Faq.dto';
 
 @Controller('faqs')
 export class FaqController {
-  constructor(private readonly faqService: FaqService) {}
+  constructor(private readonly faqService: FaqService) { }
 
   @Get('tree')
   async findTree(@Query('lang') lang?: string): Promise<FaqDto[]> {

@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Put, Patch, Param, Delete } from '@nestjs/common';
 import { TextePromotionnelService } from '../../service/TextePromotionnel/TextePromotionnel.service';
-import { CreateUpdateTextePromotionnelDto, TextePromotionnelDto } from '../../service/dtos/TextPromotionnel/TextePromotionnel.dto';
+import { CreateUpdateTextePromotionnelDto, TextePromotionnelDto } from '../../service/TextePromotionnel/dtos/TextePromotionnel.dto';
 
 @Controller('advertisements')
 export class TextePromotionnelController {
-  constructor(private readonly service: TextePromotionnelService) {}
+  constructor(private readonly service: TextePromotionnelService) { }
 
   @Get()
   getAll(): Promise<TextePromotionnelDto[]> {
