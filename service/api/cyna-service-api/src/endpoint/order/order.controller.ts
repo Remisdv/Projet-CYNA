@@ -1,79 +1,12 @@
 import { Controller, Get, Patch, Post, Param, Query, Body, Headers } from '@nestjs/common';
-import { IsEnum, IsOptional, IsString, IsNumber, IsArray, IsEmail, IsObject } from 'class-validator';
-import { Type } from 'class-transformer';
 import { OrderService } from '../../service/order/order.service';
-import { OrderStatus, PaymentStatus } from '../../database/entity/order';
-
-class UpdateStatusDto {
-  @IsEnum(OrderStatus)
-  status: OrderStatus;
-
-  @IsOptional()
-  @IsString()
-  trackingNumber?: string;
-}
-
-class UpdatePaymentStatusDto {
-  @IsEnum(PaymentStatus)
-  paymentStatus: PaymentStatus;
-}
-
-class AddNoteDto {
-  @IsString()
-  text: string;
-}
-
-class SendCredentialsDto {
-  @IsArray()
-  credentials: Array<{ serviceName: string; data: Record<string, string> }>;
-
-  @IsOptional()
-  @IsString()
-  customMessage?: string;
-}
-
-class SyncOrderBodyDto {
-  @IsString()
-  ref: string;
-
-  @IsEmail()
-  clientEmail: string;
-
-  @IsOptional()
-  @IsString()
-  clientFirstName?: string;
-
-  @IsOptional()
-  @IsString()
-  clientLastName?: string;
-
-  @IsArray()
-  items: any[];
-
-  @IsNumber()
-  @Type(() => Number)
-  amount: number;
-
-  @IsOptional()
-  @IsString()
-  status?: string;
-
-  @IsOptional()
-  @IsString()
-  paymentStatus?: string;
-
-  @IsOptional()
-  @IsObject()
-  billingAddress?: any;
-
-  @IsOptional()
-  @IsObject()
-  shippingAddress?: any;
-
-  @IsOptional()
-  @IsString()
-  createdAt?: string;
-}
+import {
+  UpdateStatusDto,
+  UpdatePaymentStatusDto,
+  AddNoteDto,
+  SendCredentialsDto,
+  SyncOrderBodyDto,
+} from '../../service/order/dtos/order.dto';
 
 @Controller('orders')
 export class OrderController {

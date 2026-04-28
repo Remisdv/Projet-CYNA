@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsOptional, MaxLength, Length } from 'class-validator';
-import { ServiceStatus } from '../../database/entity/service/service.entity';
+import { ServiceStatus } from '../../../database/entity/service/service.entity';
 
 export class CreateServiceDto {
   @IsString()

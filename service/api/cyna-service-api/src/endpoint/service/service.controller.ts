@@ -9,12 +9,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { ServiceService } from '../../service/service/service.service';
-import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from '../../dto/service/service.dto';
+import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from '../../service/service/dtos/service.dto';
 import { ServiceStatus } from '../../database/entity/service/service.entity';
 
 @Controller('services')
 export class ServiceController {
-  constructor(private readonly serviceService: ServiceService) {}
+  constructor(private readonly serviceService: ServiceService) { }
 
   /**
    * GET /services

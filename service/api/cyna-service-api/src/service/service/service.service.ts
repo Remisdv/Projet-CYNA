@@ -1,15 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ServiceEntity, ServiceStatus } from '../../database/entity/service/service.entity';
-import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from '../../dto/service/service.dto';
+import { ServiceRepository } from '../../repository/service/service.repository';
+import { ServiceMapper } from './mappers/service.mapper';
+import { CreateServiceDto, UpdateServiceDto, ServiceResponseDto } from './dtos/service.dto';
 
 @Injectable()
 export class ServiceService {
   constructor(
-    @InjectRepository(ServiceEntity)
-    private serviceRepository: Repository<ServiceEntity>,
+    private readonly serviceRepository: ServiceRepository,
+    private readonly mapper: ServiceMapper,
   ) {}
 
   /**
@@ -31,7 +31,7 @@ export class ServiceService {
     let slug = this.generateSlug(nom);
     let counter = 1;
 
-    while (await this.serviceRepository.findOneBy({ slug })) {
+    while (await this.serviceRepository.findBySlug(slug)) {
       slug = `${this.generateSlug(nom)}-${counter}`;
       counter++;
     }
@@ -52,7 +52,7 @@ export class ServiceService {
       service.slug = await this.generateUniqueSlug(service.nom);
     } else {
       // Verify slug uniqueness
-      const existingService = await this.serviceRepository.findOneBy({ slug: service.slug });
+      const existingService = await this.serviceRepository.findBySlug(service.slug);
       if (existingService) {
         throw new ConflictException(`Un service avec le slug ${service.slug} existe déjà`);
       }
@@ -64,7 +64,7 @@ export class ServiceService {
     }
 
     const saved = await this.serviceRepository.save(service);
-    return this.mapToResponseDto(saved);
+    return this.mapper.toDto(saved);
   }
 
   /**
@@ -84,38 +84,17 @@ export class ServiceService {
   }> {
     const page = query.page || 1;
     const per_page = query.per_page || 20;
-    const skip = (page - 1) * per_page;
 
-    let queryBuilder = this.serviceRepository.createQueryBuilder('service');
-
-    // Apply filters
-    if (query.categorie) {
-      queryBuilder = queryBuilder.andWhere('service.categoryId = :categorie', {
-        categorie: query.categorie,
-      });
-    }
-
-    if (query.statut) {
-      queryBuilder = queryBuilder.andWhere('service.statut = :statut', {
-        statut: query.statut,
-      });
-    }
-
-    // Apply sorting
-    if (query.sort) {
-      const [field, direction] = query.sort.split(':');
-      queryBuilder = queryBuilder.orderBy(`service.${field}`, (direction?.toUpperCase() as 'ASC' | 'DESC') || 'ASC');
-    } else {
-      queryBuilder = queryBuilder.orderBy('service.createdAt', 'DESC');
-    }
-
-    // Apply pagination
-    queryBuilder = queryBuilder.skip(skip).take(per_page);
-
-    const [services, total] = await queryBuilder.getManyAndCount();
+    const { data, total } = await this.serviceRepository.findFiltered({
+      page,
+      per_page,
+      categorie: query.categorie,
+      statut: query.statut,
+      sort: query.sort,
+    });
 
     return {
-      data: services.map(service => this.mapToResponseDto(service)),
+      data: this.mapper.toDtoArray(data),
       total,
       page,
       per_page,
@@ -126,25 +105,25 @@ export class ServiceService {
    * Get service by ID
    */
   async findById(id: string): Promise<ServiceResponseDto> {
-    const service = await this.serviceRepository.findOneBy({ id });
+    const service = await this.serviceRepository.findById(id);
     if (!service) {
       throw new NotFoundException(`Service avec l'id ${id} introuvable`);
     }
-    return this.mapToResponseDto(service);
+    return this.mapper.toDto(service);
   }
 
   /**
    * Update a service
    */
   async update(id: string, updateServiceDto: UpdateServiceDto): Promise<ServiceResponseDto> {
-    const service = await this.serviceRepository.findOneBy({ id });
+    const service = await this.serviceRepository.findById(id);
     if (!service) {
       throw new NotFoundException(`Service avec l'id ${id} introuvable`);
     }
 
     // Verify slug uniqueness if changed
     if (updateServiceDto.slug && updateServiceDto.slug !== service.slug) {
-      const existingService = await this.serviceRepository.findOneBy({ slug: updateServiceDto.slug });
+      const existingService = await this.serviceRepository.findBySlug(updateServiceDto.slug);
       if (existingService) {
         throw new ConflictException(`Un service avec le slug ${updateServiceDto.slug} existe déjà`);
       }
@@ -152,15 +131,15 @@ export class ServiceService {
 
     Object.assign(service, updateServiceDto);
     const saved = await this.serviceRepository.save(service);
-    return this.mapToResponseDto(saved);
+    return this.mapper.toDto(saved);
   }
 
   /**
    * Delete a service
    */
   async remove(id: string): Promise<void> {
-    const result = await this.serviceRepository.delete(id);
-    if (result.affected === 0) {
+    const affected = await this.serviceRepository.deleteById(id);
+    if (affected === 0) {
       throw new NotFoundException(`Service avec l'id ${id} introuvable`);
     }
   }
@@ -169,7 +148,7 @@ export class ServiceService {
    * Duplicate a service
    */
   async duplicate(id: string): Promise<ServiceResponseDto> {
-    const originalService = await this.serviceRepository.findOneBy({ id });
+    const originalService = await this.serviceRepository.findById(id);
     if (!originalService) {
       throw new NotFoundException(`Service avec l'id ${id} introuvable`);
     }
@@ -186,25 +165,6 @@ export class ServiceService {
     newService.keywords = originalService.keywords;
 
     const saved = await this.serviceRepository.save(newService);
-    return this.mapToResponseDto(saved);
-  }
-
-  /**
-   * Map entity to response DTO
-   */
-  private mapToResponseDto(entity: ServiceEntity): ServiceResponseDto {
-    return {
-      id: entity.id,
-      nom: entity.nom,
-      categoryId: entity.categoryId,
-      description: entity.description,
-      statut: entity.statut,
-      slug: entity.slug,
-      meta_title: entity.meta_title,
-      meta_description: entity.meta_description,
-      keywords: entity.keywords,
-      createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
-    };
+    return this.mapper.toDto(saved);
   }
 }

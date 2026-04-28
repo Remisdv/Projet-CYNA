@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsArray, IsOptional, IsNumber, IsBoolean, IsInt, MaxLength, Length } from 'class-validator';
-import { ProductType, ServicePeriodicity, ProductStatus } from '../../database/entity/product';
+import { ProductType, ServicePeriodicity, ProductStatus } from '../../../database/entity/product';
 
 export class CreateProductDto {
   @IsString()

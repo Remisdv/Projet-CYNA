@@ -16,11 +16,11 @@ import {
   UpdateProductDto,
   ProductResponseDto,
   UpdateImageOrderDto,
-} from '../../dto/product';
+} from '../../service/product/dtos';
 
 @Controller('products')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(private readonly productService: ProductService) { }
 
   /**
    * GET /products
