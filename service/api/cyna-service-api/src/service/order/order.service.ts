@@ -1,34 +1,19 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { OrderEntity, OrderStatus, PaymentStatus } from '../../database/entity/order';
+import { OrderRepository } from '../../repository/order/order.repository';
 import { EmailService } from '../email/email.service';
-
-export interface SyncOrderDto {
-  ref: string;
-  clientEmail: string;
-  clientFirstName?: string;
-  clientLastName?: string;
-  items: any[];
-  amount: number;
-  status?: string;
-  paymentStatus?: string;
-  billingAddress?: any;
-  shippingAddress?: any;
-  createdAt?: string;
-}
+import { SyncOrderDto, PatchOrderDto } from './dtos/order.dto';
 
 @Injectable()
 export class OrderService {
   constructor(
-    @InjectRepository(OrderEntity)
-    private readonly orderRepository: Repository<OrderEntity>,
+    private readonly orderRepository: OrderRepository,
     private readonly emailService: EmailService,
   ) { }
 
   async syncFromWebapp(dto: SyncOrderDto): Promise<OrderEntity> {
     // Upsert by ref to avoid duplicates
-    const existing = await this.orderRepository.findOne({ where: { ref: dto.ref } });
+    const existing = await this.orderRepository.findByRef(dto.ref);
     if (existing) {
       // Update all fields on re-sync
       if (dto.status) existing.status = dto.status as OrderStatus;
@@ -106,12 +91,7 @@ export class OrderService {
       where.status = params.status as OrderStatus;
     }
 
-    const [items, total] = await this.orderRepository.findAndCount({
-      where,
-      order: { createdAt: 'DESC' },
-      skip,
-      take: per_page,
-    });
+    const [items, total] = await this.orderRepository.findAndCount(where, skip, per_page);
 
     return {
       items,
@@ -123,7 +103,7 @@ export class OrderService {
   }
 
   async findById(id: string): Promise<OrderEntity> {
-    const order = await this.orderRepository.findOne({ where: { id } });
+    const order = await this.orderRepository.findById(id);
     if (!order) {
       throw new NotFoundException(`Order ${id} not found`);
     }
@@ -131,7 +111,7 @@ export class OrderService {
   }
 
   async findByRef(ref: string): Promise<OrderEntity | null> {
-    return this.orderRepository.findOne({ where: { ref } });
+    return this.orderRepository.findByRef(ref);
   }
 
   async updateStatus(
@@ -220,6 +200,20 @@ export class OrderService {
     }
 
     return saved;
+  }
+
+  async patchUpdate(id: string, dto: PatchOrderDto, by: string): Promise<OrderEntity> {
+    let order = await this.findById(id);
+    if (dto.status !== undefined) {
+      order = await this.updateStatus(id, dto.status, by, dto.trackingNumber);
+    } else if (dto.trackingNumber !== undefined) {
+      order.trackingNumber = dto.trackingNumber;
+      order = await this.orderRepository.save(order);
+    }
+    if (dto.paymentStatus !== undefined) {
+      order = await this.updatePaymentStatus(id, dto.paymentStatus, by);
+    }
+    return order;
   }
 
   async addNote(id: string, text: string, by: string): Promise<OrderEntity> {

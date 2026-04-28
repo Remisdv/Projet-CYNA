@@ -1,0 +1,91 @@
+{
+    "common": {
+        "app": {
+            "title": "CYNA",
+            "tagline": "Solutions de Cybersécurité",
+            "loading": "Chargement..."
+        },
+        "navigation": {
+            "home": "Accueil",
+            "catalog": "Catalogue",
+            "account": "Mon compte",
+            "cart": "Panier",
+            "support": "Support",
+            "login": "Connexion",
+            "register": "Inscription",
+            "logout": "Déconnexion"
+        },
+        "actions": {
+            "save": "Enregistrer",
+            "cancel": "Annuler",
+            "delete": "Supprimer",
+            "edit": "Modifier",
+            "confirm": "Confirmer",
+            "close": "Fermer",
+            "back": "Retour",
+            "next": "Suivant",
+            "previous": "Précédent",
+            "submit": "Valider"
+        },
+        "status": {
+            "loading": "Chargement...",
+            "error": "Erreur",
+            "success": "Succès"
+        },
+        "errors": {
+            "generic": "Une erreur est survenue",
+            "network": "Erreur de connexion",
+            "notFound": "Introuvable"
+        }
+    },
+    "account": {
+        "pageTitle": "Mon compte",
+        "heading": "Mon espace",
+        "tabs": {
+            "profile": "Mon profil",
+            "orders": "Commandes",
+            "subscriptions": "Abonnements",
+            "notifications": "Notifications",
+            "security": "Sécurité"
+        },
+        "logout": "Déconnexion"
+    },
+    "auth": {
+        "login": {
+            "pageTitle": "Connexion"
+        },
+        "register": {
+            "pageTitle": "Inscription"
+        },
+        "forgotPassword": {
+            "pageTitle": "Mot de passe oublié"
+        },
+        "resetPassword": {
+            "pageTitle": "Réinitialiser le mot de passe"
+        },
+        "twoFactor": {
+            "pageTitle": "Vérification en deux étapes"
+        }
+    },
+    "cart": {
+        "pageTitle": "Panier"
+    },
+    "catalog": {
+        "pageTitle": "Catalogue",
+        "productDetail": {
+            "pageTitle": "Détail produit"
+        }
+    },
+    "checkout": {
+        "pageTitle": "Paiement"
+    },
+    "home": {
+        "pageTitle": "Accueil"
+    },
+    "orders": {
+        "trackingPageTitle": "Suivi de commande"
+    },
+    "support": {
+        "pageTitle": "Contact"
+    }
+}

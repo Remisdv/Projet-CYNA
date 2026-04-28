@@ -1,74 +1,91 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Res,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { Public } from '../../common/decorator/public.decorator';
 import { BoAuthService } from '../../service/bo-auth/bo-auth.service';
-import { BoLoginDto, BoRefreshDto } from '../../dto/bo-auth/bo-auth.dto';
+import {
+  BoCreateSessionDto,
+  BoVerifySessionDto,
+  BoTwoFactorChallengeDto,
+} from '../../dto/bo-auth/bo-auth.dto';
+
+const COOKIE_NAME = 'BoAuthentication';
+const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function setAuthCookie(res: Response, token: string): void {
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: COOKIE_MAX_AGE,
+  });
+}
 
 @Controller('api/bo/auth')
 export class BoAuthController {
-  constructor(private readonly authService: BoAuthService) { }
+  constructor(private readonly authService: BoAuthService) {}
 
+  /**
+   * POST /api/bo/auth/sessions — polymorphic.
+   * Body { email, password } → login (returns 2FA pending response, no cookie yet)
+   * Body { refresh_token } → refresh tokens
+   */
   @Public()
-  @Post('login')
-  async login(@Body() loginDto: BoLoginDto, @Res() res: Response): Promise<void> {
-    const authResponse = await this.authService.loginBo(loginDto);
+  @Post('sessions')
+  @HttpCode(HttpStatus.OK)
+  async createSession(@Body() dto: BoCreateSessionDto, @Res() res: Response): Promise<void> {
+    const authResponse = await this.authService.createSession({
+      email: dto.email,
+      password: dto.password,
+      refresh_token: dto.refresh_token,
+    });
 
-    // If 2FA is required, return pending response without setting cookie
     if ((authResponse as any).requiresTwoFactor) {
-      res.status(200).json(authResponse);
+      res.status(HttpStatus.OK).json(authResponse);
       return;
     }
 
-    res.cookie('BoAuthentication', authResponse.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.status(200).json({
-      message: 'Login successful',
-      user: authResponse.user,
-      access_token: authResponse.access_token,
-      refresh_token: authResponse.refresh_token,
-    });
-  }
-
-  @Public()
-  @Post('2fa/verify')
-  async verifyTwoFactor(@Body() body: { userId: string; code: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.verifyTwoFactor(body.userId, body.code);
-
-    if (result.access_token) {
-      res.cookie('BoAuthentication', result.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000,
-      });
+    if ((authResponse as any).access_token) {
+      setAuthCookie(res, (authResponse as any).access_token);
     }
-
-    res.status(200).json(result);
+    res.status(HttpStatus.OK).json(authResponse);
   }
 
+  /** PATCH /api/bo/auth/sessions/current — verify 2FA code. */
   @Public()
-  @Post('2fa/resend')
-  async resendTwoFactor(@Body() body: { userId: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.resendTwoFactor(body.userId);
-    res.status(200).json(result);
+  @Patch('sessions/current')
+  @HttpCode(HttpStatus.OK)
+  async verifySession(@Body() dto: BoVerifySessionDto, @Res() res: Response): Promise<void> {
+    const result = await this.authService.verifySession(dto.userId, dto.code);
+    if ((result as any).access_token) {
+      setAuthCookie(res, (result as any).access_token);
+    }
+    res.status(HttpStatus.OK).json(result);
   }
 
+  /** POST /api/bo/auth/sessions/current/two-factor-challenges — resend code. */
   @Public()
-  @Post('refresh')
-  async refresh(@Body() dto: BoRefreshDto, @Res() res: Response): Promise<void> {
-    const authResponse = await this.authService.refreshBo(dto.refresh_token);
-    res.status(200).json(authResponse);
+  @Post('sessions/current/two-factor-challenges')
+  @HttpCode(HttpStatus.OK)
+  async createTwoFactorChallenge(@Body() dto: BoTwoFactorChallengeDto, @Res() res: Response): Promise<void> {
+    const result = await this.authService.createTwoFactorChallenge(dto.userId);
+    res.status(HttpStatus.OK).json(result);
   }
 
+  /** DELETE /api/bo/auth/sessions/current — logout. */
   @Public()
-  @Post('logout')
+  @Delete('sessions/current')
+  @HttpCode(HttpStatus.OK)
   async logout(@Res() res: Response): Promise<void> {
-    res.clearCookie('BoAuthentication');
-    res.status(200).json({ message: 'Logout successful' });
+    res.clearCookie(COOKIE_NAME);
+    res.status(HttpStatus.OK).json({ message: 'Logout successful' });
   }
 }

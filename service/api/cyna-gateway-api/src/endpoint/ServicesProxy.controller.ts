@@ -149,13 +149,6 @@ export class ServicesProxyController extends BaseProxyController {
     await this.proxyWithMapping(req, res, `/api/products${qs}${sep}statut=all`);
   }
 
-  @Get('search')
-  @Public()
-  async search(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    await this.proxyWithMapping(req, res, `/api/products/search${qs}`);
-  }
-
   @Post('upload-images')
   @Roles('admin')
   async uploadImages(@Req() req: Request, @Res() res: Response): Promise<void> {
@@ -171,7 +164,8 @@ export class ServicesProxyController extends BaseProxyController {
   @Post()
   @Roles('admin')
   async create(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxyWithMapping(req, res, '/api/products');
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxyWithMapping(req, res, `/api/products${qs}`);
   }
 
   @Put(':id')
@@ -180,22 +174,16 @@ export class ServicesProxyController extends BaseProxyController {
     await this.proxyWithMapping(req, res, `/api/products/${id}`);
   }
 
+  @Patch(':id')
+  @Roles('admin')
+  async patchUpdate(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
+    await this.proxyWithMapping(req, res, `/api/products/${id}`);
+  }
+
   @Delete(':id')
   @Roles('admin')
   async delete(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
     await this.proxy(req, res, `/api/products/${id}`);
-  }
-
-  @Post(':id/publish')
-  @Roles('admin')
-  async publish(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/publish`);
-  }
-
-  @Post(':id/duplicate')
-  @Roles('admin')
-  async duplicate(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxyWithMapping(req, res, `/api/products/${id}/duplicate`);
   }
 
   @Post(':id/images')
@@ -215,20 +203,14 @@ export class ServicesProxyController extends BaseProxyController {
     await this.proxy(req, res, `/api/products/${id}/images/${imageId}`);
   }
 
-  @Patch(':id/images/:imageId/main')
+  @Patch(':id/images/:imageId')
   @Roles('admin')
-  async setMainImage(
+  async patchImage(
     @Param('id') id: string,
     @Param('imageId') imageId: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/images/${imageId}/main`);
-  }
-
-  @Put(':id/images/order')
-  @Roles('admin')
-  async reorderImages(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/images/order`);
+    await this.proxy(req, res, `/api/products/${id}/images/${imageId}`);
   }
 }

@@ -51,10 +51,11 @@ export class WebappOrdersProxyController extends BaseProxyController {
       }
       const serviceOrder = await this.serviceApiProxy.proxy({
         method: 'GET',
-        path: `/api/orders/by-ref/${encodeURIComponent(ref)}`,
+        path: `/api/orders?ref=${encodeURIComponent(ref)}`,
         headers: {},
       });
-      const so = serviceOrder?.data;
+      const orders = serviceOrder?.data;
+      const so = Array.isArray(orders) ? orders[0] : orders;
       res.json({
         trackingNumber: so?.trackingNumber || webappOrder?.data?.trackingNumber || null,
         credentials: so?.credentials || [],

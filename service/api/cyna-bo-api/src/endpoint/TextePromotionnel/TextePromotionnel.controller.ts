@@ -1,19 +1,17 @@
-import { Controller, Get, Post, Body, Put, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Param, Delete, Query } from '@nestjs/common';
 import { TextePromotionnelService } from '../../service/TextePromotionnel/TextePromotionnel.service';
-import { CreateUpdateTextePromotionnelDto, TextePromotionnelDto } from '../../service/dtos/TextPromotionnel/TextePromotionnel.dto';
+import { CreateUpdateTextePromotionnelDto, PatchTextePromotionnelDto, TextePromotionnelDto } from '../../service/TextePromotionnel/dtos/TextePromotionnel.dto';
 
 @Controller('advertisements')
 export class TextePromotionnelController {
-  constructor(private readonly service: TextePromotionnelService) {}
+  constructor(private readonly service: TextePromotionnelService) { }
 
   @Get()
-  getAll(): Promise<TextePromotionnelDto[]> {
+  getAll(@Query('isActive') isActive?: string): Promise<TextePromotionnelDto[]> {
+    if (isActive === 'true') {
+      return this.service.findAllActive();
+    }
     return this.service.findAll();
-  }
-
-  @Get('active')
-  getActive(): Promise<TextePromotionnelDto> {
-    return this.service.findActive();
   }
 
   @Get(':id')
@@ -31,9 +29,9 @@ export class TextePromotionnelController {
     return this.service.update(id, data);
   }
 
-  @Patch(':id/activate')
-  activate(@Param('id') id: string): Promise<TextePromotionnelDto> {
-    return this.service.activate(id);
+  @Patch(':id')
+  patchUpdate(@Param('id') id: string, @Body() data: PatchTextePromotionnelDto): Promise<TextePromotionnelDto> {
+    return this.service.patchUpdate(id, data);
   }
 
   @Delete(':id')

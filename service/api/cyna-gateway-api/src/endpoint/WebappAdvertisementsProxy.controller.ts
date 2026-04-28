@@ -10,9 +10,10 @@ export class WebappAdvertisementsProxyController extends BaseProxyController {
     super(proxyService);
   }
 
-  @Get('active')
+  @Get()
   @Public()
-  async getActive(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/advertisements/active');
+  async getAll(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxy(req, res, `/api/webapp/advertisements${qs}`);
   }
 }

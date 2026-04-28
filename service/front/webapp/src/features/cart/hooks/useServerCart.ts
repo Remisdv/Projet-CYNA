@@ -1,26 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../services/api';
+import { cartApi } from '../api/cart.api';
+import type { AddToCartInput } from '../types/cart.types';
 
-export interface ServerCartItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productType: string;
-  quantity: number;
-  prix?: number;
-  prixMensuel?: number;
-  prixAnnuel?: number;
-  periodicity?: string;
-  image?: string;
-}
+export type { ServerCartItem } from '../types/cart.types';
 
 export function useServerCart(enabled: boolean) {
   return useQuery({
     queryKey: ['server-cart'],
-    queryFn: async () => {
-      const { data } = await api.get('/webapp/cart');
-      return (data.items ?? []) as ServerCartItem[];
-    },
+    queryFn: cartApi.list,
     enabled,
     staleTime: 1000 * 30,
   });
@@ -29,10 +16,7 @@ export function useServerCart(enabled: boolean) {
 export function useAddToServerCart() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (item: Omit<ServerCartItem, 'id'>) => {
-      const { data } = await api.post('/webapp/cart/items', item);
-      return data;
-    },
+    mutationFn: (item: AddToCartInput) => cartApi.add(item),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
   });
 }
@@ -40,10 +24,7 @@ export function useAddToServerCart() {
 export function useUpdateServerCartItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
-      const { data } = await api.put(`/webapp/cart/items/${id}`, { quantity });
-      return data;
-    },
+    mutationFn: ({ id, quantity }: { id: string; quantity: number }) => cartApi.update(id, quantity),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
   });
 }
@@ -51,9 +32,7 @@ export function useUpdateServerCartItem() {
 export function useRemoveServerCartItem() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/webapp/cart/items/${id}`);
-    },
+    mutationFn: (id: string) => cartApi.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
   });
 }
@@ -61,20 +40,8 @@ export function useRemoveServerCartItem() {
 export function useClearServerCart() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      await api.delete('/webapp/cart');
-    },
+    mutationFn: () => cartApi.clear(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
   });
 }
 
-export function useMergeCart() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (items: Omit<ServerCartItem, 'id'>[]) => {
-      const { data } = await api.post('/webapp/cart/merge', { items });
-      return (data.items ?? []) as ServerCartItem[];
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
-  });
-}

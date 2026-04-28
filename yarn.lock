@@ -415,6 +415,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.22.5, @babel/runtime@npm:^7.23.2":
+  version: 7.29.2
+  resolution: "@babel/runtime@npm:7.29.2"
+  checksum: 10c0/30b80a0140d16467792e1bbeb06f655b0dab70407da38dfac7fedae9c859f9ae9d846ef14ad77bd3814c064295fe9b1bc551f1541ea14646ae9f22b71a8bc17a
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:^7.5.5, @babel/runtime@npm:^7.8.7":
   version: 7.28.6
   resolution: "@babel/runtime@npm:7.28.6"
@@ -2128,7 +2135,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.3.1":
+"@types/node@npm:^20.10.0, @types/node@npm:^20.3.1":
   version: 20.19.39
   resolution: "@types/node@npm:20.19.39"
   dependencies:
@@ -3082,6 +3089,7 @@ __metadata:
   dependencies:
     "@hookform/resolvers": "npm:^3.3.2"
     "@tanstack/react-query": "npm:^5.12.2"
+    "@types/node": "npm:^20.10.0"
     "@types/react": "npm:^18.2.37"
     "@types/react-dom": "npm:^18.2.15"
     "@vitejs/plugin-react": "npm:^4.2.0"
@@ -3089,11 +3097,13 @@ __metadata:
     axios: "npm:^1.6.2"
     class-variance-authority: "npm:^0.7.0"
     clsx: "npm:^2.0.0"
+    i18next: "npm:^23.7.6"
     lucide-react: "npm:^0.292.0"
     postcss: "npm:^8.4.31"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-hook-form: "npm:^7.48.2"
+    react-i18next: "npm:^13.5.0"
     react-markdown: "npm:^8.0.7"
     react-router-dom: "npm:^6.18.0"
     recharts: "npm:^2.9.0"
@@ -4076,6 +4086,7 @@ __metadata:
     "@stripe/react-stripe-js": "npm:^2.9.0"
     "@stripe/stripe-js": "npm:^3.5.0"
     "@tanstack/react-query": "npm:^5.12.2"
+    "@types/node": "npm:^20.10.0"
     "@types/react": "npm:^18.2.37"
     "@types/react-dom": "npm:^18.2.15"
     "@vitejs/plugin-react": "npm:^4.2.0"
@@ -4083,11 +4094,13 @@ __metadata:
     axios: "npm:^1.6.2"
     class-variance-authority: "npm:^0.7.0"
     clsx: "npm:^2.0.0"
+    i18next: "npm:^23.7.6"
     lucide-react: "npm:^0.292.0"
     postcss: "npm:^8.4.31"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     react-hook-form: "npm:^7.48.2"
+    react-i18next: "npm:^13.5.0"
     react-markdown: "npm:^8.0.7"
     react-router-dom: "npm:^6.18.0"
     recharts: "npm:^2.9.0"
@@ -5594,6 +5607,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-parse-stringify@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "html-parse-stringify@npm:3.0.1"
+  dependencies:
+    void-elements: "npm:3.1.0"
+  checksum: 10c0/159292753d48b84d216d61121054ae5a33466b3db5b446e2ffc093ac077a411a99ce6cbe0d18e55b87cf25fa3c5a86c4d8b130b9719ec9b66623259000c72c15
+  languageName: node
+  linkType: hard
+
 "http-errors@npm:~2.0.0, http-errors@npm:~2.0.1":
   version: 2.0.1
   resolution: "http-errors@npm:2.0.1"
@@ -5611,6 +5633,15 @@ __metadata:
   version: 2.1.0
   resolution: "human-signals@npm:2.1.0"
   checksum: 10c0/695edb3edfcfe9c8b52a76926cd31b36978782062c0ed9b1192b36bebc75c4c87c82e178dfcb0ed0fc27ca59d434198aac0bd0be18f5781ded775604db22304a
+  languageName: node
+  linkType: hard
+
+"i18next@npm:^23.7.6":
+  version: 23.16.8
+  resolution: "i18next@npm:23.16.8"
+  dependencies:
+    "@babel/runtime": "npm:^7.23.2"
+  checksum: 10c0/57d249191e8a39bbbbe190cfa2e2bb651d0198e14444fe80453d3df8d02927de3c147c77724e9ae6c72fa241898cd761e3fdcd55d053db373471f1ac084bf345
   languageName: node
   linkType: hard
 
@@ -8239,6 +8270,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-i18next@npm:^13.5.0":
+  version: 13.5.0
+  resolution: "react-i18next@npm:13.5.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.22.5"
+    html-parse-stringify: "npm:^3.0.1"
+  peerDependencies:
+    i18next: ">= 23.2.3"
+    react: ">= 16.8.0"
+  peerDependenciesMeta:
+    react-dom:
+      optional: true
+    react-native:
+      optional: true
+  checksum: 10c0/955db09fb83bc68aa9fe7ed11c95fb3e9dc5ab95e85854f169c07a9e71f9154d2cc01f46e343801e2478d5de86475e7a19ec677bec532c3870cb7a01246a6a86
+  languageName: node
+  linkType: hard
+
 "react-is@npm:^16.13.1":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
@@ -10208,6 +10257,13 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10c0/468336a1409f728b464160cbf02672e72271fb688d0e605e776b74a89d27e1029509eef3a3a6c755928d8011e474dbf234824d054d07960be5f23cd176bc72de
+  languageName: node
+  linkType: hard
+
+"void-elements@npm:3.1.0":
+  version: 3.1.0
+  resolution: "void-elements@npm:3.1.0"
+  checksum: 10c0/0b8686f9f9aa44012e9bd5eabf287ae0cde409b9a2854c5a2335cb83920c957668ac5876e3f0d158dd424744ac411a7270e64128556b451ed3bec875ef18534d
   languageName: node
   linkType: hard
 

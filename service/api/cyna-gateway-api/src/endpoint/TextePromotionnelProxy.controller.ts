@@ -25,13 +25,8 @@ export class TextePromotionnelProxyController extends BaseProxyController {
   @Get()
   @Public()
   async getAll(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/bo/advertisements');
-  }
-
-  @Get('active')
-  @Public()
-  async getActive(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/bo/advertisements/active');
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxy(req, res, `/api/bo/advertisements${qs}`);
   }
 
   @Get(':id')
@@ -52,10 +47,10 @@ export class TextePromotionnelProxyController extends BaseProxyController {
     await this.proxy(req, res, `/api/bo/advertisements/${id}`);
   }
 
-  @Patch(':id/activate')
+  @Patch(':id')
   @Roles('admin')
-  async activate(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, `/api/bo/advertisements/${id}/activate`);
+  async patchUpdate(@Param('id') id: string, @Req() req: Request, @Res() res: Response): Promise<void> {
+    await this.proxy(req, res, `/api/bo/advertisements/${id}`);
   }
 
   @Delete(':id')

@@ -1,24 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ContactMessage } from '../../database/entity/Contact/ContactMessage.entity';
+import { ContactRepository } from '../../repository/Contact/Contact.repository';
 import { EmailService } from '../Email/Email.service';
-import { CreateContactDto } from '../../dto/Contact/Contact.dto';
+import { CreateContactDto } from './dtos/Contact.dto';
 
 @Injectable()
 export class ContactService {
   constructor(
-    @InjectRepository(ContactMessage)
-    private readonly repo: Repository<ContactMessage>,
+    private readonly contactRepository: ContactRepository,
     private readonly emailService: EmailService,
   ) { }
 
   async create(dto: CreateContactDto, userId?: string): Promise<{ message: string }> {
-    const contact = this.repo.create({
+    const contact = this.contactRepository.create({
       ...dto,
       userId: userId || null,
     });
-    await this.repo.save(contact);
+    await this.contactRepository.save(contact);
 
     const contactDest = process.env.EMAIL_CONTACT_DEST || 'contact@cyna.com';
 

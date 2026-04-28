@@ -1,79 +1,11 @@
 import { Controller, Get, Patch, Post, Param, Query, Body, Headers } from '@nestjs/common';
-import { IsEnum, IsOptional, IsString, IsNumber, IsArray, IsEmail, IsObject } from 'class-validator';
-import { Type } from 'class-transformer';
 import { OrderService } from '../../service/order/order.service';
-import { OrderStatus, PaymentStatus } from '../../database/entity/order';
-
-class UpdateStatusDto {
-  @IsEnum(OrderStatus)
-  status: OrderStatus;
-
-  @IsOptional()
-  @IsString()
-  trackingNumber?: string;
-}
-
-class UpdatePaymentStatusDto {
-  @IsEnum(PaymentStatus)
-  paymentStatus: PaymentStatus;
-}
-
-class AddNoteDto {
-  @IsString()
-  text: string;
-}
-
-class SendCredentialsDto {
-  @IsArray()
-  credentials: Array<{ serviceName: string; data: Record<string, string> }>;
-
-  @IsOptional()
-  @IsString()
-  customMessage?: string;
-}
-
-class SyncOrderBodyDto {
-  @IsString()
-  ref: string;
-
-  @IsEmail()
-  clientEmail: string;
-
-  @IsOptional()
-  @IsString()
-  clientFirstName?: string;
-
-  @IsOptional()
-  @IsString()
-  clientLastName?: string;
-
-  @IsArray()
-  items: any[];
-
-  @IsNumber()
-  @Type(() => Number)
-  amount: number;
-
-  @IsOptional()
-  @IsString()
-  status?: string;
-
-  @IsOptional()
-  @IsString()
-  paymentStatus?: string;
-
-  @IsOptional()
-  @IsObject()
-  billingAddress?: any;
-
-  @IsOptional()
-  @IsObject()
-  shippingAddress?: any;
-
-  @IsOptional()
-  @IsString()
-  createdAt?: string;
-}
+import {
+  PatchOrderDto,
+  AddNoteDto,
+  SendCredentialsDto,
+  SyncOrderBodyDto,
+} from '../../service/order/dtos/order.dto';
 
 @Controller('orders')
 export class OrderController {
@@ -84,13 +16,13 @@ export class OrderController {
     @Query('page') page?: number,
     @Query('per_page') per_page?: number,
     @Query('status') status?: string,
+    @Query('ref') ref?: string,
   ) {
+    if (ref) {
+      const order = await this.orderService.findByRef(ref);
+      return order ? [order] : [];
+    }
     return this.orderService.findAll({ page, per_page, status });
-  }
-
-  @Get('by-ref/:ref')
-  async findByRef(@Param('ref') ref: string) {
-    return this.orderService.findByRef(ref);
   }
 
   @Get(':id')
@@ -98,36 +30,26 @@ export class OrderController {
     return this.orderService.findById(id);
   }
 
-  @Post('sync')
-  async syncFromWebapp(@Body() body: SyncOrderBodyDto) {
+  /**
+   * POST /orders
+   * Idempotent create: if an order with the same ref already exists it is updated.
+   */
+  @Post()
+  async create(@Body() body: SyncOrderBodyDto) {
     return this.orderService.syncFromWebapp(body);
   }
 
-  @Patch(':id/status')
-  async updateStatus(
+  /**
+   * PATCH /orders/:id
+   * Partial order update: status, paymentStatus, trackingNumber.
+   */
+  @Patch(':id')
+  async patchUpdate(
     @Param('id') id: string,
-    @Body() body: UpdateStatusDto,
+    @Body() body: PatchOrderDto,
     @Headers('x-user-id') userId: string,
   ) {
-    return this.orderService.updateStatus(
-      id,
-      body.status,
-      userId || 'admin',
-      body.trackingNumber,
-    );
-  }
-
-  @Patch(':id/payment-status')
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Body() body: UpdatePaymentStatusDto,
-    @Headers('x-user-id') userId: string,
-  ) {
-    return this.orderService.updatePaymentStatus(
-      id,
-      body.paymentStatus,
-      userId || 'admin',
-    );
+    return this.orderService.patchUpdate(id, body, userId || 'admin');
   }
 
   @Post(':id/notes')
@@ -139,7 +61,7 @@ export class OrderController {
     return this.orderService.addNote(id, body.text, userId || 'admin');
   }
 
-  @Post(':id/credentials')
+  @Post(':id/credential-deliveries')
   async sendCredentials(
     @Param('id') id: string,
     @Body() body: SendCredentialsDto,
@@ -153,3 +75,4 @@ export class OrderController {
     );
   }
 }
+

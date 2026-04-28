@@ -1,29 +1,25 @@
 import { Module } from '@nestjs/common';
 import { WebappProxyService } from '../service/webapp-proxy.service';
 import { ProxyService } from '../service/proxy.service';
-import { WebappCarouselProxyController } from '../endpoint/WebappCarouselProxy.controller';
 import { WebappAdvertisementsProxyController } from '../endpoint/WebappAdvertisementsProxy.controller';
 import { WebappAccountProxyController } from '../endpoint/WebappAccountProxy.controller';
+import { WebappTwoFactorProxyController } from '../endpoint/WebappTwoFactorProxy.controller';
 import { WebappOrdersProxyController } from '../endpoint/WebappOrdersProxy.controller';
 import { WebappSubscriptionsProxyController } from '../endpoint/WebappSubscriptionsProxy.controller';
 import { WebappContactProxyController } from '../endpoint/WebappContactProxy.controller';
 import { WebappPaymentProxyController } from '../endpoint/WebappPaymentProxy.controller';
 import { WebappCartProxyController } from '../endpoint/WebappCartProxy.controller';
-import { NotificationsProxyController } from '../endpoint/NotificationsProxy.controller';
-import { WebappUsersProxyController } from '../endpoint/WebappUsersProxy.controller';
 
 @Module({
   controllers: [
-    WebappCarouselProxyController,
     WebappAdvertisementsProxyController,
     WebappAccountProxyController,
+    WebappTwoFactorProxyController,
     WebappOrdersProxyController,
     WebappSubscriptionsProxyController,
     WebappContactProxyController,
     WebappPaymentProxyController,
     WebappCartProxyController,
-    NotificationsProxyController,
-    WebappUsersProxyController,
   ],
   providers: [WebappProxyService, ProxyService],
   exports: [WebappProxyService],

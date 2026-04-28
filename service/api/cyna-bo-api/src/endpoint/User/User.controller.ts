@@ -1,11 +1,11 @@
 import { Controller, Get, Post, Body, Put, Param, Delete, Query } from '@nestjs/common';
 import { UserService } from '../../service/User/User.service';
-import { CreateUserDto, UpdateUserDto, UserDto, UserListDto } from '../../service/dtos/User/User.dto';
+import { CreateUserDto, UpdateUserDto, UserDto, UserListDto } from '../../service/User/dtos/User.dto';
 import { UserStatus } from '../../database/entity/User/User.entity';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly service: UserService) {}
+  constructor(private readonly service: UserService) { }
 
   @Get()
   findAll(
@@ -47,7 +47,7 @@ export class UserController {
     return this.service.remove(id);
   }
 
-  @Post(':id/reset-password')
+  @Post(':id/password-resets')
   resetPassword(@Param('id') id: string): Promise<{ tempPassword: string }> {
     return this.service.resetPassword(id);
   }

@@ -1,9 +1,8 @@
 import { Injectable, OnModuleInit, Inject, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Client } from '@elastic/elasticsearch';
 import { ELASTICSEARCH_CLIENT } from '../../module/elasticsearch/elasticsearch.module';
 import { ProductEntity, ProductStatus } from '../../database/entity/product';
+import { ProductRepository } from '../../repository/product/product.repository';
 
 const PRODUCTS_INDEX = 'products';
 
@@ -13,8 +12,8 @@ export class ProductSearchService implements OnModuleInit {
 
   constructor(
     @Inject(ELASTICSEARCH_CLIENT) private readonly esClient: Client,
-    @InjectRepository(ProductEntity) private readonly productRepository: Repository<ProductEntity>,
-  ) {}
+    private readonly productRepository: ProductRepository,
+  ) { }
 
   async onModuleInit() {
     await this.ensureIndex();
@@ -64,9 +63,7 @@ export class ProductSearchService implements OnModuleInit {
 
   private async reindexAll(): Promise<void> {
     try {
-      const products = await this.productRepository.find({
-        where: { statut: ProductStatus.PUBLISHED },
-      });
+      const products = await this.productRepository.findAllPublished();
       if (products.length === 0) return;
 
       const operations = products.flatMap((p) => [

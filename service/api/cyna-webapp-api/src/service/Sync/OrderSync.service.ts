@@ -11,7 +11,7 @@ export class OrderSyncService {
 
     async syncOrder(order: CustomerOrder, user?: WebappUser): Promise<void> {
         try {
-            await this.httpClient.post('/api/orders/sync', {
+            await this.httpClient.post('/api/orders', {
                 ref: order.ref,
                 clientEmail: user?.email || 'unknown',
                 clientFirstName: user?.firstName,

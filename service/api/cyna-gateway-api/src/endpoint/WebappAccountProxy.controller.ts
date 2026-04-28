@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Put,
+  Patch,
   Req,
   Res,
 } from '@nestjs/common';
@@ -28,7 +29,7 @@ export class WebappAccountProxyController extends BaseProxyController {
     await this.proxy(req, res, '/api/webapp/account/profile');
   }
 
-  @Put('password')
+  @Patch('password')
   @Auth()
   async changePassword(@Req() req: Request, @Res() res: Response): Promise<void> {
     await this.proxy(req, res, '/api/webapp/account/password');

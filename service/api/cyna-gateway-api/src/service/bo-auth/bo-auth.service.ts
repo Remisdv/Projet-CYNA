@@ -1,7 +1,9 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import * as http from 'http';
 import * as https from 'https';
-import { BoLoginDto, BoAuthResponseDto } from '../../dto/bo-auth/bo-auth.dto';
+import { BoAuthResponseDto } from '../../dto/bo-auth/bo-auth.dto';
+
+type HttpMethod = 'POST' | 'PATCH' | 'DELETE' | 'GET';
 
 @Injectable()
 export class BoAuthService {
@@ -15,92 +17,66 @@ export class BoAuthService {
     this.boApiPort = parseInt(process.env.BO_API_PORT || '3001', 10);
   }
 
-  async loginBo(loginDto: BoLoginDto): Promise<BoAuthResponseDto> {
-    return this.callBoAuthEndpoint('/api/bo/auth/login', loginDto);
+  /** POST /auth/sessions — login or refresh depending on body shape. */
+  async createSession(body: { email?: string; password?: string; refresh_token?: string }): Promise<BoAuthResponseDto> {
+    return this.call('POST', '/api/bo/auth/sessions', body);
   }
 
-  async refreshBo(refreshToken: string): Promise<BoAuthResponseDto> {
-    return this.callBoAuthEndpoint('/api/bo/auth/refresh', { refresh_token: refreshToken });
+  /** PATCH /auth/sessions/current — confirm 2FA code. */
+  async verifySession(userId: string, code: string): Promise<BoAuthResponseDto> {
+    return this.call('PATCH', '/api/bo/auth/sessions/current', { userId, code });
   }
 
-  async verifyTwoFactor(userId: string, code: string): Promise<any> {
-    return this.callBoAuthEndpoint('/api/bo/auth/2fa/verify', { userId, code });
+  /** POST /auth/sessions/current/two-factor-challenges — resend 2FA code. */
+  async createTwoFactorChallenge(userId: string): Promise<{ message: string }> {
+    return this.call('POST', '/api/bo/auth/sessions/current/two-factor-challenges', { userId });
   }
 
-  async resendTwoFactor(userId: string): Promise<any> {
-    return this.callBoAuthEndpoint('/api/bo/auth/2fa/resend', { userId });
-  }
-
-  /**
-   * Make HTTP request to BO service
-   */
-  private callBoAuthEndpoint(path: string, data: any): Promise<BoAuthResponseDto> {
+  private call(method: HttpMethod, path: string, data?: any): Promise<any> {
     return new Promise((resolve, reject) => {
-      const requestData = JSON.stringify(data);
+      const requestData = data !== undefined ? JSON.stringify(data) : '';
+
+      const headers: Record<string, string | number> = {
+        'Content-Type': 'application/json',
+      };
+      if (requestData) headers['Content-Length'] = Buffer.byteLength(requestData);
 
       const options = {
         hostname: this.boApiHost,
         port: this.boApiPort,
-        path: path,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(requestData),
-        },
+        path,
+        method,
+        headers,
       };
 
       const protocol = this.boApiUrl.startsWith('https') ? https : http;
 
       const req = protocol.request(options, (res) => {
         let responseData = '';
-
-        res.on('data', (chunk) => {
-          responseData += chunk;
-        });
-
+        res.on('data', (chunk) => { responseData += chunk; });
         res.on('end', () => {
-          if (res.statusCode >= 200 && res.statusCode < 300) {
+          if (res.statusCode! >= 200 && res.statusCode! < 300) {
             try {
-              resolve(JSON.parse(responseData));
-            } catch (error) {
-              reject(
-                new HttpException(
-                  'Invalid response from BO service',
-                  HttpStatus.INTERNAL_SERVER_ERROR,
-                ),
-              );
+              resolve(responseData ? JSON.parse(responseData) : {});
+            } catch {
+              reject(new HttpException('Invalid response from BO service', HttpStatus.INTERNAL_SERVER_ERROR));
             }
           } else {
             try {
               const error = JSON.parse(responseData);
-              reject(
-                new HttpException(
-                  error.message || 'Authentication failed',
-                  res.statusCode || HttpStatus.UNAUTHORIZED,
-                ),
-              );
-            } catch (parseError) {
-              reject(
-                new HttpException(
-                  'Authentication service error',
-                  res.statusCode || HttpStatus.INTERNAL_SERVER_ERROR,
-                ),
-              );
+              reject(new HttpException(error.message || 'Authentication failed', res.statusCode || HttpStatus.UNAUTHORIZED));
+            } catch {
+              reject(new HttpException('Authentication service error', res.statusCode || HttpStatus.INTERNAL_SERVER_ERROR));
             }
           }
         });
       });
 
-      req.on('error', (error) => {
-        reject(
-          new HttpException(
-            'Failed to connect to BO authentication service',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-          ),
-        );
+      req.on('error', () => {
+        reject(new HttpException('Failed to connect to BO authentication service', HttpStatus.INTERNAL_SERVER_ERROR));
       });
 
-      req.write(requestData);
+      if (requestData) req.write(requestData);
       req.end();
     });
   }

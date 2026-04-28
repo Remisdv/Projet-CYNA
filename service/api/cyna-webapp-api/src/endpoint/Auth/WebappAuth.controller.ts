@@ -1,113 +1,82 @@
-import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { WebappAuthService } from '../../service/Auth/WebappAuth.service';
 import {
   RegisterDto,
-  LoginDto,
-  RefreshDto,
+  CreateSessionDto,
+  VerifySessionDto,
+  TwoFactorChallengeDto,
   ForgotPasswordDto,
-  ResetPasswordDto,
+  ResetPasswordBodyDto,
   AuthResponseDto,
-  TwoFactorVerifyDto,
-  TwoFactorResendDto,
-  EnableEmailTwoFactorDto,
-  ConfirmEmailTwoFactorDto,
-  SetupTotpDto,
-  VerifyTotpSetupDto,
-  DisableTwoFactorDto,
-} from '../../dto/Auth/Auth.dto';
+} from '../../service/Auth/dtos/Auth.dto';
 
 @Controller('auth')
 export class WebappAuthController {
-  constructor(private readonly authService: WebappAuthService) { }
+  constructor(private readonly authService: WebappAuthService) {}
 
-  @Post('register')
+  @Post('users')
   async register(@Body() dto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(dto);
   }
 
-  @Post('login')
+  /**
+   * Polymorphic session creation:
+   * - body { email, password } → login (or 2FA pending)
+   * - body { refresh_token } → refresh
+   */
+  @Post('sessions')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async createSession(@Body() dto: CreateSessionDto) {
+    if (dto.refresh_token) {
+      return this.authService.refresh({ refresh_token: dto.refresh_token });
+    }
+    return this.authService.login({ email: dto.email!, password: dto.password! });
   }
 
-  @Post('2fa/verify')
+  /** Confirm a pending 2FA session by submitting the code. */
+  @Patch('sessions/current')
   @HttpCode(HttpStatus.OK)
-  async verifyTwoFactor(@Body() dto: TwoFactorVerifyDto): Promise<AuthResponseDto> {
-    return this.authService.verifyTwoFactor(dto);
+  async verifySession(@Body() dto: VerifySessionDto): Promise<AuthResponseDto> {
+    return this.authService.verifyTwoFactor({ userId: dto.userId, code: dto.code });
   }
 
-  @Post('2fa/resend')
+  /** Resend the email 2FA code for a pending session. */
+  @Post('sessions/current/two-factor-challenges')
   @HttpCode(HttpStatus.OK)
-  async resendTwoFactor(@Body() dto: TwoFactorResendDto): Promise<{ message: string }> {
+  async createTwoFactorChallenge(@Body() dto: TwoFactorChallengeDto): Promise<{ message: string }> {
     await this.authService.resendTwoFactor(dto.userId);
     return { message: 'Code renvoyé' };
   }
 
-  @Post('2fa/email/enable')
-  @HttpCode(HttpStatus.OK)
-  async enableEmailTwoFactor(@Body() dto: EnableEmailTwoFactorDto): Promise<{ message: string }> {
-    return this.authService.enableEmailTwoFactor(dto.userId, dto.password);
-  }
-
-  @Post('2fa/email/enable/confirm')
-  @HttpCode(HttpStatus.OK)
-  async confirmEmailTwoFactor(@Body() dto: ConfirmEmailTwoFactorDto): Promise<{ message: string }> {
-    return this.authService.confirmEmailTwoFactor(dto.userId, dto.password, dto.code);
-  }
-
-  @Post('2fa/totp/setup')
-  @HttpCode(HttpStatus.OK)
-  async setupTotp(@Body() dto: SetupTotpDto): Promise<{ secret: string; qrCodeDataUrl: string; otpAuthUrl: string }> {
-    return this.authService.setupTotp(dto.userId, dto.password);
-  }
-
-  @Post('2fa/totp/confirm')
-  @HttpCode(HttpStatus.OK)
-  async confirmTotp(@Body() dto: VerifyTotpSetupDto): Promise<{ message: string }> {
-    return this.authService.verifyTotpSetup(dto.userId, dto.password, dto.code);
-  }
-
-  @Post('2fa/disable/send-code')
-  @HttpCode(HttpStatus.OK)
-  async sendDisableCode(@Body() body: { userId: string; password: string }): Promise<{ message: string }> {
-    return this.authService.sendDisableCode(body.userId, body.password);
-  }
-
-  @Post('2fa/disable')
-  @HttpCode(HttpStatus.OK)
-  async disableTwoFactor(@Body() dto: DisableTwoFactorDto): Promise<{ message: string }> {
-    return this.authService.disableTwoFactor(dto.userId, dto.password, dto.code);
-  }
-
-  @Get('2fa/status')
-  async getTwoFactorStatus(@Query('userId') userId: string): Promise<{ twoFactorEnabled: boolean; totpEnabled: boolean }> {
-    return this.authService.getTwoFactorStatus(userId);
-  }
-
-  @Post('refresh')
-  @HttpCode(HttpStatus.OK)
-  async refresh(@Body() dto: RefreshDto): Promise<{ access_token: string; refresh_token: string }> {
-    return this.authService.refresh(dto);
-  }
-
-  @Post('logout')
+  @Delete('sessions/current')
   @HttpCode(HttpStatus.OK)
   async logout(): Promise<{ message: string }> {
     return { message: 'Déconnexion réussie' };
   }
 
-  @Post('forgot-password')
+  @Post('password-resets')
   @HttpCode(HttpStatus.OK)
-  async forgotPassword(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
+  async requestPasswordReset(@Body() dto: ForgotPasswordDto): Promise<{ message: string }> {
     await this.authService.forgotPassword(dto);
     return { message: 'Si un compte existe avec cet email, un lien de réinitialisation a été envoyé' };
   }
 
-  @Post('reset-password')
+  @Patch('password-resets/:token')
   @HttpCode(HttpStatus.OK)
-  async resetPassword(@Body() dto: ResetPasswordDto): Promise<{ message: string }> {
-    await this.authService.resetPassword(dto);
+  async confirmPasswordReset(
+    @Param('token') token: string,
+    @Body() dto: ResetPasswordBodyDto,
+  ): Promise<{ message: string }> {
+    await this.authService.resetPassword({ token, newPassword: dto.newPassword });
     return { message: 'Mot de passe réinitialisé avec succès' };
   }
 }

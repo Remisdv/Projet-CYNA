@@ -1,20 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ProductEntity,
   ProductType,
   ProductStatus,
-  ServicePeriodicity,
 } from '../../database/entity/product';
-import { CategoryEntity } from '../../database/entity/category/category.entity';
+import { ProductRepository } from '../../repository/product/product.repository';
+import { CategoryRepository } from '../../repository/category/category.repository';
+import { ProductMapper } from './mappers/product.mapper';
 import {
   CreateProductDto,
   UpdateProductDto,
   ProductResponseDto,
   UpdateImageOrderDto,
-} from '../../dto/product';
+} from './dtos/product.dto';
 import { ProductSearchService } from '../elasticsearch/product-search.service';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -22,11 +21,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectRepository(ProductEntity)
-    private productRepository: Repository<ProductEntity>,
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-    private productSearchService: ProductSearchService,
+    private readonly productRepository: ProductRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly mapper: ProductMapper,
+    private readonly productSearchService: ProductSearchService,
   ) {}
 
   /**
@@ -38,7 +36,7 @@ export class ProductService {
   private async resolveCategoryId(value: string): Promise<string | null> {
     if (!value) return null;
     if (UUID_RE.test(value)) return value;
-    const cat = await this.categoryRepository.findOne({ where: { slug: value } });
+    const cat = await this.categoryRepository.findBySlug(value);
     return cat?.id ?? null;
   }
 
@@ -92,7 +90,7 @@ export class ProductService {
     if (saved.statut === ProductStatus.PUBLISHED) {
       void this.productSearchService.indexProduct(saved);
     }
-    return this.mapToResponseDto(saved);
+    return this.mapper.toDto(saved);
   }
 
   /**
@@ -116,87 +114,31 @@ export class ProductService {
   }> {
     const page = query.page || 1;
     const per_page = query.per_page || 20;
-    const skip = (page - 1) * per_page;
 
-    let queryBuilder = this.productRepository.createQueryBuilder('product');
-
-    // Apply filters
-    if (query.statut === 'all') {
-      // No status filter: admin sees all statuses
-    } else if (query.statut) {
-      queryBuilder = queryBuilder.where('product.statut = :statut', { statut: query.statut });
-    } else {
-      // Default: show only published products to public
-      queryBuilder = queryBuilder.where('product.statut = :statut', {
-        statut: ProductStatus.PUBLISHED,
-      });
-    }
-
+    let resolvedCategorie: string | undefined;
     if (query.categorie) {
       const resolvedCatId = await this.resolveCategoryId(query.categorie);
       if (!resolvedCatId) {
         // Unknown slug/UUID => return empty result rather than ignoring the filter
         return { data: [], total: 0, page, per_page };
       }
-      queryBuilder = queryBuilder.andWhere('product.categorie = :categorie', {
-        categorie: resolvedCatId,
-      });
+      resolvedCategorie = resolvedCatId;
     }
 
-    if (query.type) {
-      queryBuilder = queryBuilder.andWhere('product.type = :type', { type: query.type });
-    }
-
-    if (query.disponible !== undefined && query.disponible) {
-      queryBuilder = queryBuilder.andWhere('(product.stock > 0 OR product.stock_illimite = :illimite)', {
-        illimite: 'illimit\u00e9',
-      });
-    }
-
-    // Price range filter
-    if (Number.isFinite(query.prix_min)) {
-      queryBuilder = queryBuilder.andWhere(
-        '(product.prix >= :prix_min OR product.prix_mensuel >= :prix_min)',
-        { prix_min: query.prix_min },
-      );
-    }
-
-    if (Number.isFinite(query.prix_max)) {
-      queryBuilder = queryBuilder.andWhere(
-        '(product.prix <= :prix_max OR product.prix_mensuel <= :prix_max)',
-        { prix_max: query.prix_max },
-      );
-    }
-
-    // Apply sorting
-    switch (query.sort) {
-      case 'prix_asc':
-        queryBuilder = queryBuilder.orderBy(
-          'COALESCE(product.prix, product.prix_mensuel)',
-          'ASC',
-        );
-        break;
-      case 'prix_desc':
-        queryBuilder = queryBuilder.orderBy(
-          'COALESCE(product.prix, product.prix_mensuel)',
-          'DESC',
-        );
-        break;
-      case 'nouveautes':
-        queryBuilder = queryBuilder.orderBy('product.date_creation', 'DESC');
-        break;
-      case 'featured':
-      default:
-        queryBuilder = queryBuilder.orderBy('product.date_modification', 'DESC');
-    }
-
-    const [data, total] = await queryBuilder
-      .skip(skip)
-      .take(per_page)
-      .getManyAndCount();
+    const { data, total } = await this.productRepository.findFiltered({
+      page,
+      per_page,
+      statut: query.statut,
+      categorie: resolvedCategorie,
+      type: query.type,
+      disponible: query.disponible,
+      prix_min: query.prix_min,
+      prix_max: query.prix_max,
+      sort: query.sort,
+    });
 
     return {
-      data: data.map((product) => this.mapToResponseDto(product)),
+      data: this.mapper.toDtoArray(data),
       total,
       page,
       per_page,
@@ -214,14 +156,11 @@ export class ProductService {
 
     if (esIds !== null) {
       if (esIds.length === 0) return { data: [], total: 0 };
-      const entities = await this.productRepository.findBy({
-        id: In(esIds),
-        statut: ProductStatus.PUBLISHED,
-      });
+      const entities = await this.productRepository.findManyPublishedByIds(esIds);
       const ordered = esIds
         .map((id) => entities.find((p) => p.id === id))
         .filter((p): p is ProductEntity => p !== undefined);
-      return { data: ordered.map((p) => this.mapToResponseDto(p)), total: ordered.length };
+      return { data: this.mapper.toDtoArray(ordered), total: ordered.length };
     }
 
     // Elasticsearch unavailable: fall back to SQL ILIKE
@@ -232,61 +171,51 @@ export class ProductService {
     q: string,
     query?: { categorie?: string; type?: string },
   ): Promise<{ data: ProductResponseDto[]; total: number }> {
-    const qb = this.productRepository.createQueryBuilder('product');
-    qb.where('product.statut = :statut', { statut: ProductStatus.PUBLISHED });
-
-    if (q) {
-      qb.andWhere(
-        '(product.nom ILIKE :q OR product.description_courte ILIKE :q OR product.description_longue ILIKE :q OR product.tags::text ILIKE :q)',
-        { q: `%${q}%` },
-      );
-    }
-
+    let resolvedCategorie: string | undefined;
     if (query?.categorie) {
       const resolvedCatId = await this.resolveCategoryId(query.categorie);
       if (!resolvedCatId) return { data: [], total: 0 };
-      qb.andWhere('product.categorie = :categorie', { categorie: resolvedCatId });
+      resolvedCategorie = resolvedCatId;
     }
 
-    if (query?.type) {
-      qb.andWhere('product.type = :type', { type: query.type });
-    }
-
-    const [data, total] = await qb.getManyAndCount();
-    return { data: data.map((p) => this.mapToResponseDto(p)), total };
+    const { data, total } = await this.productRepository.searchFallback(q, {
+      categorie: resolvedCategorie,
+      type: query?.type,
+    });
+    return { data: this.mapper.toDtoArray(data), total };
   }
 
   /**
    * Get product by ID
    */
   async findById(id: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
-    return this.mapToResponseDto(product);
+    return this.mapper.toDto(product);
   }
 
   /**
    * Get product by slug
    */
   async findBySlug(slug: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { slug } });
+    const product = await this.productRepository.findBySlug(slug);
 
     if (!product) {
       throw new NotFoundException(`Product with slug ${slug} not found`);
     }
 
-    return this.mapToResponseDto(product);
+    return this.mapper.toDto(product);
   }
 
   /**
    * Update a product
    */
   async update(id: string, updateProductDto: UpdateProductDto): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -313,14 +242,14 @@ export class ProductService {
     } else {
       void this.productSearchService.removeProduct(updated.id);
     }
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
   }
 
   /**
    * Delete/Archive a product
    */
   async delete(id: string): Promise<void> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -334,7 +263,7 @@ export class ProductService {
    * Publish a product (change from draft to published)
    */
   async publish(id: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -343,14 +272,14 @@ export class ProductService {
     product.statut = ProductStatus.PUBLISHED;
     const updated = await this.productRepository.save(product);
     void this.productSearchService.indexProduct(updated);
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
   }
 
   /**
    * Duplicate a product
    */
   async duplicate(id: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -367,7 +296,7 @@ export class ProductService {
     duplicate.date_modification = new Date();
 
     const saved = await this.productRepository.save(duplicate);
-    return this.mapToResponseDto(saved);
+    return this.mapper.toDto(saved);
   }
 
   /**
@@ -375,7 +304,7 @@ export class ProductService {
    * In a real app, store this in Redis or a separate table
    */
   async generateDemoToken(id: string, userId: string): Promise<{ access_token_demo: string; expires_in: number }> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -409,7 +338,7 @@ export class ProductService {
     id: string,
     images: Array<{ url: string; est_principale?: boolean; ordre?: number }>,
   ): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findById(id);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
@@ -429,14 +358,14 @@ export class ProductService {
     });
 
     const updated = await this.productRepository.save(product);
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
   }
 
   /**
    * Delete an image
    */
   async deleteImage(productId: string, imageId: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+    const product = await this.productRepository.findById(productId);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${productId} not found`);
@@ -455,14 +384,14 @@ export class ProductService {
     product.images.splice(imageIndex, 1);
 
     const updated = await this.productRepository.save(product);
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
   }
 
   /**
    * Set main image
    */
   async setMainImage(productId: string, imageId: string): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+    const product = await this.productRepository.findById(productId);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${productId} not found`);
@@ -487,14 +416,14 @@ export class ProductService {
     product.images[imageIndex].est_principale = true;
 
     const updated = await this.productRepository.save(product);
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
   }
 
   /**
    * Reorder images
    */
   async reorderImages(productId: string, updateImageOrderDto: UpdateImageOrderDto): Promise<ProductResponseDto> {
-    const product = await this.productRepository.findOne({ where: { id: productId } });
+    const product = await this.productRepository.findById(productId);
 
     if (!product) {
       throw new NotFoundException(`Product with ID ${productId} not found`);
@@ -502,7 +431,39 @@ export class ProductService {
 
     product.images = updateImageOrderDto.images;
     const updated = await this.productRepository.save(product);
-    return this.mapToResponseDto(updated);
+    return this.mapper.toDto(updated);
+  }
+
+  /**
+   * Partial update of a single image (set as main, change order, etc.)
+   */
+  async patchImage(
+    productId: string,
+    imageId: string,
+    dto: { est_principale?: boolean; ordre?: number },
+  ): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${productId} not found`);
+    }
+    if (!product.images) {
+      throw new NotFoundException('No images found');
+    }
+    const image = product.images.find((img) => img.id === imageId);
+    if (!image) {
+      throw new NotFoundException(`Image with ID ${imageId} not found`);
+    }
+    if (dto.est_principale === true) {
+      product.images.forEach((img) => { img.est_principale = false; });
+      image.est_principale = true;
+    } else if (dto.est_principale === false) {
+      image.est_principale = false;
+    }
+    if (dto.ordre !== undefined) {
+      image.ordre = dto.ordre;
+    }
+    const updated = await this.productRepository.save(product);
+    return this.mapper.toDto(updated);
   }
 
   /**
@@ -512,30 +473,11 @@ export class ProductService {
     let slug = this.generateSlug(nom);
     let counter = 1;
 
-    while (
-      await this.productRepository.findOne({
-        where: { slug },
-      })
-    ) {
+    while (await this.productRepository.findBySlug(slug)) {
       slug = `${this.generateSlug(nom)}-${counter}`;
       counter++;
     }
 
     return slug;
-  }
-
-  /**
-   * Helper: Map entity to response DTO
-   */
-  private mapToResponseDto(entity: ProductEntity): ProductResponseDto {
-    const dto = new ProductResponseDto();
-    Object.assign(dto, entity);
-
-    // Handle stock display
-    if (entity.type === ProductType.PRODUCT) {
-      dto.stock = entity.stock_illimite === 'illimit\u00e9' ? 'illimit\u00e9' : entity.stock;
-    }
-
-    return dto;
   }
 }

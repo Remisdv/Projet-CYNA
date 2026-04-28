@@ -1,21 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TextePromotionnel } from '../../database/entity/Advertisement/Advertisement.entity';
-import { AdvertisementMapper } from '../../mapper/Advertisement.mapper';
-import { AdvertisementDto } from '../../dto/Advertisement/Advertisement.dto';
+import { Injectable } from '@nestjs/common';
+import { AdvertisementRepository } from '../../repository/Advertisement/Advertisement.repository';
+import { AdvertisementMapper } from './mappers/Advertisement.mapper';
+import { AdvertisementDto } from './dtos/Advertisement.dto';
 
 @Injectable()
 export class AdvertisementService {
   constructor(
-    @InjectRepository(TextePromotionnel)
-    private readonly repo: Repository<TextePromotionnel>,
+    private readonly advertisementRepository: AdvertisementRepository,
     private readonly mapper: AdvertisementMapper,
   ) { }
 
   async findActive(): Promise<AdvertisementDto | null> {
-    const texte = await this.repo.findOneBy({ isActive: true });
+    const texte = await this.advertisementRepository.findActive();
     if (!texte) return null;
     return this.mapper.toDto(texte);
+  }
+
+  async findAll(): Promise<AdvertisementDto[]> {
+    const all = await this.advertisementRepository.findAll();
+    return all.map((t) => this.mapper.toDto(t));
   }
 }

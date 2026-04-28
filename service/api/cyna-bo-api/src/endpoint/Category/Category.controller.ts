@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CategoryService } from '../../service/Category/Category.service';
-import { CategoryDto, CreateUpdateCategoryDto } from '../../service/dtos/Category/Category.dto';
+import { CategoryDto, CreateUpdateCategoryDto } from '../../service/Category/dtos/Category.dto';
 
 @Controller('categories')
 export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(private readonly categoryService: CategoryService) { }
 
   @Get()
   async findAll(): Promise<CategoryDto[]> {

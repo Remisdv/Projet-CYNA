@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Check, Monitor, Package, ArrowRight } from 'lucide-react';
-import { useCart } from '../../../context/CartContext';
+import { useCart } from '@/shared/context/CartContext';
 import type { Product } from '../hooks/useProducts';
 import { useCategoryName } from '../hooks/useCategories';
 
