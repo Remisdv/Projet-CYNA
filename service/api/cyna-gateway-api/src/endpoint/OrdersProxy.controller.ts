@@ -27,24 +27,14 @@ export class OrdersProxyController extends BaseProxyController {
     await this.proxy(req, res, `/api/orders/${id}`);
   }
 
-  @Patch(':id/status')
+  @Patch(':id')
   @Roles('admin')
-  async updateStatus(
+  async patchUpdate(
     @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/api/orders/${id}/status`);
-  }
-
-  @Patch(':id/payment-status')
-  @Roles('admin')
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    await this.proxy(req, res, `/api/orders/${id}/payment-status`);
+    await this.proxy(req, res, `/api/orders/${id}`);
   }
 
   @Post(':id/notes')
@@ -57,13 +47,13 @@ export class OrdersProxyController extends BaseProxyController {
     await this.proxy(req, res, `/api/orders/${id}/notes`);
   }
 
-  @Post(':id/credentials')
+  @Post(':id/credential-deliveries')
   @Roles('admin')
   async sendCredentials(
     @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/api/orders/${id}/credentials`);
+    await this.proxy(req, res, `/api/orders/${id}/credential-deliveries`);
   }
 }

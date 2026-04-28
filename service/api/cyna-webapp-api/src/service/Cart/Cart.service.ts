@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CartItem } from '../../database/entity/Cart/CartItem.entity';
-import { AddCartItemDto, UpdateCartItemDto, MergeCartDto } from './dtos/Cart.dto';
+import { AddCartItemDto, UpdateCartItemDto } from './dtos/Cart.dto';
 import { HttpClientService } from '../../common/services/http-client.service';
 import { CartRepository } from '../../repository/Cart/Cart.repository';
 
@@ -100,64 +100,6 @@ export class CartService {
       }
     }
     await this.cartRepository.removeMany(items);
-  }
-
-  async mergeLocalCart(userId: string, dto: MergeCartDto): Promise<CartItem[]> {
-    for (const localItem of dto.items) {
-      const existing = await this.cartRepository.findOneByUserProductPeriodicity(
-        userId,
-        localItem.productId,
-        localItem.periodicity ?? '',
-      );
-
-      if (existing) {
-        // If already in server cart, keep existing (don't duplicate)
-        continue;
-      }
-
-      const quantity = localItem.quantity ?? 1;
-
-      // Best-effort stock reservation: if it fails (stock insuffisant, produit supprimé,
-      // service-api injoignable), on garde quand même la ligne dans le panier pour
-      // ne pas perdre le contenu client au login.
-      let reserved = false;
-      try {
-        await this.reserveStock(localItem.productId, quantity);
-        reserved = true;
-      } catch (err) {
-        this.logger.warn(
-          `Merge: skipping stock reservation for ${localItem.productId}: ${err?.message ?? err}`,
-        );
-      }
-
-      const item = this.cartRepository.create({
-        userId,
-        productId: localItem.productId,
-        productName: localItem.productName,
-        productType: localItem.productType,
-        quantity,
-        prix: localItem.prix,
-        prixMensuel: localItem.prixMensuel,
-        prixAnnuel: localItem.prixAnnuel,
-        periodicity: localItem.periodicity ?? '',
-        image: localItem.image,
-        stockReserved: reserved,
-        reservationExpiresAt: reserved ? new Date(Date.now() + RESERVATION_DURATION_MS) : null,
-      });
-
-      try {
-        await this.cartRepository.save(item);
-      } catch (err) {
-        this.logger.warn(
-          `Merge: failed to save cart item ${localItem.productId}: ${err?.message ?? err}`,
-        );
-        if (reserved) {
-          // Undo the reservation we just made
-          await this.releaseStock(localItem.productId, quantity);
-        }
-      }
-    }
-    return this.getCart(userId);
   }
 
   /** Mark cart items as purchased so stock is NOT released */

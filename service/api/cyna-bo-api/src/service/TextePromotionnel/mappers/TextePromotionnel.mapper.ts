@@ -23,6 +23,7 @@ export class TextePromotionnelMapper {
     const entity = new TextePromotionnel();
     entity.textFr = dto.textFr;
     entity.textEn = dto.textEn;
+    if (dto.isActive !== undefined) entity.isActive = dto.isActive;
     return entity;
   }
 }

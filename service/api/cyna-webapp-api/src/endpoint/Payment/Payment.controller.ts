@@ -4,14 +4,14 @@ import { PaymentService } from '../../service/Payment/Payment.service';
 import { StripeService } from '../../service/Stripe/Stripe.service';
 import { CreatePaymentIntentDto, ConfirmOrderDto } from '../../service/Payment/dtos/Payment.dto';
 
-@Controller('payment')
+@Controller()
 export class PaymentController {
   constructor(
     private readonly paymentService: PaymentService,
     private readonly stripeService: StripeService,
   ) { }
 
-  @Post('create-intent')
+  @Post('payment-intents')
   async createPaymentIntent(
     @Headers('x-user-id') userId: string,
     @Body() dto: CreatePaymentIntentDto,
@@ -19,19 +19,19 @@ export class PaymentController {
     return this.paymentService.createPaymentIntent(userId, dto);
   }
 
-  @Post('stripe/webhook')
-  async handleWebhook(@Req() req: RawBodyRequest<Request>): Promise<{ received: boolean }> {
-    const signature = req.headers['stripe-signature'] as string;
-    const event = this.stripeService.constructEvent(req.rawBody, signature);
-    await this.paymentService.handleWebhook(event);
-    return { received: true };
-  }
-
-  @Post('confirm')
+  @Post('payment-intents/confirmations')
   async confirmPayment(
     @Headers('x-user-id') userId: string,
     @Body() dto: ConfirmOrderDto,
   ) {
     return this.paymentService.confirmOrder(userId, dto.orderId);
+  }
+
+  @Post('stripe-webhooks')
+  async handleWebhook(@Req() req: RawBodyRequest<Request>): Promise<{ received: boolean }> {
+    const signature = req.headers['stripe-signature'] as string;
+    const event = this.stripeService.constructEvent(req.rawBody, signature);
+    await this.paymentService.handleWebhook(event);
+    return { received: true };
   }
 }

@@ -43,7 +43,7 @@ export const catalogApi = {
     return normalizeProduct(payload);
   },
   searchProducts: async (q: string): Promise<Product[]> => {
-    const { data } = await apiClient.get<{ data?: Product[] } | Product[]>(`/products/search?q=${encodeURIComponent(q)}`);
+    const { data } = await apiClient.get<{ data?: Product[] } | Product[]>(`/products?q=${encodeURIComponent(q)}`);
     return (Array.isArray(data) ? data : data?.data ?? []) as Product[];
   },
 };

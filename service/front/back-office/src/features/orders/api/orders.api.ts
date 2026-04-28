@@ -111,14 +111,14 @@ export const ordersApi = {
     return normalizeOrderDetail(data);
   },
   updateStatus: async (id: string, status: string, trackingNumber?: string) => {
-    const { data } = await apiClient.patch(`/orders/${id}/status`, {
+    const { data } = await apiClient.patch(`/orders/${id}`, {
       status,
       trackingNumber,
     });
     return data;
   },
   updatePaymentStatus: async (id: string, paymentStatus: string) => {
-    const { data } = await apiClient.patch(`/orders/${id}/payment-status`, {
+    const { data } = await apiClient.patch(`/orders/${id}`, {
       paymentStatus,
     });
     return data;
@@ -132,7 +132,7 @@ export const ordersApi = {
     credentials: Array<{ serviceName: string; data: Record<string, string> }>,
     customMessage?: string
   ) => {
-    const { data } = await apiClient.post(`/orders/${id}/credentials`, {
+    const { data } = await apiClient.post(`/orders/${id}/credential-deliveries`, {
       credentials,
       customMessage,
     });

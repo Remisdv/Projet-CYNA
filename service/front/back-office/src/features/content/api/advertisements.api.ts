@@ -15,7 +15,7 @@ export const advertisementsApi = {
     return data;
   },
   activate: async (id: string): Promise<Advertisement> => {
-    const { data } = await apiClient.patch<Advertisement>(`/advertisements/${id}/activate`);
+    const { data } = await apiClient.patch<Advertisement>(`/advertisements/${id}`, { isActive: true });
     return data;
   },
   remove: async (id: string): Promise<void> => {

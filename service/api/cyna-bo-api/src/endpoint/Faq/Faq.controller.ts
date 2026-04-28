@@ -1,14 +1,20 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { FaqService } from '../../service/Faq/Faq.service';
-import { FaqDto, CreateUpdateFaqDto, ReorderFaqDto } from '../../service/Faq/dtos/Faq.dto';
+import { FaqDto, CreateUpdateFaqDto, PatchFaqDto } from '../../service/Faq/dtos/Faq.dto';
 
 @Controller('faqs')
 export class FaqController {
   constructor(private readonly faqService: FaqService) { }
 
-  @Get('tree')
-  async findTree(@Query('lang') lang?: string): Promise<FaqDto[]> {
-    return this.faqService.findTree(lang);
+  @Get()
+  async findAll(
+    @Query('lang') lang?: string,
+    @Query('format') format?: string,
+  ): Promise<FaqDto[]> {
+    if (format === 'tree' || !format) {
+      return this.faqService.findTree(lang);
+    }
+    return this.faqService.findFlat(lang);
   }
 
   @Get(':id')
@@ -26,9 +32,9 @@ export class FaqController {
     return this.faqService.update(id, dto);
   }
 
-  @Put(':id/reorder')
-  async reorder(@Param('id') id: string, @Body() dto: ReorderFaqDto): Promise<FaqDto> {
-    return this.faqService.reorder(id, dto);
+  @Patch(':id')
+  async patchUpdate(@Param('id') id: string, @Body() dto: PatchFaqDto): Promise<FaqDto> {
+    return this.faqService.patchUpdate(id, dto);
   }
 
   @Delete(':id')

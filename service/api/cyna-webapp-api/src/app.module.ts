@@ -9,6 +9,7 @@ import { CarouselModule } from './module/Carousel.module';
 import { AdvertisementModule } from './module/Advertisement.module';
 import { WebappAuthModule } from './module/WebappAuth.module';
 import { AccountModule } from './module/Account.module';
+import { TwoFactorModule } from './module/TwoFactor.module';
 import { PaymentModule } from './module/Payment.module';
 import { OrderModule } from './module/Order.module';
 import { SubscriptionModule } from './module/Subscription.module';
@@ -34,6 +35,7 @@ import { CommonModule } from './common/common.module';
     AdvertisementModule,
     WebappAuthModule,
     AccountModule,
+    TwoFactorModule,
     PaymentModule,
     OrderModule,
     SubscriptionModule,

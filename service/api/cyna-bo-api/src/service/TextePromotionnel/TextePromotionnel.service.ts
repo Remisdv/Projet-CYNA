@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TextePromotionnelRepository } from '../../repository/TextePromotionnel/TextePromotionnel.repository';
 import { TextePromotionnelMapper } from './mappers/TextePromotionnel.mapper';
-import { TextePromotionnelDto, CreateUpdateTextePromotionnelDto } from './dtos/TextePromotionnel.dto';
+import { TextePromotionnelDto, CreateUpdateTextePromotionnelDto, PatchTextePromotionnelDto } from './dtos/TextePromotionnel.dto';
 
 @Injectable()
 export class TextePromotionnelService {
@@ -15,15 +15,14 @@ export class TextePromotionnelService {
     return this.mapper.toDtoArray(textes);
   }
 
+  async findAllActive(): Promise<TextePromotionnelDto[]> {
+    const texte = await this.textePromotionnelRepository.findActive();
+    return texte ? [this.mapper.toDto(texte)] : [];
+  }
+
   async findOne(id: string): Promise<TextePromotionnelDto> {
     const texte = await this.textePromotionnelRepository.findById(id);
     if (!texte) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
-    return this.mapper.toDto(texte);
-  }
-
-  async findActive(): Promise<TextePromotionnelDto> {
-    const texte = await this.textePromotionnelRepository.findActive();
-    if (!texte) throw new NotFoundException('Aucun texte actif trouvé');
     return this.mapper.toDto(texte);
   }
 
@@ -37,17 +36,24 @@ export class TextePromotionnelService {
   async update(id: string, data: CreateUpdateTextePromotionnelDto): Promise<TextePromotionnelDto> {
     const entity = await this.textePromotionnelRepository.findById(id);
     if (!entity) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
+    if (data.isActive === true) {
+      await this.textePromotionnelRepository.deactivateAll();
+    }
     const mappedData = this.mapper.toEntity(data);
     const updated = this.textePromotionnelRepository.merge(entity, mappedData);
     const saved = await this.textePromotionnelRepository.save(updated);
     return this.mapper.toDto(saved);
   }
 
-  async activate(id: string): Promise<TextePromotionnelDto> {
+  async patchUpdate(id: string, data: PatchTextePromotionnelDto): Promise<TextePromotionnelDto> {
     const entity = await this.textePromotionnelRepository.findById(id);
     if (!entity) throw new NotFoundException(`Texte avec l'id ${id} introuvable`);
-    await this.textePromotionnelRepository.deactivateAll();
-    entity.isActive = true;
+    if (data.isActive === true) {
+      await this.textePromotionnelRepository.deactivateAll();
+    }
+    if (data.textFr !== undefined) entity.textFr = data.textFr;
+    if (data.textEn !== undefined) entity.textEn = data.textEn;
+    if (data.isActive !== undefined) entity.isActive = data.isActive;
     const saved = await this.textePromotionnelRepository.save(entity);
     return this.mapper.toDto(saved);
   }

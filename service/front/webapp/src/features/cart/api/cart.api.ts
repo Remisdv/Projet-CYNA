@@ -20,8 +20,4 @@ export const cartApi = {
   clear: async (): Promise<void> => {
     await apiClient.delete('/webapp/cart');
   },
-  merge: async (items: AddToCartInput[]): Promise<ServerCartItem[]> => {
-    const { data } = await apiClient.post<ServerCartResponse>('/webapp/cart/merge', { items });
-    return data.items ?? [];
-  },
 };

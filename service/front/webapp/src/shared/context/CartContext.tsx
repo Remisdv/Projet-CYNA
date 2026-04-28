@@ -7,7 +7,6 @@ import {
   useUpdateServerCartItem,
   useRemoveServerCartItem,
   useClearServerCart,
-  useMergeCart,
 } from '@/features/cart/hooks/useServerCart';
 
 export type CartPeriodicity = 'mensuel' | 'annuel';
@@ -67,7 +66,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateServer = useUpdateServerCartItem();
   const removeFromServer = useRemoveServerCartItem();
   const clearServer = useClearServerCart();
-  const mergeServer = useMergeCart();
 
   // Persist localStorage on every local change (only when not authenticated)
   useEffect(() => {
@@ -111,21 +109,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line no-console
     console.debug('[Cart] merging', stored.length, 'local items to server');
 
-    mergeServer.mutate(serverPayload as unknown as Parameters<typeof mergeServer.mutate>[0], {
-      onSuccess: () => {
-        // Succès: le serveur a persisté les lignes (même si stock insuffisant,
-        // le back save maintenant en best-effort). On peut vider le local.
+    // Sequential POST /cart/items — RESTful merge: each line = creation.
+    // Le backend gère la déduplication (productId+periodicity) et la réservation
+    // de stock en best-effort.
+    (async () => {
+      let allOk = true;
+      for (const payload of serverPayload) {
+        try {
+          await addToServer.mutateAsync(payload as unknown as Parameters<typeof addToServer.mutateAsync>[0]);
+        } catch (err) {
+          allOk = false;
+          // eslint-disable-next-line no-console
+          console.warn('[Cart] merge: skipping item', payload, err);
+        }
+      }
+      if (allOk) {
         setLocalItems([]);
         localStorage.removeItem(CART_KEY);
-      },
-      onError: (err) => {
-        // Échec réseau/5xx: on garde le localStorage intact pour ne pas perdre
-        // le panier client, et on autorise une nouvelle tentative plus tard.
-        // eslint-disable-next-line no-console
-        console.error('[Cart] merge failed, keeping local cart', err);
+      } else {
+        // Au moins un item a échoué (réseau / 5xx) : on garde le localStorage et on autorise un nouveau retry.
         mergedRef.current = false;
-      },
-    });
+      }
+    })();
   }, [isAuthenticated, authLoading]);
 
   // Reset merge flag on logout

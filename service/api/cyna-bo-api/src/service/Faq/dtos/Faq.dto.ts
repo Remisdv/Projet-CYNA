@@ -33,7 +33,24 @@ export class CreateUpdateFaqDto {
   order?: number;
 }
 
-export class ReorderFaqDto {
+export class PatchFaqDto {
+  @IsString()
+  @IsOptional()
+  parentId?: string;
+
+  @IsString()
+  @IsOptional()
+  question?: string;
+
+  @IsString()
+  @IsOptional()
+  answer?: string;
+
+  @IsString()
+  @IsOptional()
+  lang?: string;
+
   @IsNumber()
-  order: number;
+  @IsOptional()
+  order?: number;
 }

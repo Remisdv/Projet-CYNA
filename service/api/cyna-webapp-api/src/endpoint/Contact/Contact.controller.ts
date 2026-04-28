@@ -2,7 +2,7 @@ import { Controller, Post, Body, Headers } from '@nestjs/common';
 import { ContactService } from '../../service/Contact/Contact.service';
 import { CreateContactDto } from '../../service/Contact/dtos/Contact.dto';
 
-@Controller('contact')
+@Controller('contact-messages')
 export class ContactController {
   constructor(private readonly contactService: ContactService) { }
 

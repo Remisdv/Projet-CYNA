@@ -14,7 +14,7 @@ export function trackEvent(
     metadata?: Record<string, any>,
 ) {
     apiClient
-        .post('/tracking/event', {
+        .post('/tracking-events', {
             type,
             userId: userId ? String(userId) : undefined,
             sessionId,

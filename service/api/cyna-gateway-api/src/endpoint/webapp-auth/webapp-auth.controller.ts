@@ -1,32 +1,50 @@
-import { Controller, Post, Get, Body, Query, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  Res,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { Public } from '../../common/decorator/public.decorator';
 import { WebappAuthService } from '../../service/webapp-auth/webapp-auth.service';
 import {
-  WebappLoginDto,
   WebappRegisterDto,
-  WebappRefreshDto,
   WebappForgotPasswordDto,
-  WebappResetPasswordDto,
+  WebappResetPasswordBodyDto,
+  WebappCreateSessionDto,
+  WebappVerifySessionDto,
+  WebappTwoFactorChallengeDto,
 } from '../../dto/webapp-auth/webapp-auth.dto';
+
+const COOKIE_NAME = 'Authentication';
+const COOKIE_MAX_AGE = 24 * 60 * 60 * 1000;
+
+function setAuthCookie(res: Response, token: string): void {
+  res.cookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: COOKIE_MAX_AGE,
+  });
+}
 
 @Controller('api/webapp/auth')
 export class WebappAuthController {
-  constructor(private readonly authService: WebappAuthService) { }
+  constructor(private readonly authService: WebappAuthService) {}
 
+  /** POST /api/webapp/auth/users — register a new account. */
   @Public()
-  @Post('register')
+  @Post('users')
   async register(@Body() dto: WebappRegisterDto, @Res() res: Response): Promise<void> {
     const authResponse = await this.authService.register(dto);
 
-    res.cookie('Authentication', authResponse.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.status(201).json({
+    setAuthCookie(res, authResponse.access_token);
+    res.status(HttpStatus.CREATED).json({
       message: 'Registration successful',
       user: authResponse.user,
       access_token: authResponse.access_token,
@@ -34,130 +52,81 @@ export class WebappAuthController {
     });
   }
 
+  /**
+   * POST /api/webapp/auth/sessions — polymorphic.
+   * Body { email, password } → login (may return 2FA pending without setting cookie)
+   * Body { refresh_token } → refresh
+   */
   @Public()
-  @Post('login')
-  async login(@Body() dto: WebappLoginDto, @Res() res: Response): Promise<void> {
-    const authResponse = await this.authService.login(dto);
+  @Post('sessions')
+  @HttpCode(HttpStatus.OK)
+  async createSession(@Body() dto: WebappCreateSessionDto, @Res() res: Response): Promise<void> {
+    const authResponse = await this.authService.createSession({
+      email: dto.email,
+      password: dto.password,
+      refresh_token: dto.refresh_token,
+    });
 
-    // If 2FA required, return pending state (no cookie yet)
     if ((authResponse as any).requiresTwoFactor) {
-      res.status(200).json(authResponse);
+      res.status(HttpStatus.OK).json(authResponse);
       return;
     }
 
-    res.cookie('Authentication', (authResponse as any).access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.status(200).json({
-      message: 'Login successful',
-      user: (authResponse as any).user,
-      access_token: (authResponse as any).access_token,
-      refresh_token: (authResponse as any).refresh_token,
-    });
-  }
-
-  @Public()
-  @Post('2fa/verify')
-  async verifyTwoFactor(@Body() body: { userId: string; code: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.verifyTwoFactor(body.userId, body.code);
-
-    if (result.access_token) {
-      res.cookie('Authentication', result.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 24 * 60 * 60 * 1000,
-      });
+    if ((authResponse as any).access_token) {
+      setAuthCookie(res, (authResponse as any).access_token);
     }
-
-    res.status(200).json(result);
+    res.status(HttpStatus.OK).json(authResponse);
   }
 
+  /** PATCH /api/webapp/auth/sessions/current — verify 2FA code. */
   @Public()
-  @Post('2fa/resend')
-  async resendTwoFactor(@Body() body: { userId: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.resendTwoFactor(body.userId);
-    res.status(200).json(result);
+  @Patch('sessions/current')
+  @HttpCode(HttpStatus.OK)
+  async verifySession(@Body() dto: WebappVerifySessionDto, @Res() res: Response): Promise<void> {
+    const result = await this.authService.verifySession(dto.userId, dto.code);
+    if ((result as any).access_token) {
+      setAuthCookie(res, (result as any).access_token);
+    }
+    res.status(HttpStatus.OK).json(result);
   }
 
+  /** POST /api/webapp/auth/sessions/current/two-factor-challenges — resend code. */
   @Public()
-  @Post('2fa/email/enable')
-  async enableEmailTwoFactor(@Body() body: { userId: string; password: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.enableEmailTwoFactor(body.userId, body.password);
-    res.status(200).json(result);
+  @Post('sessions/current/two-factor-challenges')
+  @HttpCode(HttpStatus.OK)
+  async createTwoFactorChallenge(@Body() dto: WebappTwoFactorChallengeDto, @Res() res: Response): Promise<void> {
+    const result = await this.authService.createTwoFactorChallenge(dto.userId);
+    res.status(HttpStatus.OK).json(result);
   }
 
+  /** DELETE /api/webapp/auth/sessions/current — logout (clear cookie). */
   @Public()
-  @Post('2fa/email/enable/confirm')
-  async confirmEmailTwoFactor(@Body() body: { userId: string; password: string; code: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.confirmEmailTwoFactor(body.userId, body.password, body.code);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Post('2fa/totp/setup')
-  async setupTotp(@Body() body: { userId: string; password: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.setupTotp(body.userId, body.password);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Post('2fa/totp/confirm')
-  async confirmTotp(@Body() body: { userId: string; password: string; code: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.confirmTotp(body.userId, body.password, body.code);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Post('2fa/disable/send-code')
-  async sendDisableCode(@Body() body: { userId: string; password: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.sendDisableCode(body.userId, body.password);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Post('2fa/disable')
-  async disableTwoFactor(@Body() body: { userId: string; password: string; code: string }, @Res() res: Response): Promise<void> {
-    const result = await this.authService.disableTwoFactor(body.userId, body.password, body.code);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Get('2fa/status')
-  async getTwoFactorStatus(@Query('userId') userId: string, @Res() res: Response): Promise<void> {
-    const result = await this.authService.getTwoFactorStatus(userId);
-    res.status(200).json(result);
-  }
-
-  @Public()
-  @Post('refresh')
-  async refresh(@Body() dto: WebappRefreshDto, @Res() res: Response): Promise<void> {
-    const authResponse = await this.authService.refresh(dto.refresh_token);
-    res.status(200).json(authResponse);
-  }
-
-  @Public()
-  @Post('logout')
+  @Delete('sessions/current')
+  @HttpCode(HttpStatus.OK)
   async logout(@Res() res: Response): Promise<void> {
-    res.clearCookie('Authentication');
-    res.status(200).json({ message: 'Logout successful' });
+    res.clearCookie(COOKIE_NAME);
+    res.status(HttpStatus.OK).json({ message: 'Logout successful' });
   }
 
+  /** POST /api/webapp/auth/password-resets — request a password reset email. */
   @Public()
-  @Post('forgot-password')
-  async forgotPassword(@Body() dto: WebappForgotPasswordDto, @Res() res: Response): Promise<void> {
-    const result = await this.authService.forgotPassword(dto.email);
-    res.status(200).json(result);
+  @Post('password-resets')
+  @HttpCode(HttpStatus.OK)
+  async requestPasswordReset(@Body() dto: WebappForgotPasswordDto, @Res() res: Response): Promise<void> {
+    const result = await this.authService.requestPasswordReset(dto.email);
+    res.status(HttpStatus.OK).json(result);
   }
 
+  /** PATCH /api/webapp/auth/password-resets/:token — confirm a password reset. */
   @Public()
-  @Post('reset-password')
-  async resetPassword(@Body() dto: WebappResetPasswordDto, @Res() res: Response): Promise<void> {
-    const result = await this.authService.resetPassword(dto.token, dto.newPassword);
-    res.status(200).json(result);
+  @Patch('password-resets/:token')
+  @HttpCode(HttpStatus.OK)
+  async confirmPasswordReset(
+    @Param('token') token: string,
+    @Body() dto: WebappResetPasswordBodyDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const result = await this.authService.confirmPasswordReset(token, dto.newPassword);
+    res.status(HttpStatus.OK).json(result);
   }
 }

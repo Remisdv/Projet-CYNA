@@ -12,7 +12,6 @@
             "services": "Services",
             "categories": "Catégories",
             "content": "Contenu",
-            "faq": "FAQ",
             "advertisements": "Publicités",
             "carousel": "Carousel",
             "users": "Utilisateurs",
@@ -153,9 +152,6 @@
         "pageTitle": "Dashboard Commercial"
     },
     "content": {
-        "faq": {
-            "pageTitle": "FAQ"
-        },
         "advertisements": {
             "pageTitle": "Publicités"
         },

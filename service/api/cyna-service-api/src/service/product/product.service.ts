@@ -435,6 +435,38 @@ export class ProductService {
   }
 
   /**
+   * Partial update of a single image (set as main, change order, etc.)
+   */
+  async patchImage(
+    productId: string,
+    imageId: string,
+    dto: { est_principale?: boolean; ordre?: number },
+  ): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${productId} not found`);
+    }
+    if (!product.images) {
+      throw new NotFoundException('No images found');
+    }
+    const image = product.images.find((img) => img.id === imageId);
+    if (!image) {
+      throw new NotFoundException(`Image with ID ${imageId} not found`);
+    }
+    if (dto.est_principale === true) {
+      product.images.forEach((img) => { img.est_principale = false; });
+      image.est_principale = true;
+    } else if (dto.est_principale === false) {
+      image.est_principale = false;
+    }
+    if (dto.ordre !== undefined) {
+      image.ordre = dto.ordre;
+    }
+    const updated = await this.productRepository.save(product);
+    return this.mapper.toDto(updated);
+  }
+
+  /**
    * Helper: Generate unique slug
    */
   private async generateUniqueSlug(nom: string): Promise<string> {

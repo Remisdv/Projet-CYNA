@@ -48,17 +48,19 @@ export class ServiceController {
 
   /**
    * POST /services
-   * Create a new service
+   * Create a new service, or duplicate an existing one when ?from=:id is provided.
    */
   @Post()
-  async create(@Body() createServiceDto: CreateServiceDto): Promise<ServiceResponseDto> {
+  async create(
+    @Body() createServiceDto: CreateServiceDto,
+    @Query('from') from?: string,
+  ): Promise<ServiceResponseDto> {
+    if (from) {
+      return this.serviceService.duplicate(from);
+    }
     return this.serviceService.create(createServiceDto);
   }
 
-  /**
-   * PUT /services/:id
-   * Update a service
-   */
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -67,21 +69,8 @@ export class ServiceController {
     return this.serviceService.update(id, updateServiceDto);
   }
 
-  /**
-   * DELETE /services/:id
-   * Delete a service
-   */
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
     return this.serviceService.remove(id);
-  }
-
-  /**
-   * POST /services/:id/duplicate
-   * Duplicate a service
-   */
-  @Post(':id/duplicate')
-  async duplicate(@Param('id') id: string): Promise<ServiceResponseDto> {
-    return this.serviceService.duplicate(id);
   }
 }

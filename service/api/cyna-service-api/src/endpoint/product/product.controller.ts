@@ -15,7 +15,6 @@ import {
   CreateProductDto,
   UpdateProductDto,
   ProductResponseDto,
-  UpdateImageOrderDto,
 } from '../../service/product/dtos';
 
 @Controller('products')
@@ -24,8 +23,7 @@ export class ProductController {
 
   /**
    * GET /products
-   * List all products with filtering, pagination, and sorting
-   * Public endpoint
+   * List all products with filtering, pagination, sorting and search via ?q=
    */
   @Get()
   async findAll(
@@ -57,44 +55,25 @@ export class ProductController {
   }
 
   /**
-   * GET /products/search?q=...
-   * Search products by keyword
-   * Public endpoint
-   */
-  @Get('search')
-  async search(
-    @Query('q') q: string,
-    @Query('categorie') categorie?: string,
-    @Query('type') type?: string,
-  ) {
-    return this.productService.search(q, { categorie, type });
-  }
-
-  /**
    * POST /products
-   * Create a new product
-   * Admin only
+   * Create a new product, or duplicate an existing one when ?from=:id is provided.
    */
   @Post()
-  async create(@Body() createProductDto: CreateProductDto): Promise<ProductResponseDto> {
+  async create(
+    @Body() createProductDto: CreateProductDto,
+    @Query('from') from?: string,
+  ): Promise<ProductResponseDto> {
+    if (from) {
+      return this.productService.duplicate(from);
+    }
     return this.productService.create(createProductDto);
   }
 
-  /**
-   * GET /products/:id
-   * Get product details by ID
-   * Public endpoint
-   */
   @Get(':id')
   async findById(@Param('id') id: string): Promise<ProductResponseDto> {
     return this.productService.findById(id);
   }
 
-  /**
-   * PUT /products/:id
-   * Update a product
-   * Admin only
-   */
   @Put(':id')
   async update(
     @Param('id') id: string,
@@ -104,10 +83,17 @@ export class ProductController {
   }
 
   /**
-   * DELETE /products/:id
-   * Delete/Archive a product
-   * Admin only
+   * PATCH /products/:id
+   * Partial product update (also used to publish via {statut:'published'}).
    */
+  @Patch(':id')
+  async patchUpdate(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ): Promise<ProductResponseDto> {
+    return this.productService.update(id, updateProductDto);
+  }
+
   @Delete(':id')
   @HttpCode(204)
   async delete(@Param('id') id: string): Promise<void> {
@@ -115,31 +101,10 @@ export class ProductController {
   }
 
   /**
-   * POST /products/:id/publish
-   * Publish a product (change from draft to published)
-   * Admin only
+   * POST /products/:id/demo-tokens
+   * Generate a demo access token (24h TTL).
    */
-  @Post(':id/publish')
-  async publish(@Param('id') id: string): Promise<ProductResponseDto> {
-    return this.productService.publish(id);
-  }
-
-  /**
-   * POST /products/:id/duplicate
-   * Duplicate a product
-   * Admin only
-   */
-  @Post(':id/duplicate')
-  async duplicate(@Param('id') id: string): Promise<ProductResponseDto> {
-    return this.productService.duplicate(id);
-  }
-
-  /**
-   * POST /products/:id/demo
-   * Generate a demo access token (24h TTL)
-   * Authenticated users only
-   */
-  @Post(':id/demo')
+  @Post(':id/demo-tokens')
   async generateDemoToken(
     @Param('id') id: string,
     @Query('userId') userId: string,
@@ -147,11 +112,6 @@ export class ProductController {
     return this.productService.generateDemoToken(id, userId);
   }
 
-  /**
-   * POST /products/:id/images
-   * Upload/Add images to a product
-   * Admin only
-   */
   @Post(':id/images')
   async addImages(
     @Param('id') id: string,
@@ -160,11 +120,6 @@ export class ProductController {
     return this.productService.addImages(id, body.images);
   }
 
-  /**
-   * DELETE /products/:id/images/:imageId
-   * Delete an image
-   * Admin only
-   */
   @Delete(':id/images/:imageId')
   async deleteImage(
     @Param('id') id: string,
@@ -174,28 +129,16 @@ export class ProductController {
   }
 
   /**
-   * PATCH /products/:id/images/:imageId/main
-   * Set an image as main
-   * Admin only
+   * PATCH /products/:id/images/:imageId
+   * Partial update of an image (set as main with {est_principale:true} or set order with {ordre:N}).
    */
-  @Patch(':id/images/:imageId/main')
-  async setMainImage(
+  @Patch(':id/images/:imageId')
+  async patchImage(
     @Param('id') id: string,
     @Param('imageId') imageId: string,
+    @Body() body: { est_principale?: boolean; ordre?: number },
   ): Promise<ProductResponseDto> {
-    return this.productService.setMainImage(id, imageId);
-  }
-
-  /**
-   * PUT /products/:id/images/order
-   * Reorder images
-   * Admin only
-   */
-  @Put(':id/images/order')
-  async reorderImages(
-    @Param('id') id: string,
-    @Body() updateImageOrderDto: UpdateImageOrderDto,
-  ): Promise<ProductResponseDto> {
-    return this.productService.reorderImages(id, updateImageOrderDto);
+    return this.productService.patchImage(id, imageId, body);
   }
 }
+

@@ -47,10 +47,4 @@ export class WebappCartProxyController extends BaseProxyController {
   async clearCart(@Req() req: Request, @Res() res: Response): Promise<void> {
     await this.proxy(req, res, '/api/webapp/cart');
   }
-
-  @Post('merge')
-  @Auth()
-  async mergeCart(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/cart/merge');
-  }
 }

@@ -4,27 +4,27 @@ import { WebappProxyService } from '../service/webapp-proxy.service';
 import { Auth, Public } from '../common';
 import { BaseProxyController } from './base-proxy.controller';
 
-@Controller('api/webapp/payment')
+@Controller('api/webapp')
 export class WebappPaymentProxyController extends BaseProxyController {
   constructor(readonly proxyService: WebappProxyService) {
     super(proxyService);
   }
 
-  @Post('create-intent')
+  @Post('payment-intents')
   @Auth()
   async createIntent(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/payment/create-intent');
+    await this.proxy(req, res, '/api/webapp/payment-intents');
   }
 
-  @Post('stripe/webhook')
-  @Public()
-  async webhook(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/payment/stripe/webhook');
-  }
-
-  @Post('confirm')
+  @Post('payment-intents/confirmations')
   @Auth()
   async confirm(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/payment/confirm');
+    await this.proxy(req, res, '/api/webapp/payment-intents/confirmations');
+  }
+
+  @Post('stripe-webhooks')
+  @Public()
+  async webhook(@Req() req: Request, @Res() res: Response): Promise<void> {
+    await this.proxy(req, res, '/api/webapp/stripe-webhooks');
   }
 }

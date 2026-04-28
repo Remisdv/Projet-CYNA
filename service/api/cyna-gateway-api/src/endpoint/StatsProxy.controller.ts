@@ -10,17 +10,13 @@ export class StatsProxyController extends BaseProxyController {
     super(proxyService);
   }
 
-  @Get('dashboard')
-  @Roles('admin')
-  async getDashboard(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    await this.proxy(req, res, `/api/stats/dashboard${qs}`);
-  }
-
-  @Get('commercial')
+  /**
+   * GET /api/bo/stats?scope=dashboard|commercial&days=N
+   */
+  @Get()
   @Roles('admin', 'commercial')
-  async getCommercial(@Req() req: Request, @Res() res: Response): Promise<void> {
+  async get(@Req() req: Request, @Res() res: Response): Promise<void> {
     const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    await this.proxy(req, res, `/api/stats/commercial${qs}`);
+    await this.proxy(req, res, `/api/stats${qs}`);
   }
 }

@@ -16,18 +16,18 @@ export interface SyncOrderDto {
     createdAt?: string;
 }
 
-export class UpdateStatusDto {
+export class PatchOrderDto {
+    @IsOptional()
     @IsEnum(OrderStatus)
-    status: OrderStatus;
+    status?: OrderStatus;
+
+    @IsOptional()
+    @IsEnum(PaymentStatus)
+    paymentStatus?: PaymentStatus;
 
     @IsOptional()
     @IsString()
     trackingNumber?: string;
-}
-
-export class UpdatePaymentStatusDto {
-    @IsEnum(PaymentStatus)
-    paymentStatus: PaymentStatus;
 }
 
 export class AddNoteDto {

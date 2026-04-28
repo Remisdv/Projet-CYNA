@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength, IsOptional, Length, IsBoolean } from 'class-validator';
+import { IsEmail, IsString, MinLength, IsOptional, Length, IsBoolean, ValidateIf } from 'class-validator';
 
 export class RegisterDto {
     @IsEmail()
@@ -57,61 +57,42 @@ export class TwoFactorResendDto {
     userId: string;
 }
 
-export class EnableEmailTwoFactorDto {
-    @IsString()
-    userId: string;
+/**
+ * Polymorphic session creation: either { email, password } (login) or { refresh_token } (refresh).
+ */
+export class CreateSessionDto {
+    @ValidateIf((o) => !o.refresh_token)
+    @IsEmail()
+    email?: string;
 
+    @ValidateIf((o) => !o.refresh_token)
     @IsString()
     @MinLength(6)
-    password: string;
+    password?: string;
+
+    @ValidateIf((o) => !o.email && !o.password)
+    @IsString()
+    refresh_token?: string;
 }
 
-export class SetupTotpDto {
+export class VerifySessionDto {
     @IsString()
     userId: string;
-
-    @IsString()
-    @MinLength(6)
-    password: string;
-}
-
-export class ConfirmEmailTwoFactorDto {
-    @IsString()
-    userId: string;
-
-    @IsString()
-    @MinLength(6)
-    password: string;
 
     @IsString()
     @Length(6, 6)
     code: string;
 }
 
-export class VerifyTotpSetupDto {
+export class TwoFactorChallengeDto {
     @IsString()
     userId: string;
-
-    @IsString()
-    @MinLength(6)
-    password: string;
-
-    @IsString()
-    @Length(6, 6)
-    code: string;
 }
 
-export class DisableTwoFactorDto {
-    @IsString()
-    userId: string;
-
+export class ResetPasswordBodyDto {
     @IsString()
     @MinLength(6)
-    password: string;
-
-    @IsString()
-    @Length(6, 6)
-    code: string;
+    newPassword: string;
 }
 
 export class AuthResponseDto {

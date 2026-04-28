@@ -26,7 +26,7 @@ export class ProductProxyController extends BaseProxyController {
 
   /**
    * GET /api/products
-   * List products (public sees only published, admin sees all)
+   * List products (public sees only published, admin sees all). Search via ?q=.
    */
   @Get()
   @Public()
@@ -36,29 +36,18 @@ export class ProductProxyController extends BaseProxyController {
   }
 
   /**
-   * GET /api/products/search?q=...
-   * Search products
-   */
-  @Get('search')
-  @Public()
-  async search(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    await this.proxy(req, res, `/api/products/search${qs}`);
-  }
-
-  /**
    * POST /api/products
-   * Create product (admin only)
+   * Create product, or duplicate via ?from=:id (admin only).
    */
   @Post()
   @Roles('admin')
   async create(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/products');
+    const qs = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    await this.proxy(req, res, `/api/products${qs}`);
   }
 
   /**
    * GET /api/products/:id
-   * Get product details
    */
   @Get(':id')
   @Public()
@@ -71,8 +60,7 @@ export class ProductProxyController extends BaseProxyController {
   }
 
   /**
-   * PUT /api/products/:id
-   * Update product (admin only)
+   * PUT /api/products/:id (full update, admin only)
    */
   @Put(':id')
   @Roles('admin')
@@ -85,8 +73,20 @@ export class ProductProxyController extends BaseProxyController {
   }
 
   /**
+   * PATCH /api/products/:id (partial update incl. publish via {statut})
+   */
+  @Patch(':id')
+  @Roles('admin')
+  async patchUpdate(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    await this.proxy(req, res, `/api/products/${id}`);
+  }
+
+  /**
    * DELETE /api/products/:id
-   * Delete product (admin only)
    */
   @Delete(':id')
   @Roles('admin')
@@ -99,50 +99,20 @@ export class ProductProxyController extends BaseProxyController {
   }
 
   /**
-   * POST /api/products/:id/publish
-   * Publish product (admin only)
+   * POST /api/products/:id/demo-tokens (authenticated)
    */
-  @Post(':id/publish')
-  @Roles('admin')
-  async publish(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/publish`);
-  }
-
-  /**
-   * POST /api/products/:id/duplicate
-   * Duplicate product (admin only)
-   */
-  @Post(':id/duplicate')
-  @Roles('admin')
-  async duplicate(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/duplicate`);
-  }
-
-  /**
-   * POST /api/products/:id/demo
-   * Generate demo token (authenticated users)
-   */
-  @Post(':id/demo')
+  @Post(':id/demo-tokens')
   @Roles('')
   async generateDemo(
     @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/demo`);
+    await this.proxy(req, res, `/api/products/${id}/demo-tokens`);
   }
 
   /**
    * POST /api/products/:id/images
-   * Add images (admin only)
    */
   @Post(':id/images')
   @Roles('admin')
@@ -156,7 +126,6 @@ export class ProductProxyController extends BaseProxyController {
 
   /**
    * DELETE /api/products/:id/images/:imageId
-   * Delete image (admin only)
    */
   @Delete(':id/images/:imageId')
   @Roles('admin')
@@ -170,31 +139,17 @@ export class ProductProxyController extends BaseProxyController {
   }
 
   /**
-   * PATCH /api/products/:id/images/:imageId/main
-   * Set main image (admin only)
+   * PATCH /api/products/:id/images/:imageId
+   * Partial image update (set main, change order)
    */
-  @Patch(':id/images/:imageId/main')
+  @Patch(':id/images/:imageId')
   @Roles('admin')
-  async setMainImage(
+  async patchImage(
     @Param('id') id: string,
     @Param('imageId') imageId: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/images/${imageId}/main`);
-  }
-
-  /**
-   * PUT /api/products/:id/images/order
-   * Reorder images (admin only)
-   */
-  @Put(':id/images/order')
-  @Roles('admin')
-  async reorderImages(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    await this.proxy(req, res, `/api/products/${id}/images/order`);
+    await this.proxy(req, res, `/api/products/${id}/images/${imageId}`);
   }
 }

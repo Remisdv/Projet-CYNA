@@ -19,7 +19,7 @@ export const accountApi = {
     return data;
   },
   changePassword: async (passwordData: ChangePasswordData): Promise<unknown> => {
-    const { data } = await apiClient.put('/webapp/account/password', passwordData);
+    const { data } = await apiClient.patch('/webapp/account/password', passwordData);
     return data;
   },
   listOrders: async (page = 1, limit = 10): Promise<OrdersListResponse> => {

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Faq } from '../../database/entity/Faq/Faq.entity';
 import { FaqRepository } from '../../repository/Faq/Faq.repository';
 import { FaqMapper } from './mappers/Faq.mapper';
-import { FaqDto, CreateUpdateFaqDto, ReorderFaqDto } from './dtos/Faq.dto';
+import { FaqDto, CreateUpdateFaqDto, PatchFaqDto } from './dtos/Faq.dto';
 
 @Injectable()
 export class FaqService {
@@ -14,6 +14,11 @@ export class FaqService {
   async findTree(lang?: string): Promise<FaqDto[]> {
     const faqs = await this.faqRepository.findOrdered(lang);
     return this.buildTree(faqs);
+  }
+
+  async findFlat(lang?: string): Promise<FaqDto[]> {
+    const faqs = await this.faqRepository.findOrdered(lang);
+    return faqs.map((f) => this.mapper.toDto(f, []));
   }
 
   async findOne(id: string): Promise<FaqDto> {
@@ -36,10 +41,14 @@ export class FaqService {
     return this.mapper.toDto(saved);
   }
 
-  async reorder(id: string, dto: ReorderFaqDto): Promise<FaqDto> {
+  async patchUpdate(id: string, dto: PatchFaqDto): Promise<FaqDto> {
     const entity = await this.faqRepository.findById(id);
     if (!entity) throw new NotFoundException(`FAQ with id ${id} not found`);
-    entity.order = dto.order;
+    if (dto.parentId !== undefined) entity.parentId = dto.parentId || null;
+    if (dto.question !== undefined) entity.question = dto.question;
+    if (dto.answer !== undefined) entity.answer = dto.answer;
+    if (dto.lang !== undefined) entity.lang = dto.lang;
+    if (dto.order !== undefined) entity.order = dto.order;
     const saved = await this.faqRepository.save(entity);
     return this.mapper.toDto(saved);
   }

@@ -1,4 +1,4 @@
-import { IsString, IsEmail, MinLength, IsOptional } from 'class-validator';
+import { IsString, IsEmail, MinLength, IsOptional, ValidateIf, Length } from 'class-validator';
 
 export class WebappLoginDto {
   @IsEmail()
@@ -38,13 +38,39 @@ export class WebappForgotPasswordDto {
   email: string;
 }
 
-export class WebappResetPasswordDto {
-  @IsString()
-  token: string;
-
+export class WebappResetPasswordBodyDto {
   @IsString()
   @MinLength(6)
   newPassword: string;
+}
+
+export class WebappCreateSessionDto {
+  @ValidateIf((o) => !o.refresh_token)
+  @IsEmail()
+  email?: string;
+
+  @ValidateIf((o) => !o.refresh_token)
+  @IsString()
+  @MinLength(6)
+  password?: string;
+
+  @ValidateIf((o) => !o.email && !o.password)
+  @IsString()
+  refresh_token?: string;
+}
+
+export class WebappVerifySessionDto {
+  @IsString()
+  userId: string;
+
+  @IsString()
+  @Length(6, 6)
+  code: string;
+}
+
+export class WebappTwoFactorChallengeDto {
+  @IsString()
+  userId: string;
 }
 
 export class WebappAuthResponseDto {

@@ -47,7 +47,7 @@ export class UserController {
     return this.service.remove(id);
   }
 
-  @Post(':id/reset-password')
+  @Post(':id/password-resets')
   resetPassword(@Param('id') id: string): Promise<{ tempPassword: string }> {
     return this.service.resetPassword(id);
   }

@@ -2,7 +2,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { EmailService } from '../../service/Email/Email.service';
 import { ShippingUpdateDto, ServiceCredentialsDto } from '../../service/Notifications/dtos/Notification.dto';
 
-@Controller('internal/notifications')
+@Controller('internal/order-notifications')
 export class NotificationsController {
     constructor(private readonly emailService: EmailService) { }
 

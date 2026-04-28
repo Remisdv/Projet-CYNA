@@ -3,7 +3,7 @@ import type { DashboardStats, RecentOrdersResponse, RecentUsersResponse } from '
 
 export const dashboardApi = {
   stats: async (days: number): Promise<DashboardStats> => {
-    const { data } = await apiClient.get<DashboardStats>('/stats/dashboard', { params: { days } });
+    const { data } = await apiClient.get<DashboardStats>('/stats', { params: { scope: 'dashboard', days } });
     return data;
   },
   recentOrders: async (limit = 5): Promise<RecentOrdersResponse> => {

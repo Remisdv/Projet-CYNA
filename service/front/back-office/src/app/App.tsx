@@ -11,7 +11,6 @@ import DashboardPage from '@/features/dashboard/pages/DashboardPage';
 import ServicesPage from '@/features/catalog/pages/ServicesPage';
 import CategoriesPage from '@/features/catalog/pages/CategoriesPage';
 import ServiceFormPage from '@/features/catalog/pages/ServiceFormPage';
-import FaqsPage from '@/features/content/pages/FaqsPage';
 import AdvertisementsPage from '@/features/content/pages/AdvertisementsPage';
 import UsersPage from '@/features/users/pages/UsersPage';
 import OrdersPage from '@/features/orders/pages/OrdersPage';
@@ -80,7 +79,6 @@ function AppRoutes() {
         <Route path="catalog/categories" element={<CategoriesPage />} />
 
         {/* Content */}
-        <Route path="content/faq" element={<FaqsPage />} />
         <Route path="content/advertisements" element={<AdvertisementsPage />} />
         <Route path="content/carousel" element={<CarouselPage />} />
 

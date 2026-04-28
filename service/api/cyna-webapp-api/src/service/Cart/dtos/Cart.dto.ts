@@ -45,10 +45,3 @@ export class UpdateCartItemDto {
     @IsNumber()
     quantity: number;
 }
-
-export class MergeCartDto {
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => AddCartItemDto)
-    items: AddCartItemDto[];
-}

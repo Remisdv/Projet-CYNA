@@ -4,7 +4,7 @@ import { WebappProxyService } from '../service/webapp-proxy.service';
 import { Public } from '../common';
 import { BaseProxyController } from './base-proxy.controller';
 
-@Controller('api/webapp/contact')
+@Controller('api/webapp/contact-messages')
 export class WebappContactProxyController extends BaseProxyController {
   constructor(readonly proxyService: WebappProxyService) {
     super(proxyService);
@@ -13,6 +13,6 @@ export class WebappContactProxyController extends BaseProxyController {
   @Post()
   @Public()
   async create(@Req() req: Request, @Res() res: Response): Promise<void> {
-    await this.proxy(req, res, '/api/webapp/contact');
+    await this.proxy(req, res, '/api/webapp/contact-messages');
   }
 }

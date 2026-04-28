@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@/shared/context/AuthContext';
-import { authApi } from '@/features/auth/api/auth.api';
+import { twoFactorApi, TotpSetupResult } from '@/features/account/api/twoFactor.api';
 
 export type TwoFAView = 'main' | 'enable-email' | 'setup-totp' | 'confirm-totp' | 'disable';
 
@@ -16,7 +16,6 @@ export function useTwoFactor() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const userId = String(user?.id ?? '');
   const twoFactorEnabled = user?.twoFactorEnabled ?? false;
   const totpEnabled = user?.totpEnabled ?? false;
 
@@ -35,7 +34,7 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      await authApi.enable2faEmail(userId, password);
+      await twoFactorApi.enable('email', password);
       setEmailEnableCodeSent(true);
       setCode('');
     } catch (err: any) {
@@ -49,7 +48,7 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      await authApi.enable2faEmailConfirm(userId, password, code);
+      await twoFactorApi.confirm('email', password, code);
       setSuccess('Authentification par email activée.');
       refreshUser();
       reset();
@@ -64,7 +63,7 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      const data = await authApi.setup2faTotp(userId, password);
+      const data = (await twoFactorApi.enable('totp', password)) as TotpSetupResult;
       setTotpData({ secret: data.secret, qrCodeDataUrl: data.qrCodeDataUrl });
       setView('confirm-totp');
     } catch (err: any) {
@@ -78,7 +77,7 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      await authApi.confirm2faTotp(userId, password, code);
+      await twoFactorApi.confirm('totp', password, code);
       setSuccess('Application d\'authentification configurée avec succès.');
       refreshUser();
       reset();
@@ -93,7 +92,7 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      await authApi.disable2faSendCode(userId, password);
+      await twoFactorApi.challenge('email', password);
       setDisableCodeSent(true);
       setCode('');
     } catch (err: any) {
@@ -107,7 +106,8 @@ export function useTwoFactor() {
     setLoading(true);
     setError('');
     try {
-      await authApi.disable2fa(userId, password, code);
+      const type = totpEnabled ? 'totp' : 'email';
+      await twoFactorApi.disable(type, password, code);
       setSuccess('Authentification à deux facteurs désactivée.');
       refreshUser();
       reset();

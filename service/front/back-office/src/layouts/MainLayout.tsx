@@ -10,7 +10,6 @@ import {
   ChevronDown,
   Package,
   FolderOpen,
-  HelpCircle,
   Megaphone,
   ShoppingCart,
   TrendingUp,
@@ -50,7 +49,6 @@ const navigation: NavItem[] = [
     icon: FileText,
     roles: ['admin'],
     children: [
-      { key: 'faq', href: '/content/faq', icon: HelpCircle },
       { key: 'advertisements', href: '/content/advertisements', icon: Megaphone },
     ],
   },

@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Headers } from '@nestjs/common';
 import { CartService } from '../../service/Cart/Cart.service';
-import { AddCartItemDto, UpdateCartItemDto, MergeCartDto } from '../../service/Cart/dtos/Cart.dto';
+import { AddCartItemDto, UpdateCartItemDto } from '../../service/Cart/dtos/Cart.dto';
 
 @Controller('cart')
 export class CartController {
@@ -37,11 +37,5 @@ export class CartController {
   async clearCart(@Headers('x-user-id') userId: string) {
     await this.cartService.clearCart(userId);
     return { success: true };
-  }
-
-  @Post('merge')
-  async mergeCart(@Headers('x-user-id') userId: string, @Body() dto: MergeCartDto) {
-    const items = await this.cartService.mergeLocalCart(userId, dto);
-    return { items };
   }
 }

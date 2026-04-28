@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
 
       if (refreshToken) {
         try {
-          const { data } = await axios.post('/api/bo/auth/refresh', {
+          const { data } = await axios.post('/api/bo/auth/sessions', {
             refresh_token: refreshToken,
           });
 

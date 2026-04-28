@@ -13,4 +13,8 @@ export class AdvertisementRepository {
     findActive(): Promise<TextePromotionnel | null> {
         return this.repo.findOneBy({ isActive: true });
     }
+
+    findAll(): Promise<TextePromotionnel[]> {
+        return this.repo.find();
+    }
 }

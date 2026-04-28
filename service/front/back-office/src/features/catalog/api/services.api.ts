@@ -58,11 +58,11 @@ export const servicesApi = {
     await apiClient.delete(`/services/${id}`);
   },
   publish: async (id: string): Promise<Service> => {
-    const { data } = await apiClient.post<Service>(`/services/${id}/publish`);
+    const { data } = await apiClient.patch<Service>(`/services/${id}`, { status: 'published' });
     return data;
   },
   duplicate: async (id: string): Promise<Service> => {
-    const { data } = await apiClient.post<Service>(`/services/${id}/duplicate`);
+    const { data } = await apiClient.post<Service>(`/services?from=${encodeURIComponent(id)}`);
     return data;
   },
   addImages: async (

@@ -1,4 +1,4 @@
-import { IsString, IsEmail, MinLength, Length } from 'class-validator';
+import { IsString, IsEmail, MinLength, Length, ValidateIf } from 'class-validator';
 
 export class BoLoginDto {
   @IsEmail()
@@ -24,6 +24,36 @@ export class TwoFactorVerifyDto {
 }
 
 export class TwoFactorResendDto {
+  @IsString()
+  userId: string;
+}
+
+/** Polymorphic session creation: either credentials or refresh_token. */
+export class CreateBoSessionDto {
+  @ValidateIf((o) => !o.refresh_token)
+  @IsEmail()
+  email?: string;
+
+  @ValidateIf((o) => !o.refresh_token)
+  @IsString()
+  @MinLength(6)
+  password?: string;
+
+  @ValidateIf((o) => !o.email && !o.password)
+  @IsString()
+  refresh_token?: string;
+}
+
+export class VerifyBoSessionDto {
+  @IsString()
+  userId: string;
+
+  @IsString()
+  @Length(6, 6)
+  code: string;
+}
+
+export class BoTwoFactorChallengeDto {
   @IsString()
   userId: string;
 }

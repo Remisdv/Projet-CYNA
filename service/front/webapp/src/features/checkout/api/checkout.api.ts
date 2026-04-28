@@ -3,11 +3,11 @@ import type { CreatePaymentIntentData, PaymentIntentResult, ConfirmPaymentResult
 
 export const checkoutApi = {
   createPaymentIntent: async (input: CreatePaymentIntentData): Promise<PaymentIntentResult> => {
-    const { data } = await apiClient.post<PaymentIntentResult>('/webapp/payment/create-intent', input);
+    const { data } = await apiClient.post<PaymentIntentResult>('/webapp/payment-intents', input);
     return data;
   },
   confirmPayment: async (orderId: string): Promise<ConfirmPaymentResult> => {
-    const { data } = await apiClient.post<ConfirmPaymentResult>('/webapp/payment/confirm', { orderId });
+    const { data } = await apiClient.post<ConfirmPaymentResult>('/webapp/payment-intents/confirmations', { orderId });
     return data;
   },
 };

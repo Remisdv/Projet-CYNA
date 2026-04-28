@@ -45,11 +45,3 @@ export function useClearServerCart() {
   });
 }
 
-export function useMergeCart() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (items: AddToCartInput[]) => cartApi.merge(items),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['server-cart'] }),
-  });
-}
-

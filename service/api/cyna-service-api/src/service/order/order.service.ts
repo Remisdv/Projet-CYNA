@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { OrderEntity, OrderStatus, PaymentStatus } from '../../database/entity/order';
 import { OrderRepository } from '../../repository/order/order.repository';
 import { EmailService } from '../email/email.service';
-import { SyncOrderDto } from './dtos/order.dto';
+import { SyncOrderDto, PatchOrderDto } from './dtos/order.dto';
 
 @Injectable()
 export class OrderService {
@@ -200,6 +200,20 @@ export class OrderService {
     }
 
     return saved;
+  }
+
+  async patchUpdate(id: string, dto: PatchOrderDto, by: string): Promise<OrderEntity> {
+    let order = await this.findById(id);
+    if (dto.status !== undefined) {
+      order = await this.updateStatus(id, dto.status, by, dto.trackingNumber);
+    } else if (dto.trackingNumber !== undefined) {
+      order.trackingNumber = dto.trackingNumber;
+      order = await this.orderRepository.save(order);
+    }
+    if (dto.paymentStatus !== undefined) {
+      order = await this.updatePaymentStatus(id, dto.paymentStatus, by);
+    }
+    return order;
   }
 
   async addNote(id: string, text: string, by: string): Promise<OrderEntity> {
