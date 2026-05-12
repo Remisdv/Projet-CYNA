@@ -163,6 +163,7 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
       - SERVICE_API_URL=http://cyna-service-api:3000
+      - FRONTEND_URL=${FRONTEND_URL:-http://app.localhost}
     depends_on:
       postgres:
         condition: service_healthy

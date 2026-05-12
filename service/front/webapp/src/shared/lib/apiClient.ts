@@ -22,12 +22,21 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      const publicPaths = ['/', '/catalog', '/support', '/login', '/register', '/forgot-password', '/reset-password'];
+      const url = error.config?.url || '';
+      const responseBody = error.response?.data;
+      // eslint-disable-next-line no-console
+      console.warn('[apiClient] 401', url, responseBody);
+
+      // Skip auto-logout for auth endpoints: those errors are handled by the calling pages
+      // (login form, 2FA form, register form) and a hard redirect would break the UX.
+      const isAuthEndpoint = url.includes('/webapp/auth/');
+
+      const publicPaths = ['/', '/catalog', '/support', '/login', '/register', '/forgot-password', '/reset-password', '/2fa'];
       const currentPath = window.location.pathname;
       const isPublic = publicPaths.some(
         (p) => currentPath === p || currentPath.startsWith('/products/') || currentPath.startsWith('/categories/'),
       );
-      if (!isPublic && localStorage.getItem('access_token')) {
+      if (!isPublic && !isAuthEndpoint && localStorage.getItem('access_token')) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         window.location.href = '/login';

@@ -10,9 +10,8 @@ import { useCreatePaymentIntent, useConfirmPayment } from '../../hooks/usePaymen
 import { trackEvent } from '@/shared/lib/tracking';
 import type { InfoForm } from '../../types/checkout.types';
 
-const stripePromise = loadStripe(
-  (import.meta as any).env?.VITE_STRIPE_PK || '',
-);
+const stripePublishableKey = ((import.meta as any).env?.VITE_STRIPE_PK || '') as string;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface Step3Props {
   info: InfoForm;
@@ -152,7 +151,7 @@ function Step3PaymentInner({ info, onNext, onBack }: Step3Props) {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Numéro de carte
         </label>
-        <div className="rounded-lg border border-gray-300 p-3 bg-gray-50 mb-3">
+        <div className="rounded-lg border border-gray-300 p-3 bg-white mb-3 min-h-[44px]">
           <CardNumberElement options={cardStyle} />
         </div>
 
@@ -161,7 +160,7 @@ function Step3PaymentInner({ info, onNext, onBack }: Step3Props) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Date d'expiration
             </label>
-            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
+            <div className="rounded-lg border border-gray-300 p-3 bg-white min-h-[44px]">
               <CardExpiryElement options={cardStyle} />
             </div>
           </div>
@@ -169,7 +168,7 @@ function Step3PaymentInner({ info, onNext, onBack }: Step3Props) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               CVC
             </label>
-            <div className="rounded-lg border border-gray-300 p-3 bg-gray-50">
+            <div className="rounded-lg border border-gray-300 p-3 bg-white min-h-[44px]">
               <CardCvcElement options={cardStyle} />
             </div>
           </div>
@@ -197,6 +196,24 @@ function Step3PaymentInner({ info, onNext, onBack }: Step3Props) {
 }
 
 export function Step3Payment(props: Step3Props) {
+  if (!stripePromise) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold text-gray-900">Paiement sécurisé</h2>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Configuration de paiement manquante : la clé publique Stripe (VITE_STRIPE_PK) n'est
+          pas définie. Contactez l'administrateur du site.
+        </div>
+        <button
+          type="button"
+          onClick={props.onBack}
+          className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
+        >
+          Retour
+        </button>
+      </div>
+    );
+  }
   return (
     <Elements stripe={stripePromise}>
       <Step3PaymentInner {...props} />

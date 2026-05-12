@@ -46,7 +46,7 @@ export class EmailService {
   }
 
   async sendPasswordReset(to: string, token: string): Promise<void> {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://app.localhost'}/reset-password?token=${token}`;
     await this.sendMail(
       to,
       'CYNA - Réinitialisation de mot de passe',

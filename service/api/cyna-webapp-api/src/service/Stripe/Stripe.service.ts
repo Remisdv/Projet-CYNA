@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadGatewayException } from '@nestjs/common';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -19,14 +19,31 @@ export class StripeService {
 
   private getClient(): InstanceType<typeof Stripe> {
     if (!this.stripe) {
-      throw new Error('Stripe is not configured (missing STRIPE_SECRET_KEY)');
+      throw new BadGatewayException('Stripe is not configured (missing STRIPE_SECRET_KEY)');
     }
     return this.stripe;
   }
 
+  /**
+   * Map Stripe SDK errors to a stable BadGateway (502) HTTP error so that
+   * upstream Stripe issues (auth, rate limit, invalid request) never bubble up
+   * as a 401 from our API — which would otherwise log the user out client-side.
+   */
+  private async run<T>(label: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (err: any) {
+      const stripeMessage = err?.raw?.message || err?.message || 'Stripe error';
+      this.logger.error(`[${label}] ${stripeMessage}`);
+      throw new BadGatewayException(`Erreur du service de paiement: ${stripeMessage}`);
+    }
+  }
+
   async createCustomer(email: string, name: string): Promise<string> {
-    const customer = await this.getClient().customers.create({ email, name });
-    return customer.id;
+    return this.run('createCustomer', async () => {
+      const customer = await this.getClient().customers.create({ email, name });
+      return customer.id;
+    });
   }
 
   async createPaymentIntent(
@@ -35,16 +52,18 @@ export class StripeService {
     customerId: string,
     metadata: Record<string, string>,
   ): Promise<{ clientSecret: string; paymentIntentId: string }> {
-    const intent = await this.getClient().paymentIntents.create({
-      amount: Math.round(amount * 100),
-      currency,
-      customer: customerId,
-      metadata,
+    return this.run('createPaymentIntent', async () => {
+      const intent = await this.getClient().paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency,
+        customer: customerId,
+        metadata,
+      });
+      return {
+        clientSecret: intent.client_secret,
+        paymentIntentId: intent.id,
+      };
     });
-    return {
-      clientSecret: intent.client_secret,
-      paymentIntentId: intent.id,
-    };
   }
 
   async createSubscription(
@@ -54,29 +73,31 @@ export class StripeService {
     productName: string,
     metadata: Record<string, string>,
   ): Promise<{ subscriptionId: string; clientSecret: string }> {
-    const price = await this.getClient().prices.create({
-      unit_amount: Math.round(priceAmount * 100),
-      currency: 'eur',
-      recurring: { interval },
-      product_data: { name: productName },
+    return this.run('createSubscription', async () => {
+      const price = await this.getClient().prices.create({
+        unit_amount: Math.round(priceAmount * 100),
+        currency: 'eur',
+        recurring: { interval },
+        product_data: { name: productName },
+      });
+
+      const subscription = await this.getClient().subscriptions.create({
+        customer: customerId,
+        items: [{ price: price.id }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+        metadata,
+      });
+
+      const invoice = subscription.latest_invoice as any;
+      const paymentIntent = invoice?.payment_intent as any;
+
+      return {
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret ?? '',
+      };
     });
-
-    const subscription = await this.getClient().subscriptions.create({
-      customer: customerId,
-      items: [{ price: price.id }],
-      payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
-      expand: ['latest_invoice.payment_intent'],
-      metadata,
-    });
-
-    const invoice = subscription.latest_invoice as any;
-    const paymentIntent = invoice?.payment_intent as any;
-
-    return {
-      subscriptionId: subscription.id,
-      clientSecret: paymentIntent?.client_secret ?? '',
-    };
   }
 
   constructEvent(rawBody: Buffer, signature: string): any {

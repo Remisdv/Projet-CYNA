@@ -28,16 +28,19 @@ export class ProductService {
   ) {}
 
   /**
-   * Resolve a "categorie" filter value which can be either a UUID (matching
-   * `product.categorie`) or a slug (requires a join on categories to resolve
-   * the corresponding UUID). Returns the UUID string, or null if nothing
-   * matches (caller should treat as "no result").
+   * Resolve a "categorie" filter value (UUID or slug) into the slug stored on
+   * `product.categorie`. Returns the slug, or null if nothing matches (caller
+   * should treat as "no result").
    */
   private async resolveCategoryId(value: string): Promise<string | null> {
     if (!value) return null;
-    if (UUID_RE.test(value)) return value;
+    if (UUID_RE.test(value)) {
+      const cat = await this.categoryRepository.findById(value);
+      return cat?.slug ?? null;
+    }
+    // Already a slug — verify it exists, otherwise return as-is for legacy data
     const cat = await this.categoryRepository.findBySlug(value);
-    return cat?.id ?? null;
+    return cat?.slug ?? value;
   }
 
   /**
@@ -152,7 +155,14 @@ export class ProductService {
     q: string,
     query?: { categorie?: string; type?: string },
   ): Promise<{ data: ProductResponseDto[]; total: number }> {
-    const esIds = await this.productSearchService.search(q, query);
+    let resolvedCategorie: string | undefined;
+    if (query?.categorie) {
+      const resolved = await this.resolveCategoryId(query.categorie);
+      if (!resolved) return { data: [], total: 0 };
+      resolvedCategorie = resolved;
+    }
+    const esQuery = { categorie: resolvedCategorie, type: query?.type };
+    const esIds = await this.productSearchService.search(q, esQuery);
 
     if (esIds !== null) {
       if (esIds.length === 0) return { data: [], total: 0 };
@@ -164,7 +174,7 @@ export class ProductService {
     }
 
     // Elasticsearch unavailable: fall back to SQL ILIKE
-    return this.searchFallback(q, query);
+    return this.searchFallback(q, { categorie: resolvedCategorie, type: query?.type });
   }
 
   private async searchFallback(

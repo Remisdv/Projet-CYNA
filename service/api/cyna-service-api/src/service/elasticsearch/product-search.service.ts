@@ -16,7 +16,6 @@ export class ProductSearchService implements OnModuleInit {
   ) { }
 
   async onModuleInit() {
-    await this.ensureIndex();
     await this.reindexAll();
   }
 
@@ -61,8 +60,11 @@ export class ProductSearchService implements OnModuleInit {
     }
   }
 
-  private async reindexAll(): Promise<void> {
+  async reindexAll(): Promise<void> {
     try {
+      // Drop & recreate the index so deleted products don't linger in ES
+      await this.ensureIndex();
+
       const products = await this.productRepository.findAllPublished();
       if (products.length === 0) return;
 

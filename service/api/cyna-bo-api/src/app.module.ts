@@ -7,6 +7,7 @@ import { TextePromotionnelModule } from './module/TextePromotionnel.module';
 import { UserModule } from './module/User.module';
 import { BoAuthModule } from './module/BoAuth.module';
 import { CategoryModule } from './module/Category.module';
+import { CarouselModule } from './module/Carousel.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CategoryModule } from './module/Category.module';
     UserModule,
     BoAuthModule,
     CategoryModule,
+    CarouselModule,
   ],
   controllers: [AppController],
   providers: [AppService],
