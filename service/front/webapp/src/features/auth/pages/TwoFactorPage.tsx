@@ -40,6 +40,22 @@ export default function TwoFactorPage() {
             const data = await authApi.verifyTwoFactor(userId, code);
             if (data.access_token) localStorage.setItem('access_token', data.access_token);
             if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+
+            // Validate the freshly-issued token against the gateway BEFORE navigating to a
+            // protected route. If profile fails here we surface the error inline instead of
+            // letting ProtectedRoute / the apiClient 401 interceptor trigger a cascade logout.
+            try {
+                await authApi.profile();
+            } catch (profileErr: any) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                setError(
+                    profileErr.response?.data?.message ||
+                    'Session non validée par le serveur. Veuillez réessayer.',
+                );
+                return;
+            }
+
             if (data.user) loginWithTokens(data.user);
             navigate('/account');
         } catch (err: any) {

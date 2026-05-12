@@ -152,9 +152,9 @@ export default function CatalogPage() {
               {categories?.map(cat => (
                 <button
                   key={cat.id}
-                  onClick={() => setFilter('categorie', cat.id)}
+                  onClick={() => setFilter('categorie', cat.slug)}
                   className={`rounded-full border px-3 py-1 text-sm transition ${
-                    categorieParam === cat.id
+                    categorieParam === cat.slug
                       ? 'border-blue-600 bg-blue-600 text-white'
                       : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
                   }`}

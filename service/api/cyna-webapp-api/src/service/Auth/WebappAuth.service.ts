@@ -36,7 +36,7 @@ export class WebappAuthService {
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
     const existing = await this.userRepository.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException('Un compte avec cet email existe dÃ©jÃ ');
+      throw new ConflictException('Un compte avec cet email existe déjà');
     }
 
     const user = this.userRepository.create({
@@ -97,7 +97,7 @@ export class WebappAuthService {
         throw new UnauthorizedException('Code invalide');
       }
       if (new Date() > user.twoFactorCodeExpiry) {
-        throw new UnauthorizedException('Code expirÃ©, veuillez en demander un nouveau');
+        throw new UnauthorizedException('Code expiré, veuillez en demander un nouveau');
       }
       if (user.twoFactorCode !== dto.code) {
         throw new UnauthorizedException('Code invalide');
@@ -130,7 +130,7 @@ export class WebappAuthService {
     try {
       payload = this.jwtService.verify(dto.refresh_token);
     } catch {
-      throw new UnauthorizedException('Token de rafraÃ®chissement invalide ou expirÃ©');
+      throw new UnauthorizedException('Token de rafraîchissement invalide ou expiré');
     }
 
     if (payload.type !== 'refresh') {
@@ -169,7 +169,7 @@ export class WebappAuthService {
     const resetToken = await this.resetTokenRepository.findActiveByToken(dto.token);
 
     if (!resetToken || resetToken.expiresAt < new Date()) {
-      throw new UnauthorizedException('Token invalide ou expirÃ©');
+      throw new UnauthorizedException('Token invalide ou expiré');
     }
 
     const user = await this.userRepository.findById(resetToken.userId);

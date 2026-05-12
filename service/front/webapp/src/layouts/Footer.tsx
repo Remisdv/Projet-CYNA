@@ -28,7 +28,7 @@ export default function Footer() {
               {categories.map((cat) => (
                 <li key={cat.id}>
                   <Link
-                    to={`/catalog?categorie=${encodeURIComponent(cat.id)}`}
+                    to={`/catalog?categorie=${encodeURIComponent(cat.slug)}`}
                     className="hover:text-white transition-colors"
                   >
                     {getCategoryName(cat)}

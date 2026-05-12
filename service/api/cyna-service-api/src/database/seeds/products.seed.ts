@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../../app.module';
 import { DataSource } from 'typeorm';
+import { ProductSearchService } from '../../service/elasticsearch/product-search.service';
 import {
     ProductEntity,
     ProductCategory,
@@ -1241,6 +1242,15 @@ async function seed() {
         console.log(`   - ${createdServices} services vedettes created`);
         console.log(`   - ${saasCount} abonnements SaaS created`);
         console.log(`   - ${physicalCount} produits physiques created`);
+
+        // Reindex Elasticsearch so /catalog?q= search reflects seeded data
+        try {
+            const searchService = app.get(ProductSearchService);
+            await searchService.reindexAll();
+            console.log('🔎 Elasticsearch reindexed');
+        } catch (e) {
+            console.warn('⚠️  Could not reindex Elasticsearch:', (e as Error).message);
+        }
     } catch (error) {
         console.error('❌ Error seeding products:', error);
         throw error;

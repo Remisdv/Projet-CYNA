@@ -117,7 +117,23 @@ export default function CartPage() {
                       >
                         <Minus size={12} />
                       </button>
-                      <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const parsed = parseInt(e.target.value, 10);
+                          const next = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                          updateQuantity(item.id, next, item.periodicity);
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value || parseInt(e.target.value, 10) < 1) {
+                            updateQuantity(item.id, 1, item.periodicity);
+                          }
+                        }}
+                        className="w-12 rounded border border-gray-200 px-1 py-0.5 text-center text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                        aria-label="Quantité"
+                      />
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1, item.periodicity)}
                         className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-blue-600 hover:text-blue-600"
