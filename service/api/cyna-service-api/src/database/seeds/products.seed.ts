@@ -1226,6 +1226,7 @@ async function seed() {
                     : {
                         prix: (p as PhysicalSeed).prix,
                         stock: (p as PhysicalSeed).stock,
+                        stock_illimite: null,
                         seuil_alerte_stock: Math.max(5, Math.floor((p as PhysicalSeed).stock * 0.1)),
                     }),
                 images: buildImages(p.images),

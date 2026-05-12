@@ -3,18 +3,15 @@ import { Card, CardContent } from '@/shared/components/ui/Card';
 import { Button } from '@/shared/components/ui/Button';
 import { Plus, Users as UsersIcon } from 'lucide-react';
 import UserFormModal from '../components/UserFormModal';
-import { useUsers, UserDto } from '../hooks/useUsers';
+import { useUsers, useDeleteUser, useResetUserPassword, UserDto } from '../hooks/useUsers';
 import type { RoleFilter, StatusFilter, SortField, SortDirection } from '../lib/userLabels';
 import { UsersFilters } from '../components/usersList/UsersFilters';
 import { UsersTable } from '../components/usersList/UsersTable';
 import { UsersPagination } from '../components/usersList/UsersPagination';
 
-export default function UsersPage() {
-  const { data: usersResponse, isLoading } = useUsers();
-  const users: UserDto[] = usersResponse?.data ?? [];
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
+const ITEMS_PER_PAGE = 25;
 
+export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [dateFrom, setDateFrom] = useState('');
@@ -23,59 +20,32 @@ export default function UsersPage() {
 
   const [sortField, setSortField] = useState<SortField>('createdAt');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 25;
 
-  const filteredAndSortedUsers = useMemo(() => {
-    let result = [...users];
+  const sortBackendField = useMemo(() => {
+    // Map UI sort field -> entity column name
+    if (sortField === 'name') return 'lastName';
+    return sortField;
+  }, [sortField]);
 
-    if (roleFilter !== 'all') {
-      result = result.filter(u => u.role === roleFilter);
-    }
-    if (statusFilter !== 'all') {
-      result = result.filter(u => u.status === statusFilter);
-    }
-    if (dateFrom) {
-      const fromDate = new Date(dateFrom);
-      result = result.filter(u => new Date(u.createdAt) >= fromDate);
-    }
-    if (dateTo) {
-      const toDate = new Date(dateTo);
-      toDate.setHours(23, 59, 59, 999);
-      result = result.filter(u => new Date(u.createdAt) <= toDate);
-    }
+  const { data: usersResponse, isLoading } = useUsers({
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    role: roleFilter,
+    status: statusFilter,
+    dateDebut: dateFrom || undefined,
+    dateFin: dateTo || undefined,
+    sort: `${sortBackendField}:${sortDirection}`,
+  });
+  const users: UserDto[] = usersResponse?.items ?? [];
+  const totalUsers = usersResponse?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalUsers / ITEMS_PER_PAGE));
 
-    result.sort((a, b) => {
-      let comparison = 0;
-      switch (sortField) {
-        case 'email':
-          comparison = a.email.localeCompare(b.email);
-          break;
-        case 'name':
-          comparison = `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
-          break;
-        case 'role':
-          comparison = a.role.localeCompare(b.role);
-          break;
-        case 'createdAt':
-          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          break;
-        case 'status':
-          comparison = a.status.localeCompare(b.status);
-          break;
-      }
-      return sortDirection === 'asc' ? comparison : -comparison;
-    });
+  const deleteUser = useDeleteUser();
+  const resetPassword = useResetUserPassword();
 
-    return result;
-  }, [users, roleFilter, statusFilter, dateFrom, dateTo, sortField, sortDirection]);
-
-  const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
-  const paginatedUsers = filteredAndSortedUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserDto | null>(null);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -84,6 +54,7 @@ export default function UsersPage() {
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(1);
   };
 
   const handleEdit = (user: UserDto) => {
@@ -91,17 +62,26 @@ export default function UsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleResetPassword = (user: UserDto) => {
-    if (confirm(`Envoyer un email de réinitialisation de mot de passe à ${user.email} ?`)) {
-      console.log('Sending password reset email to:', user.email);
-      alert(`Email de réinitialisation envoyé à ${user.email}`);
+  const handleResetPassword = async (user: UserDto) => {
+    if (!confirm(`Réinitialiser le mot de passe de ${user.email} ?`)) return;
+    try {
+      const { tempPassword } = await resetPassword.mutateAsync(user.id);
+      // Surface the temp password to the admin since email sending isn't implemented yet.
+      window.prompt(
+        `Mot de passe temporaire pour ${user.email} (à transmettre à l'utilisateur) :`,
+        tempPassword,
+      );
+    } catch (err: any) {
+      alert(err?.response?.data?.message ?? 'Erreur lors de la réinitialisation');
     }
   };
 
-  const handleDelete = (user: UserDto) => {
-    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) {
-      console.log('Deleting user:', user.id);
-      alert('Utilisateur supprimé (mock)');
+  const handleDelete = async (user: UserDto) => {
+    if (!confirm(`Supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`)) return;
+    try {
+      await deleteUser.mutateAsync(user.id);
+    } catch (err: any) {
+      alert(err?.response?.data?.message ?? 'Erreur lors de la suppression');
     }
   };
 
@@ -134,7 +114,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Utilisateurs</h1>
           <p className="text-gray-500 mt-1">
-            Gérez vos {filteredAndSortedUsers.length} utilisateurs
+            Gérez vos {totalUsers} utilisateurs
           </p>
         </div>
         <Button onClick={() => setIsModalOpen(true)}>
@@ -160,7 +140,7 @@ export default function UsersPage() {
 
       <Card>
         <CardContent className="p-0">
-          {paginatedUsers.length === 0 ? (
+          {users.length === 0 ? (
             <div className="text-center py-12">
               <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500">Aucun utilisateur trouvé</p>
@@ -173,7 +153,7 @@ export default function UsersPage() {
           ) : (
             <>
               <UsersTable
-                users={paginatedUsers}
+                users={users}
                 sortField={sortField}
                 sortDirection={sortDirection}
                 onSort={handleSort}
@@ -186,8 +166,8 @@ export default function UsersPage() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredAndSortedUsers.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                totalItems={totalUsers}
               />
             </>
           )}

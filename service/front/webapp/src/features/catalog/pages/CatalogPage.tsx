@@ -16,14 +16,28 @@ export default function CatalogPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Rehydrate filters from localStorage when landing on /catalog without any query param.
+  // Only restore filters if the user navigated here through an in-app link that includes
+  // an explicit `restore=1` marker. Otherwise a stale filter (e.g. a removed category or
+  // a `type=service` set days ago) would silently hide newly created products.
   useEffect(() => {
     const hasAnyFilterInUrl = PERSISTED_KEYS.some((k) => searchParams.has(k));
     if (hasAnyFilterInUrl) return;
+    if (searchParams.get('restore') !== '1') {
+      // Forget any previously persisted filters: a "fresh" visit to /catalog must
+      // show the full catalog, otherwise users can't see newly added products.
+      try {
+        localStorage.removeItem(FILTERS_STORAGE_KEY);
+      } catch {
+        // ignore storage failures
+      }
+      return;
+    }
     try {
       const raw = localStorage.getItem(FILTERS_STORAGE_KEY);
       if (!raw) return;
       const saved = JSON.parse(raw) as Partial<Record<(typeof PERSISTED_KEYS)[number], string>>;
       const next = new URLSearchParams(searchParams);
+      next.delete('restore');
       let changed = false;
       for (const k of PERSISTED_KEYS) {
         const v = saved?.[k];

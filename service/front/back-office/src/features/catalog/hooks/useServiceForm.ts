@@ -101,7 +101,9 @@ export function buildServicePayload(formData: ServiceFormData, publish: boolean)
     monthlyPrice: formData.type === 'service' ? formData.monthlyPrice : undefined,
     annualPrice: formData.type === 'service' ? formData.annualPrice : undefined,
     stock: formData.type === 'product' && formData.stockQuantity !== 'unlimited' ? formData.stockQuantity : undefined,
-    unlimitedStock: formData.type === 'service' || formData.stockQuantity === 'unlimited' ? true : undefined,
+    // Always send explicit boolean so the gateway can clear `stock_illimite`
+    // when switching a product from unlimited to finite stock.
+    unlimitedStock: formData.type === 'service' || formData.stockQuantity === 'unlimited',
     lowStockThreshold: formData.lowStockThreshold,
     slug: formData.slug,
     metaTitle: formData.metaTitle,

@@ -33,7 +33,7 @@ export class UserController {
   }
 
   @Post()
-  create(@Body() data: CreateUserDto): Promise<UserDto> {
+  create(@Body() data: CreateUserDto): Promise<UserDto & { tempPassword: string }> {
     return this.service.create(data);
   }
 
@@ -47,7 +47,7 @@ export class UserController {
     return this.service.remove(id);
   }
 
-  @Post(':id/password-resets')
+  @Post(':id/reset-password')
   resetPassword(@Param('id') id: string): Promise<{ tempPassword: string }> {
     return this.service.resetPassword(id);
   }

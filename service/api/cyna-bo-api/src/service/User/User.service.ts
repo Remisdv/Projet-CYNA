@@ -42,7 +42,7 @@ export class UserService {
     return this.mapper.toDto(user);
   }
 
-  async create(data: CreateUserDto): Promise<UserDto> {
+  async create(data: CreateUserDto): Promise<UserDto & { tempPassword: string }> {
     // Vérifier que l'email n'existe pas déjà
     const existingUser = await this.userRepository.findByEmail(data.email);
     if (existingUser) throw new BadRequestException(`Un utilisateur avec l'email ${data.email} existe déjà`);
@@ -58,7 +58,7 @@ export class UserService {
     // TODO: Envoyer un email avec le mot de passe temporaire
     // await this.emailService.sendWelcomeEmail(saved.email, tempPassword);
 
-    return this.mapper.toDto(saved);
+    return { ...this.mapper.toDto(saved), tempPassword };
   }
 
   async update(id: string, data: UpdateUserDto): Promise<UserDto> {
@@ -101,7 +101,7 @@ export class UserService {
   }
 
   private hashPassword(password: string): string {
-    // TODO: Utiliser bcrypt ou argon2 pour le hachage réel
+    // Aligné avec bo-auth.service (sha256).
     return crypto.createHash('sha256').update(password).digest('hex');
   }
 }

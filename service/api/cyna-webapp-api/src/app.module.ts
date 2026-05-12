@@ -16,6 +16,7 @@ import { ContactModule } from './module/Contact.module';
 import { CartModule } from './module/Cart.module';
 import { NotificationsModule } from './module/Notifications.module';
 import { CommonModule } from './common/common.module';
+import { AdminUsersModule } from './module/AdminUsers.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CommonModule } from './common/common.module';
     ContactModule,
     CartModule,
     NotificationsModule,
+    AdminUsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

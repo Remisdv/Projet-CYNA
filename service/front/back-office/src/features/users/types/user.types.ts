@@ -10,7 +10,7 @@ export interface UserDto {
 }
 
 export interface UsersResponse {
-  data: UserDto[];
+  items: UserDto[];
   total: number;
   page: number;
   limit: number;
@@ -21,7 +21,14 @@ export interface UsersListParams {
   limit?: number;
   role?: string;
   status?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  sort?: string;
 }
 
 export type CreateUserInput = Omit<UserDto, 'id' | 'createdAt' | 'updatedAt'> & { password?: string };
+
+export interface CreateUserResponse extends UserDto {
+  tempPassword: string;
+}
 export type UpdateUserInput = Partial<UserDto> & { id: string };
