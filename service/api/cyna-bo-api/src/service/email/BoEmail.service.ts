@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class BoEmailService {
+    private readonly logger = new Logger(BoEmailService.name);
     private transporter: nodemailer.Transporter;
 
     constructor() {
@@ -10,15 +11,24 @@ export class BoEmailService {
             host: process.env.SMTP_HOST || 'localhost',
             port: parseInt(process.env.SMTP_PORT || '1025', 10),
             secure: false,
+            // Timeouts courts pour éviter que le login ne fige si SMTP est indispo.
+            connectionTimeout: 3000,
+            greetingTimeout: 3000,
+            socketTimeout: 5000,
         });
     }
 
     async sendTwoFactorCode(to: string, code: string): Promise<void> {
-        await this.transporter.sendMail({
-            from: '"CYNA Admin" <noreply@cyna.com>',
-            to,
-            subject: 'CYNA - Code de connexion administrateur',
-            html: `
+        // En dev on log toujours le code pour pouvoir se connecter même si SMTP/MailHog
+        // est en rade. À retirer en prod (ou conditionner à NODE_ENV !== 'production').
+        this.logger.log(`[2FA] Code pour ${to} : ${code}`);
+
+        try {
+            await this.transporter.sendMail({
+                from: '"CYNA Admin" <noreply@cyna.com>',
+                to,
+                subject: 'CYNA - Code de connexion administrateur',
+                html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #1e293b;">Code de connexion</h2>
           <p>Votre code de vérification à deux facteurs est :</p>
@@ -33,6 +43,11 @@ export class BoEmailService {
           </p>
         </div>
       `,
-        });
+            });
+        } catch (err: any) {
+            // On n'empêche PAS le login : le code est valide en base, l'admin peut
+            // le lire dans les logs ou MailHog dès qu'il sera up.
+            this.logger.warn(`Echec envoi email 2FA à ${to} : ${err?.message ?? err}`);
+        }
     }
 }

@@ -3,8 +3,9 @@ import { Modal } from '@/shared/components/ui/Modal';
 import { Input } from '@/shared/components/ui/Input';
 import { Select } from '@/shared/components/ui/Select';
 import { Button } from '@/shared/components/ui/Button';
-import { Mail, CheckCircle } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useCreateUser, useUpdateUser } from '../hooks/useUsers';
+import type { UserDto } from '../types/user.types';
 
 interface UserFormData {
   email: string;
@@ -17,7 +18,7 @@ interface UserFormData {
 interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: any | null;
+  user: UserDto | null;
 }
 
 export default function UserFormModal({
@@ -28,8 +29,6 @@ export default function UserFormModal({
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  const [createdUserEmail, setCreatedUserEmail] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<UserFormData>({
@@ -64,7 +63,6 @@ export default function UserFormModal({
         });
       }
       setErrors({});
-      setShowSuccessMessage(false);
     }
   }, [isOpen, user]);
 
@@ -123,25 +121,22 @@ export default function UserFormModal({
       };
 
       if (!user) {
-        await createUser.mutateAsync(apiPayload);
-        setCreatedUserEmail(formData.email);
-        setShowSuccessMessage(true);
+        const created = await createUser.mutateAsync(apiPayload);
+        // Affiche le mot de passe temporaire à l'admin (pas d'email implémenté).
+        window.prompt(
+          `Mot de passe temporaire pour ${created.email} (à transmettre à l'utilisateur) :`,
+          created.tempPassword,
+        );
       } else {
         await updateUser.mutateAsync({ id: user.id, ...apiPayload });
-        onClose();
       }
+      onClose();
     } catch (error: any) {
       const message = error?.response?.data?.message ?? 'Erreur lors de la sauvegarde';
       alert(message);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Handle close from success message
-  const handleCloseSuccess = () => {
-    setShowSuccessMessage(false);
-    onClose();
   };
 
   return (
@@ -151,24 +146,17 @@ export default function UserFormModal({
       title={user ? "Modifier l'Utilisateur" : 'Nouvel Utilisateur'}
       size="md"
       footer={
-        !showSuccessMessage ? (
-          <>
-            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={isSubmitting}>
-              {isSubmitting ? (user ? 'Enregistrement...' : 'Création...') : (user ? 'Enregistrer' : 'Créer')}
-            </Button>
-          </>
-        ) : (
-          <Button onClick={handleCloseSuccess}>
-            Fermer
+        <>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Annuler
           </Button>
-        )
+          <Button onClick={handleSave} disabled={isSubmitting}>
+            {isSubmitting ? (user ? 'Enregistrement...' : 'Création...') : (user ? 'Enregistrer' : 'Créer')}
+          </Button>
+        </>
       }
     >
-      {!showSuccessMessage ? (
-        <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+      <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           <Input
             label="Email *"
             type="email"
@@ -235,69 +223,15 @@ export default function UserFormModal({
               <div className="flex items-start gap-2">
                 <Mail className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Email de bienvenue</p>
+                  <p className="font-medium mb-1">Mot de passe temporaire</p>
                   <p className="text-blue-600">
-                    Après la création, un email sera automatiquement envoyé à l'utilisateur avec des identifiants temporaires et un lien pour réinitialiser son mot de passe.
+                    Après la création, utilisez le bouton « Réinitialiser le mot de passe » dans la liste pour générer un mot de passe temporaire à transmettre à l'utilisateur.
                   </p>
                 </div>
               </div>
             </div>
           )}
         </form>
-      ) : (
-        <div className="py-8 text-center">
-          <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Utilisateur créé avec succès !
-          </h3>
-          <p className="text-gray-600 mb-4">
-            {formData.firstName} {formData.lastName} a été ajouté(e) à la plateforme.
-          </p>
-
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-            <div className="flex items-start gap-2">
-              <Mail className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-green-800 text-left">
-                <p className="font-medium mb-1">Email envoyé</p>
-                <p className="text-green-700">
-                  Un email de bienvenue a été envoyé à <span className="font-medium">{createdUserEmail}</span> avec :
-                </p>
-                <ul className="list-disc list-inside mt-2 text-green-600 space-y-1">
-                  <li>Identifiants de connexion temporaires</li>
-                  <li>Lien de réinitialisation de mot de passe</li>
-                  <li>Instructions de première connexion</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-left">
-            <p className="text-sm text-gray-700">
-              <span className="font-medium">Informations du compte :</span>
-            </p>
-            <dl className="mt-2 space-y-1 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Nom complet :</dt>
-                <dd className="font-medium text-gray-900">{formData.firstName} {formData.lastName}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Email :</dt>
-                <dd className="font-medium text-gray-900">{formData.email}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Rôle :</dt>
-                <dd className="font-medium text-gray-900 capitalize">{formData.role}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Statut :</dt>
-                <dd className="font-medium text-gray-900 capitalize">{formData.status === 'active' ? 'Actif' : 'Inactif'}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-      )}
     </Modal>
   );
 }

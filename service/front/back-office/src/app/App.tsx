@@ -13,6 +13,7 @@ import CategoriesPage from '@/features/catalog/pages/CategoriesPage';
 import ServiceFormPage from '@/features/catalog/pages/ServiceFormPage';
 import AdvertisementsPage from '@/features/content/pages/AdvertisementsPage';
 import UsersPage from '@/features/users/pages/UsersPage';
+import CustomersPage from '@/features/customers/pages/CustomersPage';
 import OrdersPage from '@/features/orders/pages/OrdersPage';
 import OrderDetailPage from '@/features/orders/pages/OrderDetailPage';
 import CommercialDashboardPage from '@/features/commercial/pages/CommercialDashboardPage';
@@ -82,6 +83,13 @@ function AppRoutes() {
 
         {/* Users */}
         <Route path="users" element={<UsersPage />} />
+
+        {/* Customers (webapp clients) */}
+        <Route path="customers" element={
+          <RoleProtectedRoute allowedRoles={['admin']}>
+            <CustomersPage />
+          </RoleProtectedRoute>
+        } />
       </Route>
     </Routes>
   );

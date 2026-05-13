@@ -5,6 +5,7 @@ import type {
   UsersResponse,
   UsersListParams,
   CreateUserInput,
+  CreateUserResponse,
   UpdateUserInput,
 } from '../types/user.types';
 
@@ -22,7 +23,7 @@ export const useUsers = (params?: UsersListParams) =>
 
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<CreateUserResponse, unknown, CreateUserInput>({
     mutationFn: (body: CreateUserInput) => usersApi.create(body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
   });
@@ -40,6 +41,14 @@ export const useDeleteUser = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => usersApi.remove(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
+  });
+};
+
+export const useResetUserPassword = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => usersApi.resetPassword(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
   });
 };

@@ -13,6 +13,7 @@ import {
   Megaphone,
   ShoppingCart,
   TrendingUp,
+  UserCircle,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -53,6 +54,7 @@ const navigation: NavItem[] = [
     ],
   },
   { key: 'users', href: '/users', icon: Users, roles: ['admin'] },
+  { key: 'customers', href: '/customers', icon: UserCircle, roles: ['admin'] },
 ];
 
 export default function MainLayout() {

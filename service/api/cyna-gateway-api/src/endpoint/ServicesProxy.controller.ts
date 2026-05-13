@@ -52,7 +52,9 @@ export class ServicesProxyController extends BaseProxyController {
       if (k === 'status') {
         result['statut'] = statusValues[v] ?? v;
       } else if (k === 'unlimitedStock') {
-        if (v) result['stock_illimite'] = 'illimit\u00e9';
+        // Always forward the explicit value so a product can transition from
+        // unlimited to finite stock and vice versa.
+        result['stock_illimite'] = v ? 'illimité' : null;
       } else {
         result[map[k] ?? k] = v;
       }

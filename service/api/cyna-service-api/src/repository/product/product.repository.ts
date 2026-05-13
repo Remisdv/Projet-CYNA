@@ -140,6 +140,7 @@ export class ProductRepository {
             .createQueryBuilder('p')
             .select(['p.id', 'p.nom', 'p.stock'])
             .where('p.stock IS NOT NULL')
+            .andWhere("(p.stock_illimite IS NULL OR p.stock_illimite <> 'illimité')")
             .andWhere('p.stock <= COALESCE(p.seuil_alerte_stock, :threshold)', { threshold })
             .andWhere('p.statut = :status', { status: ProductStatus.PUBLISHED })
             .orderBy('p.stock', 'ASC')

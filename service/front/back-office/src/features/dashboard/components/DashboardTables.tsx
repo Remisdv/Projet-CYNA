@@ -155,7 +155,7 @@ export function OutOfStockTable({ products }: { products: OOSProduct[] }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={() => navigate(`/products/${product.id}`)}>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1" onClick={() => navigate(`/catalog/services/${product.id}/edit`)}>
                     <Edit className="h-4 w-4" />
                     Éditer
                   </Button>

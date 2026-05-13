@@ -84,9 +84,14 @@ export class ProductService {
       );
     }
 
-    // Ensure stock defaults
-    if (product.type === ProductType.PRODUCT && product.stock === undefined && !product.stock_illimite) {
-      product.stock_illimite = 'illimit\u00e9';
+    // Keep `stock_illimite` consistent with the payload:
+    //  - services always use unlimited stock
+    //  - physical products: 'illimité' iff no numeric stock was provided
+    if (product.type === ProductType.SERVICE) {
+      product.stock_illimite = 'illimité';
+    } else if (product.type === ProductType.PRODUCT) {
+      product.stock_illimite =
+        product.stock === undefined || product.stock === null ? 'illimité' : null;
     }
 
     const saved = await this.productRepository.save(product);
@@ -232,6 +237,20 @@ export class ProductService {
     }
 
     Object.assign(product, updateProductDto);
+
+    // Keep `stock_illimite` consistent with the resulting state for physical
+    // products. If a numeric `stock` is set, the product is NOT unlimited.
+    if (product.type === ProductType.PRODUCT) {
+      if (
+        updateProductDto.stock_illimite === undefined &&
+        (updateProductDto.stock !== undefined || product.stock !== null)
+      ) {
+        product.stock_illimite =
+          product.stock === null || product.stock === undefined ? 'illimité' : null;
+      }
+    } else if (product.type === ProductType.SERVICE) {
+      product.stock_illimite = 'illimité';
+    }
 
     // Recalculate discount if prices changed
     if (

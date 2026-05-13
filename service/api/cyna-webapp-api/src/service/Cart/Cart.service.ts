@@ -111,22 +111,29 @@ export class CartService {
   /* ─── Stock Management via service-api ─────────────────────── */
 
   private async reserveStock(productId: string, quantity: number): Promise<void> {
+    let data: any;
     try {
       const product = await this.httpClient.get(`/api/products/${productId}`);
-      const data = product?.data ?? product;
-      if (data.stock_illimite === 'illimité') return; // unlimited stock
-      const currentStock = data.stock ?? 0;
-      if (currentStock < quantity) {
-        throw new BadRequestException(`Stock insuffisant (disponible: ${currentStock})`);
-      }
+      data = product?.data ?? product;
+    } catch (err) {
+      this.logger.error(`Failed to fetch product ${productId} for stock reservation: ${err.message}`);
+      // service-api unreachable: don't block cart add, but log loudly.
+      return;
+    }
+
+    if (data.stock_illimite === 'illimité') return; // unlimited stock
+    const currentStock = data.stock ?? 0;
+    if (currentStock < quantity) {
+      throw new BadRequestException(`Stock insuffisant (disponible: ${currentStock})`);
+    }
+    try {
       await this.httpClient.put(`/api/products/${productId}`, {
         stock: currentStock - quantity,
       });
       this.logger.log(`Reserved ${quantity} stock for product ${productId}`);
     } catch (err) {
-      if (err instanceof BadRequestException) throw err;
-      this.logger.error(`Failed to reserve stock: ${err.message}`);
-      // Don't block cart add if stock service is unavailable
+      this.logger.error(`Failed to update stock for product ${productId}: ${err.message}`);
+      throw new BadRequestException('Impossible de réserver le stock, veuillez réessayer.');
     }
   }
 

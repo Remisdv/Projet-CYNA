@@ -119,12 +119,13 @@ export class ProductEntity {
   })
   stock: number;
 
+  // 'illimité' => unlimited stock (used for services or stock-less products).
+  // NULL/empty => finite stock managed via the `stock` column.
   @Column({
     type: 'varchar',
-    default: 'illimit\u00e9',
     nullable: true,
   })
-  stock_illimite: string;
+  stock_illimite: string | null;
 
   @Column({
     type: 'integer',
