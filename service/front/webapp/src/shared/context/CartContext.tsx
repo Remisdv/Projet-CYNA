@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './AuthContext';
 import { trackEvent } from '@/shared/lib/tracking';
+import { cartApi } from '@/features/cart/api/cart.api';
 import {
   useServerCart,
   useAddToServerCart,
@@ -59,6 +61,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [localItems, setLocalItems] = useState<CartItem[]>(loadFromStorage);
   const mergedRef = useRef(false);
+  const qc = useQueryClient();
+  // Always keep a snapshot of the last known server cart so we can persist it on logout,
+  // even if React Query has already cleared serverItems when the effect fires.
+  const lastServerItemsRef = useRef<import('@/features/cart/hooks/useServerCart').ServerCartItem[]>([]);
+  const prevAuthRef = useRef(isAuthenticated);
 
   // Server cart hooks
   const { data: serverItems } = useServerCart(isAuthenticated);
@@ -66,6 +73,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateServer = useUpdateServerCartItem();
   const removeFromServer = useRemoveServerCartItem();
   const clearServer = useClearServerCart();
+
+  // Keep lastServerItemsRef in sync whenever serverItems is populated
+  if (serverItems && serverItems.length > 0) {
+    lastServerItemsRef.current = serverItems;
+  }
 
   // Persist localStorage on every local change (only when not authenticated)
   useEffect(() => {
@@ -109,14 +121,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line no-console
     console.debug('[Cart] merging', stored.length, 'local items to server');
 
-    // Sequential POST /cart/items — RESTful merge: each line = creation.
-    // Le backend gère la déduplication (productId+periodicity) et la réservation
-    // de stock en best-effort.
+    // Sequential POST /cart/items — appel direct à cartApi pour éviter les
+    // problèmes de stale closure sur le hook useMutation.
     (async () => {
       let allOk = true;
       for (const payload of serverPayload) {
         try {
-          await addToServer.mutateAsync(payload as unknown as Parameters<typeof addToServer.mutateAsync>[0]);
+          await cartApi.add(payload as any);
         } catch (err) {
           allOk = false;
           // eslint-disable-next-line no-console
@@ -126,16 +137,43 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (allOk) {
         setLocalItems([]);
         localStorage.removeItem(CART_KEY);
+        qc.invalidateQueries({ queryKey: ['server-cart'] });
       } else {
-        // Au moins un item a échoué (réseau / 5xx) : on garde le localStorage et on autorise un nouveau retry.
+        // Au moins un item a échoué : on garde le localStorage pour retry au prochain login.
         mergedRef.current = false;
       }
     })();
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, qc]);
 
-  // Reset merge flag on logout
+  // Save server cart → localStorage on logout, and reset merge flag
   useEffect(() => {
-    if (!isAuthenticated) {
+    const wasAuthenticated = prevAuthRef.current;
+    prevAuthRef.current = isAuthenticated;
+
+    if (wasAuthenticated && !isAuthenticated) {
+      // User just logged out: persist the last known server cart as local cart.
+      // We read from lastServerItemsRef (not serverItems) because React Query may
+      // have already cleared the query data when this effect fires.
+      const snapshot = lastServerItemsRef.current;
+      if (snapshot.length > 0) {
+        const itemsToSave: CartItem[] = snapshot.map((si) => ({
+          id: si.productId,
+          nom: si.productName,
+          type: si.productType as 'produit' | 'service',
+          prix: si.prix ? Number(si.prix) : undefined,
+          prix_mensuel: si.prixMensuel ? Number(si.prixMensuel) : undefined,
+          prix_annuel: si.prixAnnuel ? Number(si.prixAnnuel) : undefined,
+          periodicity: (si.periodicity as CartPeriodicity) || undefined,
+          quantity: si.quantity,
+          image: si.image,
+        }));
+        setLocalItems(itemsToSave);
+        localStorage.setItem(CART_KEY, JSON.stringify(itemsToSave));
+        // eslint-disable-next-line no-console
+        console.debug('[Cart] saved', itemsToSave.length, 'server items to localStorage on logout');
+      }
+      // Reset snapshot and merge flag for next login
+      lastServerItemsRef.current = [];
       mergedRef.current = false;
     }
   }, [isAuthenticated]);

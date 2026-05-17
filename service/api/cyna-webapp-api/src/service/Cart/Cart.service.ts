@@ -33,13 +33,13 @@ export class CartService {
     if (existing) {
       existing.quantity += quantity;
       // Reserve additional stock
-      await this.reserveStock(dto.productId, quantity);
+      await this.reserveStock(dto.productId, dto.productType, quantity);
       existing.reservationExpiresAt = new Date(Date.now() + RESERVATION_DURATION_MS);
       return this.cartRepository.save(existing);
     }
 
     // Reserve stock for new item
-    await this.reserveStock(dto.productId, quantity);
+    await this.reserveStock(dto.productId, dto.productType, quantity);
 
     const item = this.cartRepository.create({
       userId,
@@ -65,9 +65,9 @@ export class CartService {
 
     const diff = dto.quantity - item.quantity;
     if (diff > 0) {
-      await this.reserveStock(item.productId, diff);
+      await this.reserveStock(item.productId, item.productType, diff);
     } else if (diff < 0) {
-      await this.releaseStock(item.productId, Math.abs(diff));
+      await this.releaseStock(item.productId, item.productType, Math.abs(diff));
     }
 
     item.quantity = dto.quantity;
@@ -86,7 +86,7 @@ export class CartService {
     if (!item) return;
 
     if (item.stockReserved) {
-      await this.releaseStock(item.productId, item.quantity);
+      await this.releaseStock(item.productId, item.productType, item.quantity);
     }
 
     await this.cartRepository.remove(item);
@@ -96,7 +96,7 @@ export class CartService {
     const items = await this.cartRepository.findAllByUser(userId);
     for (const item of items) {
       if (item.stockReserved) {
-        await this.releaseStock(item.productId, item.quantity);
+        await this.releaseStock(item.productId, item.productType, item.quantity);
       }
     }
     await this.cartRepository.removeMany(items);
@@ -110,43 +110,58 @@ export class CartService {
 
   /* ─── Stock Management via service-api ─────────────────────── */
 
-  private async reserveStock(productId: string, quantity: number): Promise<void> {
+  /** Returns the correct base path depending on item type */
+  private itemApiPath(productId: string, productType: string): string {
+    return productType === 'service' ? `/api/services/${productId}` : `/api/products/${productId}`;
+  }
+
+  private async reserveStock(productId: string, productType: string, quantity: number): Promise<void> {
     let data: any;
     try {
-      const product = await this.httpClient.get(`/api/products/${productId}`);
-      data = product?.data ?? product;
+      const apiPath = this.itemApiPath(productId, productType);
+      const response = await this.httpClient.get(apiPath);
+      data = response?.data ?? response;
     } catch (err) {
-      this.logger.error(`Failed to fetch product ${productId} for stock reservation: ${err.message}`);
+      this.logger.error(`Failed to fetch ${productType} ${productId} for stock reservation: ${err.message}`);
       // service-api unreachable: don't block cart add, but log loudly.
       return;
     }
 
-    if (data.stock_illimite === 'illimité') return; // unlimited stock
+    // Guard: if response is null or an HTTP error (404, etc.), don't block the cart.
+    if (!data || (data.statusCode && data.statusCode >= 400)) {
+      this.logger.warn(`${productType} ${productId} not found for stock check — skipping reservation`);
+      return;
+    }
+
+    if (data.stock_illimite === 'illimité' || data.stock == null) return; // unlimited / no stock field
     const currentStock = data.stock ?? 0;
     if (currentStock < quantity) {
       throw new BadRequestException(`Stock insuffisant (disponible: ${currentStock})`);
     }
+    const apiPath = this.itemApiPath(productId, productType);
     try {
-      await this.httpClient.put(`/api/products/${productId}`, {
+      await this.httpClient.put(apiPath, {
         stock: currentStock - quantity,
       });
-      this.logger.log(`Reserved ${quantity} stock for product ${productId}`);
+      this.logger.log(`Reserved ${quantity} stock for ${productType} ${productId}`);
     } catch (err) {
-      this.logger.error(`Failed to update stock for product ${productId}: ${err.message}`);
+      this.logger.error(`Failed to update stock for ${productType} ${productId}: ${err.message}`);
       throw new BadRequestException('Impossible de réserver le stock, veuillez réessayer.');
     }
   }
 
-  private async releaseStock(productId: string, quantity: number): Promise<void> {
+  private async releaseStock(productId: string, productType: string, quantity: number): Promise<void> {
     try {
-      const product = await this.httpClient.get(`/api/products/${productId}`);
-      const data = product?.data ?? product;
-      if (data.stock_illimite === 'illimité') return;
+      const apiPath = this.itemApiPath(productId, productType);
+      const response = await this.httpClient.get(apiPath);
+      const data = response?.data ?? response;
+      if (!data || (data.statusCode && data.statusCode >= 400)) return;
+      if (data.stock_illimite === 'illimité' || data.stock == null) return;
       const currentStock = data.stock ?? 0;
-      await this.httpClient.put(`/api/products/${productId}`, {
+      await this.httpClient.put(apiPath, {
         stock: currentStock + quantity,
       });
-      this.logger.log(`Released ${quantity} stock for product ${productId}`);
+      this.logger.log(`Released ${quantity} stock for ${productType} ${productId}`);
     } catch (err) {
       this.logger.error(`Failed to release stock: ${err.message}`);
     }
@@ -164,7 +179,7 @@ export class CartService {
     this.logger.log(`Releasing ${expired.length} expired cart reservations`);
 
     for (const item of expired) {
-      await this.releaseStock(item.productId, item.quantity);
+      await this.releaseStock(item.productId, item.productType, item.quantity);
       item.stockReserved = false;
       await this.cartRepository.save(item);
     }

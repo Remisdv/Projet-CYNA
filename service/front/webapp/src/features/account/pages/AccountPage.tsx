@@ -6,14 +6,12 @@ import { useAuth } from '@/shared/context/AuthContext';
 import { ProfileTab } from '../components/ProfileTab';
 import { OrdersTab } from '../components/OrdersTab';
 import { SubscriptionsTab } from '../components/SubscriptionsTab';
-import { NotificationsTab } from '../components/NotificationsTab';
 import { SecurityTab } from '../components/SecurityTab';
 
 const TABS = [
   { id: 'profil', labelKey: 'tabs.profile', icon: User },
   { id: 'commandes', labelKey: 'tabs.orders', icon: ShoppingBag },
   { id: 'abonnements', labelKey: 'tabs.subscriptions', icon: CreditCard },
-  { id: 'notifications', labelKey: 'tabs.notifications', icon: Bell },
   { id: 'securite', labelKey: 'tabs.security', icon: Lock },
 ] as const;
 
@@ -72,7 +70,6 @@ export default function AccountPage() {
           {activeTab === 'profil' && <ProfileTab />}
           {activeTab === 'commandes' && <OrdersTab />}
           {activeTab === 'abonnements' && <SubscriptionsTab />}
-          {activeTab === 'notifications' && <NotificationsTab />}
           {activeTab === 'securite' && <SecurityTab />}
         </div>
       </div>
