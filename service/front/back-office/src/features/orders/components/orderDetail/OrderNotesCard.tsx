@@ -41,10 +41,11 @@ export function OrderNotesCard({ notes, isAddingNote, newNote, setNewNote, onAdd
                 <p className="text-xs text-gray-500 mt-2">
                   {new Date(note.date).toLocaleDateString('fr-FR', {
                     day: '2-digit',
-                    month: 'short',
+                    month: 'long',
+                    year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit',
-                  })} - {note.by}
+                  })} — {note.by}
                 </p>
               </div>
             ))}

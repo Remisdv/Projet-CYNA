@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '../api/users.api';
 import type {
   UserDto,
@@ -52,4 +52,35 @@ export const useResetUserPassword = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bo-users'] }),
   });
 };
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolves a list of potential user IDs to a map of { id → display name }.
+ * Non-UUID values (like "Système", "webapp") are passed through unchanged.
+ */
+export function useUserNames(ids: string[]): Record<string, string> {
+  const uuids = [...new Set(ids.filter((id) => UUID_REGEX.test(id)))];
+
+  const results = useQueries({
+    queries: uuids.map((id) => ({
+      queryKey: ['bo-user', id],
+      queryFn: () => usersApi.getById(id),
+      staleTime: 5 * 60 * 1000,
+      retry: false,
+    })),
+  });
+
+  const nameMap: Record<string, string> = {};
+  uuids.forEach((id, i) => {
+    const data = results[i]?.data;
+    if (data) {
+      const name = [data.firstName, data.lastName].filter(Boolean).join(' ') || data.email;
+      nameMap[id] = name;
+    } else {
+      nameMap[id] = id; // fallback: show raw id if fetch failed
+    }
+  });
+  return nameMap;
+}
 

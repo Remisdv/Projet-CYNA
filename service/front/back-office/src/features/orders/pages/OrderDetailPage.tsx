@@ -10,6 +10,7 @@ import {
   useAddOrderNote,
   useSendCredentials,
 } from '../hooks/useOrders';
+import { useUserNames } from '@/features/users/hooks/useUsers';
 import { getStatusBadgeVariant, getStatusLabel } from '../lib/orderDetailLabels';
 import { OrderActionsBar } from '../components/orderDetail/OrderActionsBar';
 import { OrderClientInfoCard } from '../components/orderDetail/OrderClientInfoCard';
@@ -36,6 +37,13 @@ export default function OrderDetailPage() {
   const updatePayment = useUpdatePaymentStatus();
   const addNote = useAddOrderNote();
   const sendCredentials = useSendCredentials();
+
+  // Resolve user IDs to display names for history and notes
+  const allByValues = [
+    ...(order?.history ?? []).map((h) => h.by),
+    ...(order?.notes ?? []).map((n) => n.by),
+  ];
+  const userNames = useUserNames(allByValues);
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-64 text-gray-500">Chargement...</div>;
@@ -210,7 +218,9 @@ export default function OrderDetailPage() {
             <OrderCredentialsSent credentials={order.credentials} />
           )}
 
-          <OrderHistoryCard history={order.history} />
+          <OrderHistoryCard
+            history={order.history.map((h) => ({ ...h, by: userNames[h.by] ?? h.by }))}
+          />
         </div>
 
         <div className="space-y-6">
@@ -222,7 +232,7 @@ export default function OrderDetailPage() {
           />
 
           <OrderNotesCard
-            notes={order.notes}
+            notes={order.notes.map((n) => ({ ...n, by: userNames[n.by] ?? n.by }))}
             isAddingNote={isAddingNote}
             newNote={newNote}
             setNewNote={setNewNote}

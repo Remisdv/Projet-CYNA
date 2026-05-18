@@ -51,7 +51,18 @@ function normalizeOrderDetail(raw: any): OrderDetail {
       by: n.by ?? 'Système',
     }));
   } else if (rawNotes && typeof rawNotes === 'string' && rawNotes.trim()) {
-    notes = [{ id: '1', text: rawNotes, date: raw.createdAt ?? '', by: 'Système' }];
+    // Backend stores notes as newline-separated entries: "[ISO_DATE] (by) text"
+    const NOTE_RE = /^\[([^\]]+)\]\s*\(([^)]+)\)\s*(.*)$/;
+    notes = rawNotes
+      .split('\n')
+      .filter((line) => line.trim())
+      .map((line, idx) => {
+        const m = line.match(NOTE_RE);
+        if (m) {
+          return { id: String(idx + 1), date: m[1], by: m[2], text: m[3] };
+        }
+        return { id: String(idx + 1), text: line, date: raw.createdAt ?? '', by: 'Système' };
+      });
   } else {
     notes = [];
   }

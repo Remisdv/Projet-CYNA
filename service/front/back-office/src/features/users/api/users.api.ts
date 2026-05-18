@@ -33,6 +33,10 @@ export const usersApi = {
   remove: async (id: string): Promise<void> => {
     await apiClient.delete(`/users/${id}`);
   },
+  getById: async (id: string): Promise<UserDto> => {
+    const { data } = await apiClient.get<UserDto>(`/users/${id}`);
+    return data;
+  },
   resetPassword: async (id: string): Promise<{ tempPassword: string }> => {
     const { data } = await apiClient.post<{ tempPassword: string }>(
       `/users/${id}/reset-password`,

@@ -79,15 +79,6 @@ export default function ContactPage() {
               <p className="text-xs text-gray-400">Lun–Ven, 9h–18h</p>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-              <MessageSquare size={20} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Chat en ligne</p>
-              <p className="text-sm text-gray-500">Disponible depuis le tableau de bord client.</p>
-            </div>
-          </div>
         </div>
 
         {/* Form */}
